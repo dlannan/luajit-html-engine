@@ -9,7 +9,7 @@ local tinsert 	= table.insert
 local tremove 	= table.remove
 
 local tcolor = { r=0.0, b=1.0, g=0.0, a=1.0 }
-local rapi 		= require("scripts.libs.htmlrender-api")
+local rapi 		= require("engine.libs.htmlrender-api")
 
 ----------------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ local TEXT_CONST = {
 local htmlelements = {}
 local dirty_elements 	= true
 
-local layout = require("scripts.libs.htmllayout")
+local layout = require("engine.libs.htmllayout")
 
 local function defaultmargin( style ) 
 

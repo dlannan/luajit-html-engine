@@ -1,14 +1,14 @@
 ----------------------------------------------------------------------------------
 -- Fix colors later (with css etc)
 
-require("scripts.utils.copy")
+require("engine.utils.copy")
 
 local tinsert 	= table.insert
 local tremove 	= table.remove
 
 local tcolor 	= { r=0.0, b=1.0, g=0.0, a=1.0 }
 
-local htmle = require("scripts.libs.htmlelements")
+local htmle = require("engine.libs.htmlelements")
 local htmlelements 	= htmle.elements 
 local FONT_SIZES 	= htmle.FONT_SIZES
 

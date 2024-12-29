@@ -3,9 +3,9 @@
 local tinsert 	= table.insert
 local tremove 	= table.remove
 
-require("scripts.utils.copy")
-local GM 		= require("scripts.libs.htmlgeom")
-local rapi 		= require("scripts.libs.htmlrender-api")
+require("engine.utils.copy")
+local GM 		= require("engine.libs.htmlgeom")
+local rapi 		= require("engine.libs.htmlrender-api")
 
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
 local enableDebug 			= 1
@@ -24,12 +24,6 @@ local elements		= {}
 local geom 			= nil
 
 local tcolor = { r=0.0, b=0.0, g=0.0, a=1.0 }
-
-----------------------------------------------------------------------------------
-
-local child_flags = imgui.WINDOWFLAGS_NOTITLEBAR
-child_flags = bit.bor(child_flags, imgui.WINDOWFLAGS_NOMOVE)
-child_flags = bit.bor(child_flags, imgui.WINDOWFLAGS_NORESIZE)
 
 ----------------------------------------------------------------------------------
 
@@ -116,14 +110,14 @@ local function renderbutton( g, v )
 	local style 	= v.style
 	local ele = getelement( v.eid )
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
-	imgui.begin_child(tostring(v.eid), ele.width, ele.height)
+	-- imgui.begin_child(tostring(v.eid), ele.width, ele.height)
 	g.ctx.ctx.setstyle(style)
 	local changed, pressed = rapi.button(v.text or "", ele.width, ele.height )
 	if changed then 
 		-- self.counter = self.counter + 1
 	end
 	g.ctx.ctx.unsetstyle()
-	imgui.end_child()
+	-- imgui.end_child()
 end 
 
 ----------------------------------------------------------------------------------
@@ -135,7 +129,7 @@ local function renderinputtext( g, v )
 	local ele = getelement( v.eid )
 
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
-	imgui.begin_child(tostring(v.eid), ele.width, ele.height)
+	-- imgui.begin_child(tostring(v.eid), ele.width, ele.height)
 	g.ctx.ctx.setstyle(style)
 	local changed, value = rapi.input_text( ele.attr.value or "", "Label" )
 	if(changed) then 
@@ -143,7 +137,7 @@ local function renderinputtext( g, v )
 		ele.attr.value = value
 	end
 	g.ctx.ctx.unsetstyle()
-	imgui.end_child()
+	-- imgui.end_child()
 end 
 
 ----------------------------------------------------------------------------------
