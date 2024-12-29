@@ -24,14 +24,6 @@ ffi.cdef [[
 typedef struct {
     FONScontext* fons;
     float dpi_scale;
-    int font_normal;
-    int font_italic;
-    int font_bold;
-    int font_japanese;
-    uint8_t font_normal_data[256 * 1024];
-    uint8_t font_italic_data[256 * 1024];
-    uint8_t font_bold_data[256 * 1024];
-    uint8_t font_japanese_data[2 * 1024 * 1024];
 } state_t;
 ]]
 
@@ -67,14 +59,10 @@ render_api.setup = function(self)
 	-- TODO: Make font management much simpler (need a font manager)
 	state.fons = fs.sfons_create(fonsdesc)
 	
-	local regular_data = utils.loaddata("projects/browser/data/fonts/LiberationSerif-Regular.ttf")
-	self.renderCtx.fonts["Regular"] = fs.fonsAddFontMem(state.fons, "sans", ffi.cast("unsigned char *", regular_data), #regular_data, false)
-	local bold_data = utils.loaddata("projects/browser/data/fonts/LiberationSerif-Bold.ttf")
-	self.renderCtx.fonts["Bold"] = 	fs.fonsAddFontMem(state.fons, "sans-bold", ffi.cast("unsigned char *", bold_data), #bold_data, false)
-	local italic_data = utils.loaddata("projects/browser/data/fonts/LiberationSerif-Italic.ttf")
-	self.renderCtx.fonts["Italic"] = fs.fonsAddFontMem(state.fons, "sans-italic", ffi.cast("unsigned char *", italic_data), #italic_data, false)
-	local bolditalic_data = utils.loaddata("projects/browser/data/fonts/LiberationSerif-BoldItalic.ttf")
-	self.renderCtx.fonts["BoldItalic"] = fs.fonsAddFontMem(state.fons, "sans-bolditalic", ffi.cast("unsigned char *", bolditalic_data), #bolditalic_data, false)
+	self.renderCtx.fonts["Regular"] = fs.fonsAddFont(state.fons, "sans", "projects/browser/data/fonts/LiberationSerif-Regular.ttf")
+	self.renderCtx.fonts["Bold"] = 	fs.fonsAddFont(state.fons, "sans-bold", "projects/browser/data/fonts/LiberationSerif-Bold.ttf")
+	self.renderCtx.fonts["Italic"] = fs.fonsAddFont(state.fons, "sans-italic", "projects/browser/data/fonts/LiberationSerif-Italic.ttf")
+	self.renderCtx.fonts["BoldItalic"] = fs.fonsAddFont(state.fons, "sans-bolditalic", "projects/browser/data/fonts/LiberationSerif-BoldItalic.ttf")
 
 	self.renderCtx.fontsize = fontsizebase
 	self.renderCtx.getstyle = function( style )
@@ -116,9 +104,7 @@ render_api.start = function( self )
 
 	fs.fonsClearState(state.fons)
 		
-
-
-	-- imgui.set_mouse_input(
+    -- imgui.set_mouse_input(
 	-- 	self.mouse.x,
 	-- 	h - self.mouse.y,
 	-- 	self.mouse.buttons[LEFT_MOUSE] or 0,
@@ -173,7 +159,7 @@ render_api.text_getsize = function( text, fontscale, fontface, wrap_size )
 		w = wrap_size
 		h = lines * h 
 	end 
-	print(text, w, h, wrap_size)
+	-- print(text, w, h, wrap_size)
 	return w, h
 end
 
@@ -197,17 +183,19 @@ end
 render_api.text = function( text, wrapwidth )
 
 	-- print( render_api.left, render_api.top, text )
+	fs.fonsSetColor(state.fons, 0xffffffff)
 	fs.fonsDrawText(state.fons, render_api.left, render_api.top, text, nil)
 end
-
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Render text using the specified interface
 render_api.text_colored = function( text, r, g, b, a)
 
-	fs.fonsSetColor(state.fons, fs.sfons_rgba(r, g, b, a))
+	--fs.fonsSetColor(state.fons, fs.sfons_rgba(r, g, b, a))
+	fs.fonsSetColor(state.fons, 0xffffffff)
 	fs.fonsDrawText(state.fons, render_api.left, render_api.top, text, nil)
 end
+
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Render buttons using the specified interface
 render_api.button = function( text, w, h )
@@ -266,7 +254,7 @@ render_api.draw_rect = function( x, y, w, h, color )
 	-- print( c.r, c.g, c.b, c.a )
 	sgp.sgp_set_color( c.r, c.g, c.b, c.a )
     drawRect(x, y, tonumber(w), tonumber(h))
-	print( string.format("%03d %03d %03d %03d  %04x", x, y, w, h, color) )
+	-- print( string.format("%03d %03d %03d %03d  %04x", x, y, w, h, color) )
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------
