@@ -1,9 +1,17 @@
 # luajit-html-engine
 A luajit html web rendering engine.
 
+First proto screenshot:
+![alt text](/media/screenshot-2024-12-30_11-50.png)
+
 ## Overview 
-Initially will build this as a private project. 
-I dont really want too much interference or input while I do this. The arch is tough to get right and needs to be clean.
+Initially this will be built with minimal external input - please DO NOT submit PRs, they will be ignored. Until there is a clear stable architecture that Im satisifed with it will probably be quite slow going. I have been wanting to build this for a long time and it has been an ongoing exercise over the last 10+ yrs looking at this possible method.
+
+Feel free to fork and use as you want though - MIT license.
+The arch is tough to get right and needs to be clean (in my mind).
+
+Note: 
+I want the majority of the project to be done in luajit. This may not end up very quick, but there are many benefits to doing it this way. If you dont like Lua or Luajit, then probably skip this project.
 
 ## Goals
 
