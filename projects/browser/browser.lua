@@ -14,6 +14,8 @@ local slib      = require("sokol_libs") -- Warn - always after gfx!!
 local hmm       = require("hmm")
 local hutils    = require("hmm_utils")
 
+local duk 		= require("duktape")
+
 local utils     = require("utils")
 
 local ffi       = require("ffi")
@@ -35,7 +37,20 @@ local vcolor 	= { r=1.0, b=0.0, g=0.0, a=1.0 }
 
 local browser = {}
 
+local function duk_eval_string( ctx, src)  
+	return duk.duk_eval_raw(ctx, src, #src,  
+				bit.bor(duk.DUK_COMPILE_EVAL, 
+					bit.bor( duk.DUK_COMPILE_NOSOURCE, 
+						bit.bor( duk.DUK_COMPILE_STRLEN, duk.DUK_COMPILE_NOFILENAME) ) ) )
+end
+
+
 -- --------------------------------------------------------------------------------------
+
+function native_print(ctx) 
+	print(string.format("%s\n", ffi.string(duk.duk_to_string(ctx, 0))))
+	return 0 
+end
 
 browser.init = function (self)
 
@@ -66,6 +81,16 @@ browser.init = function (self)
 
 	-- Toggle the visual profiler on hot reload.
 	self.profile = true
+
+	-- setup js interpreter
+	local jsctx = duk.duk_create_heap(nil,nil,nil,nil,nil)
+	duk.duk_push_c_function(jsctx, native_print, 1)
+	duk.duk_put_global_string(jsctx, "print")
+	local mandel_js = utils.loaddata("projects/browser/data/js/mandel.js")
+	duk_eval_string(jsctx, mandel_js)
+	print(string.format("%d\n", duk.duk_get_int(jsctx, -1)))
+	duk.duk_destroy_heap(jsctx)	
+
 end
 
 -- --------------------------------------------------------------------------------------
@@ -90,49 +115,50 @@ browser.on_message = function(self, message_id, message, sender)
 end
 
 -- --------------------------------------------------------------------------------------
+-- Handle incoming input events from mouse/keyboard/touch etc
 
-browser.on_input = function(self, action_id, action)
-	if action_id == LEFT_MOUSE or action_id == MIDDLE_MOUSE or action_id == RIGHT_MOUSE then
-		if action.pressed then
-			self.mouse.buttons[action_id] = 1
-		elseif action.released then
-			self.mouse.buttons[action_id] = 0
-		end
-	elseif action_id == WHEEL_UP then
-		self.mouse.wheel = action.value
-	elseif action_id == WHEEL_DOWN then
-		self.mouse.wheel = -action.value
-	elseif action_id == TEXT then
-		imgui.add_input_character(action.text)
-	elseif action_id == KEY_SHIFT then
-		if action.pressed or action.released then
-			imgui.set_key_modifier_shift(action.pressed == true)
-		end
-	elseif action_id == KEY_CTRL then
-		if action.pressed or action.released then
-			imgui.set_key_modifier_ctrl(action.pressed == true)
-		end
-	elseif action_id == KEY_ALT then
-		if action.pressed or action.released then
-			imgui.set_key_modifier_alt(action.pressed == true)
-		end
-	elseif action_id == KEY_SUPER then
-		if action.pressed or action.released then
-			imgui.set_key_modifier_super(action.pressed == true)
-		end
-	else
-		if action.pressed or action.released then
-			local key = IMGUI_KEYMAP[action_id]
-			if(key) then 
-				imgui.set_key_down(key, action.pressed == true)
-			end
-		end
-	end
+browser.on_input = function(self, event)
+	-- if action_id == LEFT_MOUSE or action_id == MIDDLE_MOUSE or action_id == RIGHT_MOUSE then
+	-- 	if action.pressed then
+	-- 		self.mouse.buttons[action_id] = 1
+	-- 	elseif action.released then
+	-- 		self.mouse.buttons[action_id] = 0
+	-- 	end
+	-- elseif action_id == WHEEL_UP then
+	-- 	self.mouse.wheel = action.value
+	-- elseif action_id == WHEEL_DOWN then
+	-- 	self.mouse.wheel = -action.value
+	-- elseif action_id == TEXT then
+	-- 	imgui.add_input_character(action.text)
+	-- elseif action_id == KEY_SHIFT then
+	-- 	if action.pressed or action.released then
+	-- 		imgui.set_key_modifier_shift(action.pressed == true)
+	-- 	end
+	-- elseif action_id == KEY_CTRL then
+	-- 	if action.pressed or action.released then
+	-- 		imgui.set_key_modifier_ctrl(action.pressed == true)
+	-- 	end
+	-- elseif action_id == KEY_ALT then
+	-- 	if action.pressed or action.released then
+	-- 		imgui.set_key_modifier_alt(action.pressed == true)
+	-- 	end
+	-- elseif action_id == KEY_SUPER then
+	-- 	if action.pressed or action.released then
+	-- 		imgui.set_key_modifier_super(action.pressed == true)
+	-- 	end
+	-- else
+	-- 	if action.pressed or action.released then
+	-- 		local key = IMGUI_KEYMAP[action_id]
+	-- 		if(key) then 
+	-- 			imgui.set_key_down(key, action.pressed == true)
+	-- 		end
+	-- 	end
+	-- end
 
-	if not action_id then
-		self.mouse.x = action.screen_x
-		self.mouse.y = action.screen_y
-	end
+	-- if not action_id then
+	-- 	self.mouse.x = action.screen_x
+	-- 	self.mouse.y = action.screen_y
+	-- end
 
 end
 
@@ -163,6 +189,13 @@ local function init()
 	sgl.sgl_setup(sgldesc)
 
 	browser:init()
+end
+
+-- --------------------------------------------------------------------------------------
+
+local function input(event) 
+
+	browser:on_input(event)
 end
 
 -- --------------------------------------------------------------------------------------
@@ -238,6 +271,7 @@ local app_desc = ffi.new("sapp_desc[1]")
 app_desc[0].init_cb     = init
 app_desc[0].frame_cb    = frame
 app_desc[0].cleanup_cb  = cleanup
+app_desc[0].event_cb	= input
 app_desc[0].width       = 1920
 app_desc[0].height      = 1080
 app_desc[0].window_title = "Browser Prototype (Sokol GP)"
