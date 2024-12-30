@@ -77,9 +77,9 @@ end
 
 browser.update = function(self, dt)
 
-	rapi:start()
+	rapi.start(self)
 	htmlr.renderxml( self.renderCtx, self.xmldoc, { left=10, top=10.0 } )
-	rapi:finish()
+	rapi.finish(self)
 end
 
 -- --------------------------------------------------------------------------------------
@@ -202,14 +202,20 @@ local function frame()
     -- Begin a render pass.
     local pass      = ffi.new("sg_pass[1]")
     pass[0].swapchain = slib.sglue_swapchain()
+	pass[0].action.colors[0].load_action = sg.SG_LOADACTION_CLEAR
+	pass[0].action.colors[0].clear_value.r = 0.3
+	pass[0].action.colors[0].clear_value.g = 0.3
+	pass[0].action.colors[0].clear_value.b = 0.32
+	pass[0].action.colors[0].clear_value.a = 1.0
     sg.sg_begin_pass(pass)
-
-	sgl.sgl_draw();	
 
 	-- Dispatch all draw commands to Sokol GFX.
     sgp.sgp_flush()
     -- Finish a draw command queue, clearing it.
     sgp.sgp_end()
+
+	sgl.sgl_draw()
+
     -- End render pass.
     sgp.sg_end_pass()
     -- Commit Sokol render.
@@ -234,7 +240,7 @@ app_desc[0].frame_cb    = frame
 app_desc[0].cleanup_cb  = cleanup
 app_desc[0].width       = 1920
 app_desc[0].height      = 1080
-app_desc[0].window_title = "Rectangle (Sokol GP)"
+app_desc[0].window_title = "Browser Prototype (Sokol GP)"
 app_desc[0].fullscreen  = false
 app_desc[0].icon.sokol_default = true 
 app_desc[0].logger.func = slib.slog_func 

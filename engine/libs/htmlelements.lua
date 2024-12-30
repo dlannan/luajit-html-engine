@@ -92,10 +92,10 @@ end
 ----------------------------------------------------------------------------------
 
 local function style_setmargins( style, left, top, right, bottom)
-	style.margin.top 	= top
-	style.margin.bottom = bottom
-	style.margin.left 	= left
-	style.margin.right 	= right
+	style.margin.top 		= top
+	style.margin.bottom 	= bottom
+	style.margin.left 		= left
+	style.margin.right 		= right
 end
 
 ----------------------------------------------------------------------------------
@@ -114,19 +114,19 @@ end
 ----------------------------------------------------------------------------------
 
 local function style_setpadding( style, left, top, right, bottom)
-	style.padding.top 	= top
-	style.padding.bottom = bottom
-	style.padding.left 	= left
+	style.padding.top 		= top
+	style.padding.bottom 	= bottom
+	style.padding.left 		= left
 	style.padding.right 	= right
 end
 
 ----------------------------------------------------------------------------------
 
 local function style_setborders( style, left, top, right, bottom)
-	style.border.top 	= top
-	style.border.bottom = bottom
-	style.border.left 	= left
-	style.border.right 	= right
+	style.border.top 		= top
+	style.border.bottom 	= bottom
+	style.border.left 		= left
+	style.border.right 		= right
 end
 
 ----------------------------------------------------------------------------------
@@ -483,6 +483,13 @@ htmlelements["body"] = {
 ----------------------------------------------------------------------------------
 
 htmlelements["html"] = {
+	opened 		= elementopen,
+	closed 		= defaultclose,
+}
+
+----------------------------------------------------------------------------------
+
+htmlelements["div"] = {
 	opened 		= elementopen,
 	closed 		= defaultclose,
 }
