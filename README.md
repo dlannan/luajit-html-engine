@@ -5,7 +5,9 @@ First proto screenshot:
 ![alt text](/media/screenshot-2024-12-30_11-50.png)
 
 ## Overview 
-Initially this will be built with minimal external input - please DO NOT submit PRs, they will be ignored. Until there is a clear stable architecture that Im satisifed with it will probably be quite slow going. I have been wanting to build this for a long time and it has been an ongoing exercise over the last 10+ yrs looking at this possible method.
+Initially this will be built with minimal external input - please DO NOT submit PRs, they will be ignored. 
+
+Until there is a clear stable architecture that Im satisifed with it will probably be quite slow going. I have been wanting to build this for a long time and it has been an ongoing exercise over the last 10+ yrs looking at this possible method.
 
 Feel free to fork and use as you want though - MIT license.
 The arch is tough to get right and needs to be clean (in my mind).
