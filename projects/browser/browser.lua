@@ -45,10 +45,15 @@ local function duk_eval_string( ctx, src)
 end
 
 
+local function duk_compile_filename( ctx, filename )
+	return duk.duk_compile_raw(ctx, filename, 0, bit.bor(1, 
+						bit.bor( duk.DUK_COMPILE_NOSOURCE, duk.DUK_COMPILE_STRLEN) ) )
+end
+
 -- --------------------------------------------------------------------------------------
 
 function native_print(ctx) 
-	print(string.format("%s\n", ffi.string(duk.duk_to_string(ctx, 0))))
+	print(string.format("%s", ffi.string(duk.duk_to_string(ctx, 0))))
 	return 0 
 end
 
@@ -76,7 +81,7 @@ browser.init = function (self)
 
 	rapi.setup(self)
 	local w         = sapp.sapp_widthf()
-    local h        = sapp.sapp_heightf()
+    local h        	= sapp.sapp_heightf()
 	htmlr.rendersize(w/2, h/1.2)
 
 	-- Toggle the visual profiler on hot reload.
@@ -85,10 +90,10 @@ browser.init = function (self)
 	-- setup js interpreter
 	local jsctx = duk.duk_create_heap(nil,nil,nil,nil,nil)
 	duk.duk_push_c_function(jsctx, native_print, 1)
-	duk.duk_put_global_string(jsctx, "print")
-	local mandel_js = utils.loaddata("projects/browser/data/js/mandel.js")
-	duk_eval_string(jsctx, mandel_js)
-	print(string.format("%d\n", duk.duk_get_int(jsctx, -1)))
+	local err = duk_compile_filename(jsctx, "projects/browser/data/js/jquery.min.js")
+	print(string.format("Error: %d", err))
+	local err = duk_compile_filename(jsctx, "projects/browser/data/js/startmin.js")
+	print(string.format("Error: %d", err))
 	duk.duk_destroy_heap(jsctx)	
 
 end

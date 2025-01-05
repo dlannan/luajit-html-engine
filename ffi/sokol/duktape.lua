@@ -83,11 +83,15 @@ duk_idx_t duk_push_c_function(duk_context *ctx, duk_c_function func, duk_idx_t n
 duk_bool_t duk_put_global_string(duk_context *ctx, const char *key);
 
 duk_int_t duk_eval_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
+duk_int_t duk_compile_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
+
 duk_int_t duk_get_int(duk_context *ctx, duk_idx_t idx);
 const char *duk_to_string(duk_context *ctx, duk_idx_t idx);
 
 enum {
    DUK_COMPILE_EVAL = 8,
+   DUK_COMPILE_STRICT = 32,
+   DUK_COMPILE_SAFE = 128,
    DUK_COMPILE_NOSOURCE = 512,
    DUK_COMPILE_STRLEN = 1024,
    DUK_COMPILE_NOFILENAME = 2048
