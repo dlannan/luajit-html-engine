@@ -26,7 +26,7 @@ Think something like Webkit without all the  cruft. And it _wont_ support all mi
 - [ ]  Application window and application API
 - [ ]  HTTP Get and network Management (use sokol fetch?)
 - [ ]  Layouts - appropriate arch.
-- [X]  JS DUktape integration (its in and working)
+- [X]  JS Duktape integration (its in and working)
 - [ ]  DOM in Lua - integrate libraries if needed (Duktape needs DOM api registrations)
 - [ ]  CSS in Lua - integrate libraries if needed
 - [ ]  Sokol Rendering - 2D
