@@ -5,6 +5,8 @@ local layout    = require("engine.libs.htmllayout")
 ----------------------------------------------------------------------------------
 local function elementbutton( g, style, attribs )
 
+	-- TODO: Need to make these default style settings for buttons
+
 	-- Need to add check for css style
 	libstyle.setmargins(style, 0, 0, 0, 0)
 	libstyle.setpadding(style, 8, 0, 8, 0)

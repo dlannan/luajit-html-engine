@@ -392,6 +392,67 @@ local function addimageobject( g, style )
 	-- Render obejcts are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
 end 
+
+----------------------------------------------------------------------------------
+-- Table columns are created empty and populated.
+local function addtablecolumn( g, style, attribs )
+
+	local stylecopy = deepcopy(style)
+	
+	-- Try to treat _all_ output as text + style. Style here means a css objects type
+	--    like border, background, size, margin etc
+	local renderobj = { 
+		ctx 	= g, 
+		etype 	= "td",
+		eid 	= style.elementid,
+		style 	= stylecopy, 
+		cursor 	= { top = g.cursor.top, left = g.cursor.left },
+		frame  	= { top = g.frame.top, left = g.frame.left },
+	}
+
+	-- Input buttons already have text if set in value 
+	if( style.etype == "input" and attribs.value ) then 
+		renderobj.text = attribs.value
+	end
+	
+	local pid = getparent(style)
+	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
+	geom.update( renderobj.gid )
+	
+	-- Render obejcts are queued in order of the output data with the correct styles
+	tinsert(render, renderobj)
+end 
+
+----------------------------------------------------------------------------------
+-- Table columns are created empty and populated.
+local function addtablerow( g, style, attribs )
+
+	local stylecopy = deepcopy(style)
+	
+	-- Try to treat _all_ output as text + style. Style here means a css objects type
+	--    like border, background, size, margin etc
+	local renderobj = { 
+		ctx 	= g, 
+		etype 	= "tr",
+		eid 	= style.elementid,
+		style 	= stylecopy, 
+		cursor 	= { top = g.cursor.top, left = g.cursor.left },
+		frame  	= { top = g.frame.top, left = g.frame.left },
+	}
+
+	-- Input buttons already have text if set in value 
+	if( style.etype == "input" and attribs.value ) then 
+		renderobj.text = attribs.value
+	end
+	
+	local pid = getparent(style)
+	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
+	geom.update( renderobj.gid )
+	
+	-- Render obejcts are queued in order of the output data with the correct styles
+	tinsert(render, renderobj)
+end 
+
 ----------------------------------------------------------------------------------
 
 local function addlayout( layout )
@@ -415,7 +476,10 @@ return {
 	addbuttonobject	= addbuttonobject,
 	addinputtextobject = addinputtextobject,
 	addimageobject	= addimageobject,
-	
+
+	addtablecolumn	= addtablecolumn,
+	addtablerow 	= addtablerow,
+
 	addlayout 		= addlayout,
 
 	getgeom 		= getgeometry,
