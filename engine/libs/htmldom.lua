@@ -1,682 +1,276 @@
+-- The html dom here does not currently follow much of the spec.
+--  Why?: Its not a priority. I want to be able to render as a UI first. Then worry about compat later.
+--        Additionally, there is _alot_ of parts to the dom that are just not that useful in the way
+--        it is described in the WW3C doc. 
+--        Also, I want to do a single pass renderer. I dont want to do multiple passes over the xml and dom.
+--        Mainly because there are ways to get around the need to pass multiple times, while also reducing 
+--        the complexity of parsing and rendering the page.
+--
+-- This dom will be simple.
+--
+-- The structure is just a tree of the element ids that are generated as the xml is parsed.
+-- Elements are processed on thier close tags and the dom may be updated at anytime between tags.
 
-local require("utils")
+local tinsert       = table.insert 
+local tremove       = table.remove
 
-local  Window = {
-    event       = nil,
+local xmlp 		    = require("engine.libs.xmlparser") 
+local htmle 		= require("engine.libs.htmlelements")
+local layout        = require("engine.libs.htmllayout")
+
+local utils         = require("lua.utils")
+
+----------------------------------------------------------------------------------
+
+local htmlelements 	= htmle.elements 
+local FONT_SIZES 	= htmle.FONT_SIZES
+
+----------------------------------------------------------------------------------
+
+local styleempty = { 
+	textsize = FONT_SIZES.p, 
+	linesize = FONT_SIZES.p * 1.5, 
+	maxlinesize = 0, 
+	width = 0, 
+	height = 0 
+}
+local stylestack    = {}
+stylestack[1] = deepcopy(styleempty)
+
+----------------------------------------------------------------------------------
+-- Root node always has nil parent.
+local dom_node = {
+    parent      = nil,   -- parent node, used mainly in traversal
+    children    = {},    -- list of child nodes which can contain mode child nodes.
+    eid         = nil,
 }
 
-local Event = {
-    constructor = function (DOMStringtype, optionalEventInit_eventInitDict = {}) end,
+----------------------------------------------------------------------------------
 
-    DOMString_type = nil,
-    EventTarget_target,
-    EventTarget_srcElement,
-    EventTarget_currentTarget,
-    composedPath = function() return sequence{ EventTarget } end,
-
-    NONE              = 0,
-    CAPTURING_PHASE   = 1,
-    AT_TARGET         = 2,
-    BUBBLING_PHASE    = 3,
-    eventPhase        = 0,
-
-    stopPropagation = function() end,
-    cancelBubble = function() end, -- legacy alias of .stopPropagation()
-    stopImmediatePropagation = function() end,
-
-    bubbles           = false,
-    cancelable        = false,
-    returnValue       = false, --  // legacy
-    preventDefault    = function() end,
-    defaultPrevented  = false,
-    composed          = false,
-
-    isTrusted         = false,
-    timeStamp         = 0.0,
-
-    initEvent         = function(DOMString_type, bubbles = false, cancelable = false) end,-- legacy
+local dom = {
+    root        = dom_node,
+    elookup     = {},    -- As elements are added, they are mapped here for fast eid->node fetch
 }
 
-local CustomEvent =  {
-    constructor = function(DOMString_type, CustomEventInit_eventInitDict = {}) end,
-
-    detail      = nil,
-
-    initCustomEvent = function(DOMString_type, bubbles = false, cancelable = false, detail = nil) end, -- // legacy
-}
-
--- Using tmerge its like merging Base with Derived. Derived class will override Base methods if declared.
-CustomEvent = utils.tmerge(Event, CustomEvent)
-
-local EventInit = {
-    bubbles = false,
-    cancelable = false,
-    composed = false,
-}
-  
-local CustomEventInit =  {
-  detail = nil,
-}
-
-CustomEventInit = utils.tmerge(EventInit, CustomEventInit)
-
-
-local EventTarget  = {
-  constructor   = function() end,
-
-  addEventListener = function(DOMString_type, EventListener_callback, options = {}) end,
-  removeEventListener = function(DOMString_type, EventListener_callback, options = {}) end,
-  dispatchEvent = function(Event_event) return true end,
-}
-
-local EventListener = {
-  handleEvent   = function(Event_event) end,
-}
-
-local EventListenerOptions = {
-  capture = false,
-}
-
-local AddEventListenerOptions = {
-  passive = false,
-  once = false,
-  AbortSignal_signal = nil,
-}
-
-AddEventListenerOptions = utils.tmerge( EventListenerOptions, AddEventListenerOptions )
-
-
-local AbortController = {
-  constructor = function() end,
-
-  AbortSignal_signal = nil,
-
-  abort = function(reason) end,
-}
-
-
-local AbortSignal = {
-  abort = function(reason) end,
-  
-  timeout = function(milliseconds) return AbortSignal end,
-  _any = function(signals) return AbortSignal end,  -- sequence<AbortSignal>
-
-  aborted = false,
-  reason = nil,
-  throwIfAborted = function() end,
-
-  onabort = EventHandler.constructor(),
-}
-
-AbortSignal = utils.tmerge( EventTarget, AbortSignal )
-
-------------- Nodes 
-
-interface mixin NonElementParentNode {
-    Element? getElementById(DOMString elementId);
-  };
-  Document includes NonElementParentNode;
-  DocumentFragment includes NonElementParentNode;
-
-interface mixin DocumentOrShadowRoot {
-};
-Document includes DocumentOrShadowRoot;
-ShadowRoot includes DocumentOrShadowRoot;
-
-interface mixin ParentNode {
-    [SameObject] readonly attribute HTMLCollection children;
-    readonly attribute Element? firstElementChild;
-    readonly attribute Element? lastElementChild;
-    readonly attribute unsigned long childElementCount;
-  
-    [CEReactions, Unscopable] undefined prepend((Node or DOMString)... nodes);
-    [CEReactions, Unscopable] undefined append((Node or DOMString)... nodes);
-    [CEReactions, Unscopable] undefined replaceChildren((Node or DOMString)... nodes);
-  
-    Element? querySelector(DOMString selectors);
-    [NewObject] NodeList querySelectorAll(DOMString selectors);
-  };
-  Document includes ParentNode;
-  DocumentFragment includes ParentNode;
-  Element includes ParentNode;
-
-  interface mixin NonDocumentTypeChildNode {
-    readonly attribute Element? previousElementSibling;
-    readonly attribute Element? nextElementSibling;
-  };
-  Element includes NonDocumentTypeChildNode;
-  CharacterData includes NonDocumentTypeChildNode;
-
-  interface mixin ChildNode {
-    [CEReactions, Unscopable] undefined before((Node or DOMString)... nodes);
-    [CEReactions, Unscopable] undefined after((Node or DOMString)... nodes);
-    [CEReactions, Unscopable] undefined replaceWith((Node or DOMString)... nodes);
-    [CEReactions, Unscopable] undefined remove();
-  };
-  DocumentType includes ChildNode;
-  Element includes ChildNode;
-  CharacterData includes ChildNode;
-
-  interface mixin Slottable {
-    readonly attribute HTMLSlotElement? assignedSlot;
-  };
-  Element includes Slottable;
-  Text includes Slottable;
-
-  [Exposed=Window]
-interface NodeList {
-  getter Node? item(unsigned long index);
-  readonly attribute unsigned long length;
-  iterable<Node>;
-};
-
-[Exposed=Window, LegacyUnenumerableNamedProperties]
-interface HTMLCollection {
-  readonly attribute unsigned long length;
-  getter Element? item(unsigned long index);
-  getter Element? namedItem(DOMString name);
-};
-
-[Exposed=Window]
-interface MutationObserver {
-  constructor(MutationCallback callback);
-
-  undefined observe(Node target, optional MutationObserverInit options = {});
-  undefined disconnect();
-  sequence<MutationRecord> takeRecords();
-};
-
-callback MutationCallback = undefined (sequence<MutationRecord> mutations, MutationObserver observer);
-
-dictionary MutationObserverInit {
-  boolean childList = false;
-  boolean attributes;
-  boolean characterData;
-  boolean subtree = false;
-  boolean attributeOldValue;
-  boolean characterDataOldValue;
-  sequence<DOMString> attributeFilter;
-};
-
-[Exposed=Window]
-interface MutationRecord {
-  readonly attribute DOMString type;
-  [SameObject] readonly attribute Node target;
-  [SameObject] readonly attribute NodeList addedNodes;
-  [SameObject] readonly attribute NodeList removedNodes;
-  readonly attribute Node? previousSibling;
-  readonly attribute Node? nextSibling;
-  readonly attribute DOMString? attributeName;
-  readonly attribute DOMString? attributeNamespace;
-  readonly attribute DOMString? oldValue;
-};
-
-[Exposed=Window]
-interface Node : EventTarget {
-  const unsigned short ELEMENT_NODE = 1;
-  const unsigned short ATTRIBUTE_NODE = 2;
-  const unsigned short TEXT_NODE = 3;
-  const unsigned short CDATA_SECTION_NODE = 4;
-  const unsigned short ENTITY_REFERENCE_NODE = 5; // legacy
-  const unsigned short ENTITY_NODE = 6; // legacy
-  const unsigned short PROCESSING_INSTRUCTION_NODE = 7;
-  const unsigned short COMMENT_NODE = 8;
-  const unsigned short DOCUMENT_NODE = 9;
-  const unsigned short DOCUMENT_TYPE_NODE = 10;
-  const unsigned short DOCUMENT_FRAGMENT_NODE = 11;
-  const unsigned short NOTATION_NODE = 12; // legacy
-  readonly attribute unsigned short nodeType;
-  readonly attribute DOMString nodeName;
-
-  readonly attribute USVString baseURI;
-
-  readonly attribute boolean isConnected;
-  readonly attribute Document? ownerDocument;
-  Node getRootNode(optional GetRootNodeOptions options = {});
-  readonly attribute Node? parentNode;
-  readonly attribute Element? parentElement;
-  boolean hasChildNodes();
-  [SameObject] readonly attribute NodeList childNodes;
-  readonly attribute Node? firstChild;
-  readonly attribute Node? lastChild;
-  readonly attribute Node? previousSibling;
-  readonly attribute Node? nextSibling;
-
-  [CEReactions] attribute DOMString? nodeValue;
-  [CEReactions] attribute DOMString? textContent;
-  [CEReactions] undefined normalize();
-
-  [CEReactions, NewObject] Node cloneNode(optional boolean subtree = false);
-  boolean isEqualNode(Node? otherNode);
-  boolean isSameNode(Node? otherNode); // legacy alias of ===
-
-  const unsigned short DOCUMENT_POSITION_DISCONNECTED = 0x01;
-  const unsigned short DOCUMENT_POSITION_PRECEDING = 0x02;
-  const unsigned short DOCUMENT_POSITION_FOLLOWING = 0x04;
-  const unsigned short DOCUMENT_POSITION_CONTAINS = 0x08;
-  const unsigned short DOCUMENT_POSITION_CONTAINED_BY = 0x10;
-  const unsigned short DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 0x20;
-  unsigned short compareDocumentPosition(Node other);
-  boolean contains(Node? other);
-
-  DOMString? lookupPrefix(DOMString? namespace);
-  DOMString? lookupNamespaceURI(DOMString? prefix);
-  boolean isDefaultNamespace(DOMString? namespace);
-
-  [CEReactions] Node insertBefore(Node node, Node? child);
-  [CEReactions] Node appendChild(Node node);
-  [CEReactions] Node replaceChild(Node node, Node child);
-  [CEReactions] Node removeChild(Node child);
-};
-
-dictionary GetRootNodeOptions {
-  boolean composed = false;
-};
-
-[Exposed=Window]
-interface Document : Node {
-  constructor();
-
-  [SameObject] readonly attribute DOMImplementation implementation;
-  readonly attribute USVString URL;
-  readonly attribute USVString documentURI;
-  readonly attribute DOMString compatMode;
-  readonly attribute DOMString characterSet;
-  readonly attribute DOMString charset; // legacy alias of .characterSet
-  readonly attribute DOMString inputEncoding; // legacy alias of .characterSet
-  readonly attribute DOMString contentType;
-
-  readonly attribute DocumentType? doctype;
-  readonly attribute Element? documentElement;
-  HTMLCollection getElementsByTagName(DOMString qualifiedName);
-  HTMLCollection getElementsByTagNameNS(DOMString? namespace, DOMString localName);
-  HTMLCollection getElementsByClassName(DOMString classNames);
-
-  [CEReactions, NewObject] Element createElement(DOMString localName, optional (DOMString or ElementCreationOptions) options = {});
-  [CEReactions, NewObject] Element createElementNS(DOMString? namespace, DOMString qualifiedName, optional (DOMString or ElementCreationOptions) options = {});
-  [NewObject] DocumentFragment createDocumentFragment();
-  [NewObject] Text createTextNode(DOMString data);
-  [NewObject] CDATASection createCDATASection(DOMString data);
-  [NewObject] Comment createComment(DOMString data);
-  [NewObject] ProcessingInstruction createProcessingInstruction(DOMString target, DOMString data);
-
-  [CEReactions, NewObject] Node importNode(Node node, optional boolean subtree = false);
-  [CEReactions] Node adoptNode(Node node);
-
-  [NewObject] Attr createAttribute(DOMString localName);
-  [NewObject] Attr createAttributeNS(DOMString? namespace, DOMString qualifiedName);
-
-  [NewObject] Event createEvent(DOMString interface); // legacy
-
-  [NewObject] Range createRange();
-
-  // NodeFilter.SHOW_ALL = 0xFFFFFFFF
-  [NewObject] NodeIterator createNodeIterator(Node root, optional unsigned long whatToShow = 0xFFFFFFFF, optional NodeFilter? filter = null);
-  [NewObject] TreeWalker createTreeWalker(Node root, optional unsigned long whatToShow = 0xFFFFFFFF, optional NodeFilter? filter = null);
-};
-
-[Exposed=Window]
-interface XMLDocument : Document {};
-
-dictionary ElementCreationOptions {
-  DOMString is;
-};
-
-
-createEvent()
-
-String 	Interface 	Notes
-"beforeunloadevent" 	BeforeUnloadEvent 	[HTML]
-"compositionevent" 	CompositionEvent 	[UIEVENTS]
-"customevent" 	CustomEvent 	
-"devicemotionevent" 	DeviceMotionEvent 	[DEVICE-ORIENTATION]
-"deviceorientationevent" 	DeviceOrientationEvent
-"dragevent" 	DragEvent 	[HTML]
-"event" 	Event 	
-"events"
-"focusevent" 	FocusEvent 	[UIEVENTS]
-"hashchangeevent" 	HashChangeEvent 	[HTML]
-"htmlevents" 	Event 	
-"keyboardevent" 	KeyboardEvent 	[UIEVENTS]
-"messageevent" 	MessageEvent 	[HTML]
-"mouseevent" 	MouseEvent 	[UIEVENTS]
-"mouseevents"
-"storageevent" 	StorageEvent 	[HTML]
-"svgevents" 	Event 	
-"textevent" 	TextEvent 	[UIEVENTS]
-"touchevent" 	TouchEvent 	[TOUCH-EVENTS]
-"uievent" 	UIEvent 	[UIEVENTS]
-"uievents" 
-
-[Exposed=Window]
-interface DOMImplementation {
-  [NewObject] DocumentType createDocumentType(DOMString qualifiedName, DOMString publicId, DOMString systemId);
-  [NewObject] XMLDocument createDocument(DOMString? namespace, [LegacyNullToEmptyString] DOMString qualifiedName, optional DocumentType? doctype = null);
-  [NewObject] Document createHTMLDocument(optional DOMString title);
-
-  boolean hasFeature(); // useless; always returns true
-};
-
-[Exposed=Window]
-interface DocumentType : Node {
-  readonly attribute DOMString name;
-  readonly attribute DOMString publicId;
-  readonly attribute DOMString systemId;
-};
-
-[Exposed=Window]
-interface DocumentFragment : Node {
-  constructor();
-};
-
-[Exposed=Window]
-interface ShadowRoot : DocumentFragment {
-  readonly attribute ShadowRootMode mode;
-  readonly attribute boolean delegatesFocus;
-  readonly attribute SlotAssignmentMode slotAssignment;
-  readonly attribute boolean clonable;
-  readonly attribute boolean serializable;
-  readonly attribute Element host;
-  attribute EventHandler onslotchange;
-};
-
-enum ShadowRootMode { "open", "closed" };
-enum SlotAssignmentMode { "manual", "named" };
-
-[Exposed=Window]
-interface Element : Node {
-  readonly attribute DOMString? namespaceURI;
-  readonly attribute DOMString? prefix;
-  readonly attribute DOMString localName;
-  readonly attribute DOMString tagName;
-
-  [CEReactions] attribute DOMString id;
-  [CEReactions] attribute DOMString className;
-  [SameObject, PutForwards=value] readonly attribute DOMTokenList classList;
-  [CEReactions, Unscopable] attribute DOMString slot;
-
-  boolean hasAttributes();
-  [SameObject] readonly attribute NamedNodeMap attributes;
-  sequence<DOMString> getAttributeNames();
-  DOMString? getAttribute(DOMString qualifiedName);
-  DOMString? getAttributeNS(DOMString? namespace, DOMString localName);
-  [CEReactions] undefined setAttribute(DOMString qualifiedName, DOMString value);
-  [CEReactions] undefined setAttributeNS(DOMString? namespace, DOMString qualifiedName, DOMString value);
-  [CEReactions] undefined removeAttribute(DOMString qualifiedName);
-  [CEReactions] undefined removeAttributeNS(DOMString? namespace, DOMString localName);
-  [CEReactions] boolean toggleAttribute(DOMString qualifiedName, optional boolean force);
-  boolean hasAttribute(DOMString qualifiedName);
-  boolean hasAttributeNS(DOMString? namespace, DOMString localName);
-
-  Attr? getAttributeNode(DOMString qualifiedName);
-  Attr? getAttributeNodeNS(DOMString? namespace, DOMString localName);
-  [CEReactions] Attr? setAttributeNode(Attr attr);
-  [CEReactions] Attr? setAttributeNodeNS(Attr attr);
-  [CEReactions] Attr removeAttributeNode(Attr attr);
-
-  ShadowRoot attachShadow(ShadowRootInit init);
-  readonly attribute ShadowRoot? shadowRoot;
-
-  Element? closest(DOMString selectors);
-  boolean matches(DOMString selectors);
-  boolean webkitMatchesSelector(DOMString selectors); // legacy alias of .matches
-
-  HTMLCollection getElementsByTagName(DOMString qualifiedName);
-  HTMLCollection getElementsByTagNameNS(DOMString? namespace, DOMString localName);
-  HTMLCollection getElementsByClassName(DOMString classNames);
-
-  [CEReactions] Element? insertAdjacentElement(DOMString where, Element element); // legacy
-  undefined insertAdjacentText(DOMString where, DOMString data); // legacy
-};
-
-dictionary ShadowRootInit {
-  required ShadowRootMode mode;
-  boolean delegatesFocus = false;
-  SlotAssignmentMode slotAssignment = "named";
-  boolean clonable = false;
-  boolean serializable = false;
-};
-
-[Exposed=Window,
- LegacyUnenumerableNamedProperties]
-interface NamedNodeMap {
-  readonly attribute unsigned long length;
-  getter Attr? item(unsigned long index);
-  getter Attr? getNamedItem(DOMString qualifiedName);
-  Attr? getNamedItemNS(DOMString? namespace, DOMString localName);
-  [CEReactions] Attr? setNamedItem(Attr attr);
-  [CEReactions] Attr? setNamedItemNS(Attr attr);
-  [CEReactions] Attr removeNamedItem(DOMString qualifiedName);
-  [CEReactions] Attr removeNamedItemNS(DOMString? namespace, DOMString localName);
-};
-
-[Exposed=Window]
-interface Attr : Node {
-  readonly attribute DOMString? namespaceURI;
-  readonly attribute DOMString? prefix;
-  readonly attribute DOMString localName;
-  readonly attribute DOMString name;
-  [CEReactions] attribute DOMString value;
-
-  readonly attribute Element? ownerElement;
-
-  readonly attribute boolean specified; // useless; always returns true
-};
-
-[Exposed=Window]
-interface CharacterData : Node {
-  attribute [LegacyNullToEmptyString] DOMString data;
-  readonly attribute unsigned long length;
-  DOMString substringData(unsigned long offset, unsigned long count);
-  undefined appendData(DOMString data);
-  undefined insertData(unsigned long offset, DOMString data);
-  undefined deleteData(unsigned long offset, unsigned long count);
-  undefined replaceData(unsigned long offset, unsigned long count, DOMString data);
-};
-
-[Exposed=Window]
-interface Text : CharacterData {
-  constructor(optional DOMString data = "");
-
-  [NewObject] Text splitText(unsigned long offset);
-  readonly attribute DOMString wholeText;
-};
-
-[Exposed=Window]
-interface CDATASection : Text {
-};
-
-[Exposed=Window]
-interface ProcessingInstruction : CharacterData {
-  readonly attribute DOMString target;
-};
-
-[Exposed=Window]
-interface Comment : CharacterData {
-  constructor(optional DOMString data = "");
-};
-
-[Exposed=Window]
-interface AbstractRange {
-  readonly attribute Node startContainer;
-  readonly attribute unsigned long startOffset;
-  readonly attribute Node endContainer;
-  readonly attribute unsigned long endOffset;
-  readonly attribute boolean collapsed;
-};
-
-dictionary StaticRangeInit {
-    required Node startContainer;
-    required unsigned long startOffset;
-    required Node endContainer;
-    required unsigned long endOffset;
-  };
-  
-  [Exposed=Window]
-  interface StaticRange : AbstractRange {
-    constructor(StaticRangeInit init);
-  };
-
-  [Exposed=Window]
-  interface Range : AbstractRange {
-    constructor();
-  
-    readonly attribute Node commonAncestorContainer;
-  
-    undefined setStart(Node node, unsigned long offset);
-    undefined setEnd(Node node, unsigned long offset);
-    undefined setStartBefore(Node node);
-    undefined setStartAfter(Node node);
-    undefined setEndBefore(Node node);
-    undefined setEndAfter(Node node);
-    undefined collapse(optional boolean toStart = false);
-    undefined selectNode(Node node);
-    undefined selectNodeContents(Node node);
-  
-    const unsigned short START_TO_START = 0;
-    const unsigned short START_TO_END = 1;
-    const unsigned short END_TO_END = 2;
-    const unsigned short END_TO_START = 3;
-    short compareBoundaryPoints(unsigned short how, Range sourceRange);
-  
-    [CEReactions] undefined deleteContents();
-    [CEReactions, NewObject] DocumentFragment extractContents();
-    [CEReactions, NewObject] DocumentFragment cloneContents();
-    [CEReactions] undefined insertNode(Node node);
-    [CEReactions] undefined surroundContents(Node newParent);
-  
-    [NewObject] Range cloneRange();
-    undefined detach();
-  
-    boolean isPointInRange(Node node, unsigned long offset);
-    short comparePoint(Node node, unsigned long offset);
-  
-    boolean intersectsNode(Node node);
-  
-    stringifier;
-  };
-
-  [Exposed=Window]
-interface NodeIterator {
-  [SameObject] readonly attribute Node root;
-  readonly attribute Node referenceNode;
-  readonly attribute boolean pointerBeforeReferenceNode;
-  readonly attribute unsigned long whatToShow;
-  readonly attribute NodeFilter? filter;
-
-  Node? nextNode();
-  Node? previousNode();
-
-  undefined detach();
-};
-
-[Exposed=Window]
-interface TreeWalker {
-  [SameObject] readonly attribute Node root;
-  readonly attribute unsigned long whatToShow;
-  readonly attribute NodeFilter? filter;
-           attribute Node currentNode;
-
-  Node? parentNode();
-  Node? firstChild();
-  Node? lastChild();
-  Node? previousSibling();
-  Node? nextSibling();
-  Node? previousNode();
-  Node? nextNode();
-};
-
-[Exposed=Window]
-callback interface NodeFilter {
-  // Constants for acceptNode()
-  const unsigned short FILTER_ACCEPT = 1;
-  const unsigned short FILTER_REJECT = 2;
-  const unsigned short FILTER_SKIP = 3;
-
-  // Constants for whatToShow
-  const unsigned long SHOW_ALL = 0xFFFFFFFF;
-  const unsigned long SHOW_ELEMENT = 0x1;
-  const unsigned long SHOW_ATTRIBUTE = 0x2;
-  const unsigned long SHOW_TEXT = 0x4;
-  const unsigned long SHOW_CDATA_SECTION = 0x8;
-  const unsigned long SHOW_ENTITY_REFERENCE = 0x10; // legacy
-  const unsigned long SHOW_ENTITY = 0x20; // legacy
-  const unsigned long SHOW_PROCESSING_INSTRUCTION = 0x40;
-  const unsigned long SHOW_COMMENT = 0x80;
-  const unsigned long SHOW_DOCUMENT = 0x100;
-  const unsigned long SHOW_DOCUMENT_TYPE = 0x200;
-  const unsigned long SHOW_DOCUMENT_FRAGMENT = 0x400;
-  const unsigned long SHOW_NOTATION = 0x800; // legacy
-
-  unsigned short acceptNode(Node node);
-};
-
-[Exposed=Window]
-interface DOMTokenList {
-  readonly attribute unsigned long length;
-  getter DOMString? item(unsigned long index);
-  boolean contains(DOMString token);
-  [CEReactions] undefined add(DOMString... tokens);
-  [CEReactions] undefined remove(DOMString... tokens);
-  [CEReactions] boolean toggle(DOMString token, optional boolean force);
-  [CEReactions] boolean replace(DOMString token, DOMString newToken);
-  boolean supports(DOMString token);
-  [CEReactions] stringifier attribute DOMString value;
-  iterable<DOMString>;
-};
-
-[Exposed=Window]
-interface XPathResult {
-  const unsigned short ANY_TYPE = 0;
-  const unsigned short NUMBER_TYPE = 1;
-  const unsigned short STRING_TYPE = 2;
-  const unsigned short BOOLEAN_TYPE = 3;
-  const unsigned short UNORDERED_NODE_ITERATOR_TYPE = 4;
-  const unsigned short ORDERED_NODE_ITERATOR_TYPE = 5;
-  const unsigned short UNORDERED_NODE_SNAPSHOT_TYPE = 6;
-  const unsigned short ORDERED_NODE_SNAPSHOT_TYPE = 7;
-  const unsigned short ANY_UNORDERED_NODE_TYPE = 8;
-  const unsigned short FIRST_ORDERED_NODE_TYPE = 9;
-
-  readonly attribute unsigned short resultType;
-  readonly attribute unrestricted double numberValue;
-  readonly attribute DOMString stringValue;
-  readonly attribute boolean booleanValue;
-  readonly attribute Node? singleNodeValue;
-  readonly attribute boolean invalidIteratorState;
-  readonly attribute unsigned long snapshotLength;
-
-  Node? iterateNext();
-  Node? snapshotItem(unsigned long index);
-};
-
-[Exposed=Window]
-interface XPathExpression {
-  // XPathResult.ANY_TYPE = 0
-  XPathResult evaluate(Node contextNode, optional unsigned short type = 0, optional XPathResult? result = null);
-};
-
-callback interface XPathNSResolver {
-    DOMString? lookupNamespaceURI(DOMString? prefix);
-  };
-  
-  interface mixin XPathEvaluatorBase {
-    [NewObject] XPathExpression createExpression(DOMString expression, optional XPathNSResolver? resolver = null);
-    Node createNSResolver(Node nodeResolver); // legacy
-    // XPathResult.ANY_TYPE = 0
-    XPathResult evaluate(DOMString expression, Node contextNode, optional XPathNSResolver? resolver = null, optional unsigned short type = 0, optional XPathResult? result = null);
-  };
-  Document includes XPathEvaluatorBase;
-
-  [Exposed=Window]
-interface XSLTProcessor {
-  constructor();
-  undefined importStylesheet(Node style);
-  [CEReactions] DocumentFragment transformToFragment(Node source, Document output);
-  [CEReactions] Document transformToDocument(Node source);
-  undefined setParameter([LegacyNullToEmptyString] DOMString namespaceURI, DOMString localName, any value);
-  any getParameter([LegacyNullToEmptyString] DOMString namespaceURI, DOMString localName);
-  undefined removeParameter([LegacyNullToEmptyString] DOMString namespaceURI, DOMString localName);
-  undefined clearParameters();
-  undefined reset();
-};
+local dom_root 		= dom.root
+local curr_node 	= dom_root
+
+----------------------------------------------------------------------------------
+
+dom.stylenone  = function(  )
+	return deepcopy(styleempty)
+end 
+
+----------------------------------------------------------------------------------
+
+dom.reset = function()
+    dom.root = {
+        parent = nil, 
+        children = {},
+        eid = nil,
+    }
+    dom.elookup = {}
+    return dom.root
+end 
+
+----------------------------------------------------------------------------------
+
+dom.newnode = function( eid )
+    local node = { parent = node, children = {}, eid = eid }
+    return node 
+end
+
+----------------------------------------------------------------------------------
+
+dom.addnode = function( node, newnode )
+    tinsert(node.children, newnode )
+    dom.elookup[newnode.eid] = newnode
+    return newnode
+end
+
+----------------------------------------------------------------------------------
+
+dom.addelement = function( node, eid )
+    local newnode = dom.newnode(eid)
+    return dom.addnode(node, newnode)
+end
+
+----------------------------------------------------------------------------------
+
+dom.delnode = function( node )
+    if(node == nil) then return nil end 
+    -- This isnt overly intuitive, but we want to remove from the parent child list.
+    local oldnode = nil
+    if(node.parent) then 
+        local remove = nil
+        for i,v in ipairs(node.parent.children) do 
+            if(v.eid == eid) then
+                remove = i 
+                oldnode = v
+                break 
+            end 
+        end 
+        if(remove) then tremove(node.parent.children, remove) end 
+    end
+    return oldnode
+end
+
+----------------------------------------------------------------------------------
+
+dom.delelement = function( eid )
+    local node = elookup[eid]
+    return dom.delnode( node )
+end
+
+----------------------------------------------------------------------------------
+
+dom.getelement = function( eid )
+    return dom.elookup[eid]
+end
+
+----------------------------------------------------------------------------------
+
+dom.getparent = function( node )
+    return node.parent
+end
+
+----------------------------------------------------------------------------------
+-- Simple node traversal
+dom.traversenodes = function( node, func )
+
+    if(node) then 
+        if(node.children) then 
+            for k,v in ipairs( node.children ) do 
+                if(v.children) then 
+                    dom.traversenodes( v, func ) 
+                end 
+            end
+        end
+        func(node)
+    end
+end
+
+----------------------------------------------------------------------------------
+-- Refreshes the layout data and geom for parent and children nodes
+dom.refreshnodes = function( topnode )
+
+    local geom = layout.getgeom()
+
+    -- visit each node like layout does and call layout methods
+    dom.traversenodes( topnode, function(node) 
+        local e = layout.getelement(node.eid)
+        if(e) then 
+            local iselement = htmlelements[e.etype]
+            if(iselement) then 
+                local obj 			= geom.get( e.gid )
+                e.width 		= obj.width
+                e.height 		= obj.height
+                geom.renew( e.gid, e.pos.left, e.pos.top, e.width, e.height )
+            end
+        end
+    end)
+end
+
+----------------------------------------------------------------------------------
+
+local function xmlhandler( ctx, xml )
+
+	local currstyle = stylestack[#stylestack]
+	local style = deepcopy(currstyle)
+	local this_node = nil
+
+	if(style.margin == nil) then style.margin = htmle.defaultmargin(style) end
+	if(style.padding == nil) then style.padding = htmle.defaultpadding(style) end
+	if(style.border == nil) then style.border = htmle.defaultborder(style) end
+	local g = { ctx=ctx, cursor = dom.ctx.cursor, frame = dom.ctx.frame }
+
+	-- Check element names 
+	local label = nil
+	if( xml.label ) then label = string.lower(xml.label) end
+	if(label) then 
+		style.etype = label
+		local iselement = htmlelements[label]	
+		if(iselement) then 
+			-- Assign parent
+			style.pstyle = currstyle
+
+			iselement.opened( g, style, xml.xarg ) 
+			this_node = dom.addelement( curr_node, style.elementid )
+		end
+		tinsert(stylestack, style)
+	end 
+
+	if(style.dontprocess == nil) then 
+		for k,v in pairs(xml) do 
+
+			-- Might be a string index
+			if(type(k) == "number") then
+				if( type(v) == "string") then
+					if(string.find(v, "DOCTYPE") == nil) then
+						local tstyle = deepcopy(style)
+						tstyle.pstyle = style
+						tinsert(stylestack, tstyle)
+						htmle.addtextobject( g, tstyle, xml.arg, v )
+						tremove( stylestack ) 
+					end
+				end
+
+				if(type(v) == "table") then
+					if(this_node) then curr_node = this_node end
+					xmlhandler( ctx, v ) 
+				end
+			end
+		end
+	end 
+
+	-- Check label to close the element
+	if(label) then 
+		local iselement = htmlelements[xml.label]
+		if(iselement and iselement.closed) then iselement.closed( g, style ) end 
+		tremove( stylestack ) 
+		if(this_node) then curr_node = dom.getparent(this_node) end
+	end
+end 
+
+----------------------------------------------------------------------------------
+
+dom.loadxmlfile = function( self, filename, frame, cursor )
+
+    dom.ctx = {
+        frame       = frame,
+        cursor      = cursor,
+    }
+
+    dom.renderCtx = self.renderCtx 
+
+	--local filename = "/data/html/sample02-forms.html"
+	local xml = utils.loaddata(filename)
+	local xmldata = xmlp.parse(xml)
+    dom.loadxml(xmldata)
+end
+
+----------------------------------------------------------------------------------
+
+dom.loadxml = function( xmldata )
+
+    curr_node = dom.reset(htmlelements)
+    -- TODO: Put validation here later
+    dom.xmldoc = xmldata
+    -- Process the xml into our elements and dom tree items
+    xmlhandler( dom.renderCtx, dom.xmldoc )
+    -- xmlp.dumpxml(dom.xmldoc)
+end
+
+----------------------------------------------------------------------------------
+
+dom.render = function(frame, cursor)
+    curr_node = dom.reset()
+    xmlhandler( dom.renderCtx, dom.xmldoc )
+    -- Do a normal traverse of the dom tree - not xml tree
+end
+
+----------------------------------------------------------------------------------
+
+return dom 
+
+----------------------------------------------------------------------------------

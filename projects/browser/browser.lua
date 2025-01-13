@@ -20,7 +20,7 @@ local utils     = require("utils")
 
 local ffi       = require("ffi")
 
-local xmlp 		= require("engine.libs.xmlparser") 
+
 local htmlr 	= require("engine.libs.htmlrenderer") 
 local rapi 		= require("engine.libs.htmlrender-api")
 
@@ -60,14 +60,8 @@ end
 browser.init = function (self)
 
 	self.buttons = { 0,0,0 }
+	self.renderCtx = {}
 
-	local filename = "projects/browser/data/html/sample01.html"
-	--local filename = "/data/html/sample02-forms.html"
-	local xml = utils.loaddata(filename)
-	
-	self.xmldoc = xmlp.parse(xml)
-	-- xmlp.dumpxml(self.xmldoc)
-	
 	self.actions = {}
 	self.mouse = {
 		x = 0,
@@ -75,14 +69,14 @@ browser.init = function (self)
 		wheel = 0,
 		buttons = {},
 	}
-	self.renderCtx = {
-		fontids = {},
-	}
 
 	rapi.setup(self)
 	local w         = sapp.sapp_widthf()
     local h        	= sapp.sapp_heightf()
 	htmlr.rendersize(w/2, h/1.2)
+
+	local filename = "projects/browser/data/html/sample01.html"
+	htmlr.load(self, filename)
 
 	-- Toggle the visual profiler on hot reload.
 	self.profile = true
@@ -108,7 +102,7 @@ end
 browser.update = function(self, dt)
 
 	rapi.start(self)
-	htmlr.renderxml( self.renderCtx, self.xmldoc, { left=10, top=10.0 } )
+	htmlr.render( { left=10, top=10.0 } )
 	rapi.finish(self)
 end
 

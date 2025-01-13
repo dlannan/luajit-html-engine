@@ -21,6 +21,10 @@ local layout 		= {}
 --   easily replicate operations on a dom using it.
 local elements		= {}
 
+-- A table stack for currently processing tables
+local tables		= {}
+
+
 local geom 			= nil
 
 local tcolor = { r=0.0, b=0.0, g=0.0, a=1.0 }
@@ -63,6 +67,16 @@ local function getparent( style )
 			pid = pelement.gid or nil
 		end
 	end
+	return pid
+end 
+
+----------------------------------------------------------------------------------
+
+local function getparentgid( gid )
+
+	local pid = nil 
+	local pelement 	= geom[gid]
+	pid = pelement.gid or nil
 	return pid
 end 
 
@@ -394,66 +408,6 @@ local function addimageobject( g, style )
 end 
 
 ----------------------------------------------------------------------------------
--- Table columns are created empty and populated.
-local function addtablecolumn( g, style, attribs )
-
-	local stylecopy = deepcopy(style)
-	
-	-- Try to treat _all_ output as text + style. Style here means a css objects type
-	--    like border, background, size, margin etc
-	local renderobj = { 
-		ctx 	= g, 
-		etype 	= "td",
-		eid 	= style.elementid,
-		style 	= stylecopy, 
-		cursor 	= { top = g.cursor.top, left = g.cursor.left },
-		frame  	= { top = g.frame.top, left = g.frame.left },
-	}
-
-	-- Input buttons already have text if set in value 
-	if( style.etype == "input" and attribs.value ) then 
-		renderobj.text = attribs.value
-	end
-	
-	local pid = getparent(style)
-	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
-	geom.update( renderobj.gid )
-	
-	-- Render obejcts are queued in order of the output data with the correct styles
-	tinsert(render, renderobj)
-end 
-
-----------------------------------------------------------------------------------
--- Table columns are created empty and populated.
-local function addtablerow( g, style, attribs )
-
-	local stylecopy = deepcopy(style)
-	
-	-- Try to treat _all_ output as text + style. Style here means a css objects type
-	--    like border, background, size, margin etc
-	local renderobj = { 
-		ctx 	= g, 
-		etype 	= "tr",
-		eid 	= style.elementid,
-		style 	= stylecopy, 
-		cursor 	= { top = g.cursor.top, left = g.cursor.left },
-		frame  	= { top = g.frame.top, left = g.frame.left },
-	}
-
-	-- Input buttons already have text if set in value 
-	if( style.etype == "input" and attribs.value ) then 
-		renderobj.text = attribs.value
-	end
-	
-	local pid = getparent(style)
-	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
-	geom.update( renderobj.gid )
-	
-	-- Render obejcts are queued in order of the output data with the correct styles
-	tinsert(render, renderobj)
-end 
-
-----------------------------------------------------------------------------------
 
 local function addlayout( layout )
 
@@ -483,6 +437,8 @@ return {
 	addlayout 		= addlayout,
 
 	getgeom 		= getgeometry,
+	getparent 		= getparent,
+	getparentgid	= getparentgid,
 }
 
 ----------------------------------------------------------------------------------

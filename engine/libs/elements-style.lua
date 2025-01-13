@@ -31,6 +31,18 @@ local TEXT_CONST = {
 
 ----------------------------------------------------------------------------------
 
+local TEXT_ALIGN = {
+
+    LEFT        = 1,
+    CENTER      = 2, 
+    RIGHT       = 4,
+    TOP         = 8,
+    MIDDLE      = 16,
+    BOTTOM      = 32,
+}
+
+----------------------------------------------------------------------------------
+
 local function defaultmargin( style ) 
 
 	return { 
@@ -116,6 +128,12 @@ local function style_setborders( style, left, top, right, bottom)
 	style.border.bottom 	= bottom
 	style.border.left 		= left
 	style.border.right 		= right
+end
+
+----------------------------------------------------------------------------------
+
+local function style_settextalignment( style, align)
+    style.text_align        = align or TEXT_ALIGN.LEFT
 end
 
 ----------------------------------------------------------------------------------

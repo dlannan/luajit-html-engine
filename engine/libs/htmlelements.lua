@@ -15,9 +15,9 @@ local tcolor = { r=0.0, b=1.0, g=0.0, a=1.0 }
 local htmlelements 		= {}
 local dirty_elements 	= true
 
-local common    		= require("engine.libs.elements-common")
-local libstyle  		= require("engine.libs.elements-style")
-local layout 			= require("engine.libs.htmllayout")
+local common    			= require("engine.libs.elements-common")
+local libstyle  			= require("engine.libs.elements-style")
+local layout 				= require("engine.libs.htmllayout")
 
 ----------------------------------------------------------------------------------
 -- Heading elements 
@@ -35,6 +35,13 @@ htmlelements["i"]  			= require("engine.libs.elements.text_italics")
 htmlelements["b"]  			= require("engine.libs.elements.text_bold")
 htmlelements["br"]  		= require("engine.libs.elements.br")
 htmlelements["blockquote"] 	= require("engine.libs.elements.blockquote")
+
+----------------------------------------------------------------------------------
+-- Table elements
+htmlelements["table"] 		= require("engine.libs.elements.table")
+htmlelements["th"] 			= require("engine.libs.elements.table_th")
+htmlelements["tr"] 			= require("engine.libs.elements.table_tr")
+htmlelements["td"] 			= require("engine.libs.elements.table_td")
 
 ----------------------------------------------------------------------------------
 -- Complexg elements 

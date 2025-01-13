@@ -185,8 +185,8 @@ geommanager.create 	= function( frame, cursor )
 	-- Display the tree hierachy of the geometries
 	geom.dump 		= function( startid, tabs ) 
 
-		if(startid == nil) then startid = 1 end 
-		if(tabs == nil) then tabs = 1 end 
+		startid = startid or 1
+		tabs = tabs or 1
 		
 		local thisgeom = geom.geometries[startid]
 		if(thisgeom == nil) then return end

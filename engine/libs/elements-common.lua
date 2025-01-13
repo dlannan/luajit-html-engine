@@ -6,9 +6,9 @@ local layout        = require("engine.libs.htmllayout")
 local function elementopen( g, style, attribs )
 
 	local element 		= layout.addelement( g, style, attribs )
+    -- style.peid          = style.elementid
 	style.elementid 	= element.id
 	element.cursor_top 	= g.cursor.top
-	--g.cursor.left = g.cursor.left + element.margin.left
 	return element
 end 
 
