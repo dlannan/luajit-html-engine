@@ -17,47 +17,77 @@ local utils 		= require("lua.utils")
 --   rows height needs to be populated through the rows.
 --   and td & th widths need to be recalculated based on the biggest for each column
 --      which can be stored anyway.
+
+local stored_g = {}
+
 return {
 	opened 		= function( g, style, attribs )
 		-- Make a table stack. This stores rows that contain td widths for post update
 		common.elementopen(g, style, attribs)
+		stored_g[style.elementid] = { 
+			cursor = { left = g.cursor.left, top = g.cursor.top }, 
+			frame = { left = g.frame.left, top = g.frame.top, width = g.frame.width, height = g.frame.height },
+		}
 	end,
-	closed 		= function( g, style)
+	closed 		= function( g, style, tablenode)
 
 		local geom = layout.getgeom()
-		-- local tablenode = htmldom.getelement(style.elementid)
 		-- -- print(utils.tdump(tablenode))
 
 		-- -- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
-		-- local cols = {}
-		-- for i,v in ipairs(tablenode.children) do
-		-- 	for idx, c in ipairs(v.children) do 
-		-- 		local element = layout.getelement(c.eid)
-		-- 		cols[idx] = cols[idx] or 0 
-		-- 		if(element.width > cols[idx]) then cols[idx] = element.width end
-		-- 	end
-		-- end
+		local cols = {}
+		for i,v in ipairs(tablenode.children) do
+			for idx, c in ipairs(v.children) do 
+				local element = layout.getelement(c.eid)
+				cols[idx] = cols[idx] or 0 
+				if(element.width > cols[idx]) then cols[idx] = element.width end
+			end
+		end
 
-		-- for i,v in ipairs(tablenode.children) do
-		-- 	for idx, c in ipairs(v.children) do 
-		-- 		local element 		= layout.getelement(c.eid)
-		-- 		local dim 			= geom.get( element.gid )
-		-- 		dim.width = cols[idx]
-		-- 	end
-		-- end
+		local local_g = stored_g[style.elementid]
+		local cursor = local_g.cursor
+		local startleft = cursor.left
 
-		-- htmldom.refreshnodes( tablenode )
-		--layout.recalctable(g, style)
+		local function doelement( cursor, c, idx )
+			local element 		= layout.getelement(c.eid)
+			local dim 			= geom[element.gid]
+			dim.width = cols[idx]
+			element.width = cols[idx]
+			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
+			geom.update(element.gid)
+			cursor.left 	= cursor.left + element.width
+		end
+
+		local function dotext( cursor, te )
+			local element 		= layout.getelement(te.eid)
+			local render 		= layout.getrenderobj(te.eid)
+			local dim 			= geom[element.gid]
+			element.pos.left 	= cursor.left 
+			element.pos.top 	= cursor.top
+			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
+			geom.update(element.gid)
+			-- render.cursor.left 	= cursor.left 
+			-- render.cursor.top 	= cursor.top
+		end
+
+		for i,v in ipairs(tablenode.children) do
+			local relement 		= layout.getelement(v.eid)
+			for idx, c in ipairs(v.children) do 
+				if(c.children) then dotext( cursor, c.children[1] ) end
+				doelement( cursor, c, idx)
+			end
+			common.stepline( { cursor = cursor, frame = local_g.frame }, style)
+		end
 
 		local element 		= layout.getelement(style.elementid)
-		local geom 			= layout.getgeom()
 		local obj 			= geom.get( element.gid )
 
 		element.width 		= obj.width
 		element.height 		= obj.height
+		g.cursor.top = g.cursor.top + obj.height / 2
 
 		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
-		common.defaultclose(g, style)
+		common.elementclose(g, style)
 	end,
 }
 

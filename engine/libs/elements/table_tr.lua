@@ -6,7 +6,10 @@ local layout    = require("engine.libs.htmllayout")
 
 return {
 	opened 		= function( g, style, attribs )
-		local table_data = style.table_data
+
+		libstyle.setmargins(style, 0, 0, 0, 0)
+		libstyle.setpadding(style, 8, 0, 8, 0)
+		
 		common.elementopen(g, style, attribs)
 	end,
 	closed 		= function( g, style)
@@ -22,7 +25,6 @@ return {
 		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
 
 		if(element.height > style.pstyle.linesize) then style.pstyle.linesize  = element.height end		
-
 		common.defaultclose(g, style)
 	end,
 }

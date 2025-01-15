@@ -7,6 +7,8 @@ require("engine.utils.copy")
 local GM 		= require("engine.libs.htmlgeom")
 local rapi 		= require("engine.libs.htmlrender-api")
 
+local utils 	= require("lua.utils")
+
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
 local enableDebug 			= 1
 local enableDebugElements 	= nil
@@ -14,6 +16,8 @@ local enableDebugElements 	= nil
 ----------------------------------------------------------------------------------
 -- A html render tree  -- created during first pass
 local render 		= {}
+local render_lookup = {}
+
 -- A html layout tree  -- created during passing of render tree - this should be rasterised
 local layout 		= {}
 
@@ -86,6 +90,15 @@ local function getgeometry( )
 
 	return geom
 end 
+
+----------------------------------------------------------------------------------
+
+local function getrenderobj( gid )
+	print(utils.tdump(render_lookup))
+	local rid = render_lookup[gid] or nil
+	print(rid)
+	return render[rid] or nil
+end
 
 ----------------------------------------------------------------------------------
 local function getelement(eid)
@@ -233,9 +246,7 @@ local function doraster( )
 			end 
 		end 
 
-		local ele = elements[1]
-		local html = geom.geometries[1]
-		local g = { ctx = ele.ctx, cursor=ele.cursor, frame = ele.frame }
+		local g = { ctx = elements[1].ctx, cursor=elements[1].cursor, frame = elements[1].frame }
 		for k, v in ipairs(geom.geometries) do 
 			rendergeom( g, v )
 		end
@@ -248,10 +259,13 @@ end
 geom 		= GM.create(frame, cursor)
 
 local function init(frame, cursor) 
-	render 		= {}
 	layout 		= {}
-	elements 	= {}
-	geom.clear()
+
+	-- These are now all generated during load of xml objects. 
+	--   New objects can be added at runtime too!
+	-- render 		= {}
+	-- elements 	= {}
+	-- geom.clear()
 end 
 
 local function finish() 
@@ -323,6 +337,8 @@ local function addtextobject( g, style, text )
 		
 	-- Render objects are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
+	render_lookup[renderobj.eid] = #render
+	print(renderobj.eid, #render)
 end 
 
 
@@ -354,6 +370,7 @@ local function addbuttonobject( g, style, attribs )
 	
 	-- Render obejcts are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
+	render_lookup[renderobj.eid] = #render
 end 
 
 
@@ -380,6 +397,7 @@ local function addinputtextobject( g, style, attribs )
 
 	-- Render obejcts are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
+	render_lookup[renderobj.eid] = #render
 end 
 
 ----------------------------------------------------------------------------------
@@ -405,6 +423,7 @@ local function addimageobject( g, style )
 
 	-- Render obejcts are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
+	render_lookup[renderobj.eid] = #render
 end 
 
 ----------------------------------------------------------------------------------
@@ -421,6 +440,8 @@ return {
 
 	init 			= init,
 	finish 			= finish,
+
+	getrenderobj 	= getrenderobj,
 
 	addelement		= addelement,
 	getelement		= getelement,

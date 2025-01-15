@@ -75,8 +75,8 @@ end
 
 ----------------------------------------------------------------------------------
 
-dom.newnode = function( eid )
-    local node = { parent = node, children = {}, eid = eid }
+dom.newnode = function( eid, xml )
+    local node = { parent = node, children = {}, eid = eid, xml = xml }
     return node 
 end
 
@@ -90,8 +90,8 @@ end
 
 ----------------------------------------------------------------------------------
 
-dom.addelement = function( node, eid )
-    local newnode = dom.newnode(eid)
+dom.addelement = function( node, eid, xml )
+    local newnode = dom.newnode(eid, xml)
     return dom.addnode(node, newnode)
 end
 
@@ -190,13 +190,13 @@ local function xmlhandler( ctx, xml )
 	if(label) then 
 		style.etype = label
 		local iselement = htmlelements[label]	
-		if(iselement) then 
+		if(iselement and iselement.opened) then 
 			-- Assign parent
 			style.pstyle = currstyle
-
 			iselement.opened( g, style, xml.xarg ) 
-			this_node = dom.addelement( curr_node, style.elementid )
 		end
+
+        this_node = dom.addelement( curr_node, style.elementid, xml )
 		tinsert(stylestack, style)
 	end 
 
@@ -210,7 +210,14 @@ local function xmlhandler( ctx, xml )
 						local tstyle = deepcopy(style)
 						tstyle.pstyle = style
 						tinsert(stylestack, tstyle)
+
+                        if(this_node) then curr_node = this_node end
+                        this_node = dom.addelement( curr_node, tstyle.elementid+1, xml )
+
 						htmle.addtextobject( g, tstyle, xml.arg, v )
+
+                        curr_node = dom.getparent(this_node)
+
 						tremove( stylestack ) 
 					end
 				end
@@ -226,7 +233,7 @@ local function xmlhandler( ctx, xml )
 	-- Check label to close the element
 	if(label) then 
 		local iselement = htmlelements[xml.label]
-		if(iselement and iselement.closed) then iselement.closed( g, style ) end 
+		if(iselement and iselement.closed) then iselement.closed( g, style, this_node ) end 
 		tremove( stylestack ) 
 		if(this_node) then curr_node = dom.getparent(this_node) end
 	end
@@ -242,6 +249,7 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
     }
 
     dom.renderCtx = self.renderCtx 
+    curr_node = dom.reset(htmlelements)
 
 	--local filename = "/data/html/sample02-forms.html"
 	local xml = utils.loaddata(filename)
@@ -253,7 +261,6 @@ end
 
 dom.loadxml = function( xmldata )
 
-    curr_node = dom.reset(htmlelements)
     -- TODO: Put validation here later
     dom.xmldoc = xmldata
     -- Process the xml into our elements and dom tree items
@@ -265,8 +272,23 @@ end
 
 dom.render = function(frame, cursor)
     curr_node = dom.reset()
-    xmlhandler( dom.renderCtx, dom.xmldoc )
+    --xmlhandler( dom.renderCtx, dom.xmldoc )
     -- Do a normal traverse of the dom tree - not xml tree
+    local geom = layout.getgeom()
+
+    -- visit each node like layout does and call layout methods
+    dom.traversenodes( topnode, function(node) 
+        local e = layout.getelement(node.eid)
+        if(e) then 
+            local iselement = htmlelements[e.etype]
+            if(iselement) then 
+                local obj 			= geom.get( e.gid )
+                e.width 		= obj.width
+                e.height 		= obj.height
+                geom.renew( e.gid, e.pos.left, e.pos.top, e.width, e.height )
+            end
+        end
+    end)    
 end
 
 ----------------------------------------------------------------------------------

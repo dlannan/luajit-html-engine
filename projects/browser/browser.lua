@@ -4,6 +4,8 @@ local dirtools  = require("tools.vfs.dirtools").init("luajit%-html%-engine")
 
 --_G.SOKOL_DLL    = "sokol_debug_dll"
 local sapp      = require("sokol_app")
+
+-- TODO: See if we can improve the use of these. The main problem being decoupling of modules.
 sgp             = require("sokol_gp")
 sg              = sgp
 sgl 			= sgp
