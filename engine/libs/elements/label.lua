@@ -5,10 +5,10 @@ local layout    = require("engine.libs.htmllayout")
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= function( g, style, attribs )
+	opened 		= function( g, style, xml )
 		style.margin 		= libstyle.getmargin(style, libstyle.TEXT_CONST.NONE, 0)
 		style.pstyle.linesize = common.getlineheight(style)
-		common.elementopen(g, style, attribs)
+		common.elementopen(g, style, xml)
 	end,
 	closed 		= common.elementclose,
 }

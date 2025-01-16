@@ -6,10 +6,10 @@ local rapi 		= require("engine.libs.htmlrender-api")
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= function( g, style, attribs )
+	opened 		= function( g, style, xml )
 
 		style.etype 		= "img"
-
+		local attribs 		= xml.xarg
 		if(attribs.width) then style.width = attribs.width end 
 		if(attribs.height) then style.height = attribs.height end 
 		if(attribs.src) then 
@@ -19,7 +19,7 @@ return {
 
 		--checkmargins( g, style )
 		
-		local element 		= layout.addelement( g, style, attribs )
+		local element 		= layout.addelement( g, style, xml )
 		layout.addimageobject( g, style )
 	end,
 	

@@ -3,11 +3,12 @@ local layout        = require("engine.libs.htmllayout")
 
 ----------------------------------------------------------------------------------
 
-local function elementopen( g, style, attribs )
+local function elementopen( g, style, xml )
 
-	local element 		= layout.addelement( g, style, attribs )
+	local element 		= layout.addelement( g, style, xml.xarg )
     -- style.peid          = style.elementid
 	style.elementid 	= element.id
+	xml.eid 			= element.id
 	element.cursor_top 	= g.cursor.top
 	return element
 end 
@@ -27,14 +28,15 @@ end
 
 ----------------------------------------------------------------------------------
 -- 
-local function textdefault( g, style, attribs, text )
+local function textdefault( g, style, xml )
 
 	-- remove any newlines or tabs from text!
+	local text = xml.xarg["text"] or ""
 	text = string.gsub(text, "[\n\r\t]", "")
 	
 	style.etype = "text"
 	libstyle.gettextsize(g, style, text) 
-	local element 	= layout.addelement( g, style, attribs )	
+	local element 	= layout.addelement( g, style, xml.xarg )	
 
 	if(style.linesize < style.height) then style.linesize = style.height end 
 	

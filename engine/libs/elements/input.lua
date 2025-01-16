@@ -5,8 +5,9 @@ local layout    = require("engine.libs.htmllayout")
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= function (g, style, attribs) 
+	opened 		= function (g, style, xml) 
 
+        local attribs = xml.xarg
 		local atype = attribs.type:lower()
 		style.textsize 		= libstyle.FONT_SIZES.p
 		style.linesize 		= common.getlineheight(style)
@@ -17,7 +18,7 @@ return {
 		if(atype == "button" or atype == "submit") then 
 			style.width = style.width + 16
 			style.height = style.height + 8
-			common.elementbutton(g, style, attribs)
+			common.elementbutton(g, style, xml)
 		else 
 		
 			libstyle.setmargins(style, 0, 0, 0, 0)
@@ -28,7 +29,7 @@ return {
 			style.width = 8.0 * g.ctx.fontsize
 			
 			-- A button is inserted as an "empty" div which is expanded as elements are added.		
-			local element = common.elementopen(g, style, attribs)
+			local element = common.elementopen(g, style, xml)
 			if(atype == "text") then 
 				layout.addinputtextobject( g, style, attribs )
 			end

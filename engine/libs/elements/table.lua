@@ -19,61 +19,15 @@ local utils 		= require("lua.utils")
 --      which can be stored anyway.
 
 return {
-	opened 		= function( g, style, attribs )
+	opened 		= function( g, style, xml )
 		-- Make a table stack. This stores rows that contain td widths for post update
-		common.elementopen(g, style, attribs)
+		common.elementopen(g, style, xml)
 	end,
-	closed 		= function( g, style, tablenode)
+	closed 		= function( g, style, xml)
 
-		local geom = layout.getgeom()
 		-- -- print(utils.tdump(tablenode))
-
-		-- -- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
-		-- local cols = {}
-		-- for i,v in ipairs(tablenode.children) do
-		-- 	for idx, c in ipairs(v.children) do 
-		-- 		local element = layout.getelement(c.eid)
-		-- 		cols[idx] = cols[idx] or 0 
-		-- 		if(element.width > cols[idx]) then cols[idx] = element.width end
-		-- 	end
-		-- end
-
-		-- local local_g = stored_g[style.elementid]
-		-- local cursor = local_g.cursor
-		-- local startleft = cursor.left
-
-		-- local function doelement( cursor, c, idx )
-		-- 	local element 		= layout.getelement(c.eid)
-		-- 	local dim 			= geom[element.gid]
-		-- 	dim.width = cols[idx]
-		-- 	element.width = cols[idx]
-		-- 	geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
-		-- 	geom.update(element.gid)
-		-- 	cursor.left 	= cursor.left + element.width
-		-- end
-
-		-- local function dotext( cursor, te )
-		-- 	local element 		= layout.getelement(te.eid)
-		-- 	local render 		= layout.getrenderobj(te.eid)
-		-- 	local dim 			= geom[element.gid]
-		-- 	element.pos.left 	= cursor.left 
-		-- 	element.pos.top 	= cursor.top
-		-- 	geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
-		-- 	geom.update(element.gid)
-		-- 	-- render.cursor.left 	= cursor.left 
-		-- 	-- render.cursor.top 	= cursor.top
-		-- end
-
-		-- for i,v in ipairs(tablenode.children) do
-		-- 	local relement 		= layout.getelement(v.eid)
-		-- 	for idx, c in ipairs(v.children) do 
-		-- 		if(c.children) then dotext( cursor, c.children[1] ) end
-		-- 		doelement( cursor, c, idx)
-		-- 	end
-		-- 	common.stepline( { cursor = cursor, frame = local_g.frame }, style)
-		-- end
-
-		local element 		= layout.getelement(style.elementid)
+		local element 		= layout.getelement(xml.eid)
+		local geom 			= layout.getgeom()
 		local obj 			= geom.get( element.gid )
 
 		element.width 		= obj.width
@@ -87,10 +41,70 @@ return {
 	--   need to adjust the table based on specific criteria (like column sizes in tables)
 	layout 		= function(g, xml)
 
-	end,
-	
-	render 		= function(g, style, xml)
+		local geom 			= layout.getgeom()
+		local element 		= layout.getelement(xml.eid)
+		local geomobj 		= xml.geom
 
+		-- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
+		local cols = {}
+		for k,v in pairs(xml) do
+			if(type(k) == "number" and type(v) == "table") then
+				local idx = 1
+				for kc, vc in pairs(v) do 
+					if(type(kc) == "number" and type(vc) == "table") then
+						if(vc.eid) then 
+							local childelement = layout.getelement(vc.eid)
+							cols[idx] = cols[idx] or 0 
+							if(childelement.width > cols[idx]) then cols[idx] = childelement.width end
+							idx = idx + 1
+						end
+					end
+				end
+			end
+		end
+
+		-- Reset cursor to match this current table node position
+		local cursor = { left = geomobj.left, top = geomobj.top }
+
+		local function doelement( cursor, c, idx )
+			local element 		= layout.getelement(c.eid)
+			local dim 			= geom[element.gid]
+			dim.width = cols[idx]
+			element.width = cols[idx]
+			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
+			geom.update(element.gid)
+			cursor.left 	= cursor.left + element.width
+		end
+
+		local function dotext( cursor, te )
+			local element 		= layout.getelement(te.eid+1)
+			local render 		= layout.getrenderobj(te.eid+1)
+			local dim 			= geom[element.gid]
+			element.pos.left 	= cursor.left
+			element.pos.top 	= cursor.top
+			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
+			geom.update(element.gid)
+		end
+
+		for k,v in pairs(xml) do
+			if(type(k) == "number" and type(v) == "table") then
+				local idx = 1
+				local relement 		= layout.getelement(v.eid)
+				for kc, vc in pairs(v) do 
+					if(type(kc) == "number" and type(vc) == "table") then
+						-- print("----",utils.tdump(vc))
+						if(vc[1].label == "text") then 
+							dotext( cursor, vc[1] ) 
+						end
+						doelement( cursor, vc, idx)
+						idx = idx + 1
+					end
+				end
+				cursor.left = geomobj.left
+				cursor.top = cursor.top + xml.style.linesize
+				-- common.stepline( { cursor = cursor, frame = xml.g.frame }, xml.style)
+			end
+		end
 	end,
 }
 

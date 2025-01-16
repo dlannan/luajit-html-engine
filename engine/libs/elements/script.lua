@@ -2,7 +2,8 @@
 ----------------------------------------------------------------------------------
 
 return  {
-	opened 		= function (g, style, attribs) 
+	opened 		= function (g, style, xml) 
+        local attribs = xml.xarg
 		-- Get the source file, load, and compile - dont store if errors, and report them
 		if(attribs.src) then 
 			

@@ -5,13 +5,13 @@ local layout    = require("engine.libs.htmllayout")
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= function( g, style, attribs)
+	opened 		= function( g, style, xml)
         -- TODO: default paragraph styles needed
 		style.textsize 	= libstyle.FONT_SIZES.p
 		style.margin 	= libstyle.getmargin(style, libstyle.TEXT_CONST.MARGINS, 2)
 		style.linesize 	= style.textsize
 		libstyle.checkmargins( g, style )
-		common.elementopen(g, style, attribs)
+		common.elementopen(g, style, xml)
 	end,
 	closed 		= common.defaultclose,
 }

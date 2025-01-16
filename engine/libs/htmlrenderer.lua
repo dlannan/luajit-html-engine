@@ -34,7 +34,8 @@ local function render( position )
 		htmldom.render(frame, cursor)
 		htmle.dirty = nil
 	end 
-	htmle.finish()
+	htmldom.layout(frame, cursor)
+	htmle.drawall()
 end
 
 ----------------------------------------------------------------------------------

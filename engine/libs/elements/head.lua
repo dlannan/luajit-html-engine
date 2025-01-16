@@ -2,7 +2,7 @@
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= function(g, style, attribs)
+	opened 		= function(g, style, xml)
 		-- Dont create graphics objects in the head
 		style.nographics = true
 	end,

@@ -174,7 +174,7 @@ nodefuncs.pre = function( ctx, xml )
 		if(iselement and iselement.opened) then 
 			-- Assign parent
 			style.pstyle = currstyle
-			iselement.opened( g, style, xml.xarg, xml ) 
+			iselement.opened( g, style, xml ) 
 		end    
 		tinsert(stylestack, style)
 	end 
@@ -182,30 +182,23 @@ nodefuncs.pre = function( ctx, xml )
 	if(style.dontprocess == nil) then 
 		for k,v in pairs(xml) do 
 
-			-- Might be a string index
 			if(type(k) == "number") then
 
                 if(v and type(v) == "string") then
                     if(string.find(v, "DOCTYPE") == nil) then
                         local txt = v
-                        xml[k] = {
-                            label = "text",
-                            xarg = { text = txt },
-                        }
-                        -- xmlhandler(ctx, xml[k])
+                        xml[k] = {}
+                        xml[k]["label"] = "text"
+                        xml[k]["xarg"] = { text = txt }
                     end 
                 end
-
-				-- if(type(v) == "table") then
-				-- 	xmlhandler(ctx, v) 
-				-- end
 			end
 		end
 	end 
 
+    -- TODO: This isnt great. Needs to be better way to move state around.
     xml.style     = style
     xml.g         = g
-    xml.label     = label
 end
 
 ----------------------------------------------------------------------------------
@@ -219,7 +212,13 @@ nodefuncs.post = function(ctx, xml)
 	-- Check label to close the element
 	if(label) then 
 		local iselement = htmlelements[label]
-		if(iselement and iselement.closed) then iselement.closed( g, style, xml ) end 
+		if(iselement and iselement.closed) then 
+
+            iselement.closed( g, style, xml ) 
+            local element 		= layout.getelement(style.elementid)
+            local geom 			= layout.getgeom()
+            xml.geom = geom.get(element.gid)
+        end 
 		tremove( stylestack ) 
 	end
 end 
@@ -250,10 +249,36 @@ dom.loadxml = function( xmldata )
     dom.xmldoc = xmldata
     -- Process the xml into our elements and dom tree items
     dom.traversenodes( dom.renderCtx, dom.xmldoc, nodefuncs ) 
-    -- xmlhandler( dom.renderCtx, dom.xmldoc )
     -- xmlp.dumpxml(dom.xmldoc)
 
+    -- remove parent style hierarchies from nodes
+    dom.traversenodes( dom.renderCtx, dom.xmldoc, {
+        pre = function(ctx, xml)
+            if(xml.style.pstyle) then xml.style.pstyle = nil end
+        end,
+        post = function(ctx, xml)
+        end,
+    })
+
     -- print("----> ", utils.tdump(dom.xmldoc))
+end
+
+----------------------------------------------------------------------------------
+
+dom.layout = function(frame, cursor)
+
+    dom.traversenodes( dom.renderCtx, dom.xmldoc, {
+        pre = function(ctx, xml)
+        end,
+        post = function(ctx, xml)
+            if(xml.label) then 
+                local iselement = htmlelements[xml.label]
+                if(iselement and iselement.layout) then 
+                    iselement.layout( ctx, xml ) 
+                end
+            end
+        end,
+    }) 
 end
 
 ----------------------------------------------------------------------------------

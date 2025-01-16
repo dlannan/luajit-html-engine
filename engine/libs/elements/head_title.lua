@@ -3,7 +3,7 @@
 ----------------------------------------------------------------------------------
 
 return  {
-	opened 		= function (g, style, attribs) 
+	opened 		= function (g, style, xml) 
 		style.dontprocess = true
 	end,
 	closed 		= function( g, style )	

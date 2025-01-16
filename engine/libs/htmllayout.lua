@@ -93,8 +93,8 @@ end
 
 ----------------------------------------------------------------------------------
 
-local function getrenderobj( gid )
-	local rid = render_lookup[gid] or nil
+local function getrenderobj( eid )
+	local rid = render_lookup[eid] or nil
 	return render[rid] or nil
 end
 
@@ -205,11 +205,6 @@ local function rendergeom( g, tg )
 	rapi.draw_rect( posx, posy, tg.width, tg.height, 0xffff0000) -- , brdrcolor )
 	--g.gcairo:RenderText( tostring(tg.gid), tg.left, tg.top, 16, tcolor )
 end	
-----------------------------------------------------------------------------------
-
-local function dolayout( )
-
-end
 
 ----------------------------------------------------------------------------------
 
@@ -266,13 +261,12 @@ local function init(frame, cursor)
 	-- geom.clear()
 end 
 
-local function finish() 
+local function drawall() 
 
 	-- Dump the layout tree 
 	-- table_print(render)
 	
 	-- upon completion of building render tree, run layout pass 
-	dolayout()
 	doraster()
 end
 
@@ -436,7 +430,7 @@ end
 return {
 
 	init 			= init,
-	finish 			= finish,
+	drawall 		= drawall,
 
 	getrenderobj 	= getrenderobj,
 

@@ -6,8 +6,8 @@ local layout    = require("engine.libs.htmllayout")
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= function( g, style, attribs )
-		common.elementopen(g, style, attribs)
+	opened 		= function( g, style, xml )
+		common.elementopen(g, style, xml)
 	end,
 	closed 		= function( g, style )
 

@@ -5,7 +5,7 @@ local layout    = require("engine.libs.htmllayout")
 
 ----------------------------------------------------------------------------------
 
-local function headingopen( g, style, attribs )
+local function headingopen( g, style, xml )
 
 	style.textsize 	= libstyle.FONT_SIZES[string.lower(style.etype)]
 	style.margin 	= libstyle.getmargin(style, libstyle.TEXT_CONST.HEADINGS, 0)
@@ -13,7 +13,7 @@ local function headingopen( g, style, attribs )
 	style.fontweight = 1
 
 	libstyle.checkmargins( g, style )
-	common.elementopen(g, style, attribs)
+	common.elementopen(g, style, xml)
 end	
 
 ----------------------------------------------------------------------------------
