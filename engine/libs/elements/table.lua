@@ -34,50 +34,50 @@ return {
 		local geom = layout.getgeom()
 		-- -- print(utils.tdump(tablenode))
 
-		-- -- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
-		local cols = {}
-		for i,v in ipairs(tablenode.children) do
-			for idx, c in ipairs(v.children) do 
-				local element = layout.getelement(c.eid)
-				cols[idx] = cols[idx] or 0 
-				if(element.width > cols[idx]) then cols[idx] = element.width end
-			end
-		end
+		-- -- -- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
+		-- local cols = {}
+		-- for i,v in ipairs(tablenode.children) do
+		-- 	for idx, c in ipairs(v.children) do 
+		-- 		local element = layout.getelement(c.eid)
+		-- 		cols[idx] = cols[idx] or 0 
+		-- 		if(element.width > cols[idx]) then cols[idx] = element.width end
+		-- 	end
+		-- end
 
-		local local_g = stored_g[style.elementid]
-		local cursor = local_g.cursor
-		local startleft = cursor.left
+		-- local local_g = stored_g[style.elementid]
+		-- local cursor = local_g.cursor
+		-- local startleft = cursor.left
 
-		local function doelement( cursor, c, idx )
-			local element 		= layout.getelement(c.eid)
-			local dim 			= geom[element.gid]
-			dim.width = cols[idx]
-			element.width = cols[idx]
-			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
-			geom.update(element.gid)
-			cursor.left 	= cursor.left + element.width
-		end
+		-- local function doelement( cursor, c, idx )
+		-- 	local element 		= layout.getelement(c.eid)
+		-- 	local dim 			= geom[element.gid]
+		-- 	dim.width = cols[idx]
+		-- 	element.width = cols[idx]
+		-- 	geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
+		-- 	geom.update(element.gid)
+		-- 	cursor.left 	= cursor.left + element.width
+		-- end
 
-		local function dotext( cursor, te )
-			local element 		= layout.getelement(te.eid)
-			local render 		= layout.getrenderobj(te.eid)
-			local dim 			= geom[element.gid]
-			element.pos.left 	= cursor.left 
-			element.pos.top 	= cursor.top
-			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
-			geom.update(element.gid)
-			-- render.cursor.left 	= cursor.left 
-			-- render.cursor.top 	= cursor.top
-		end
+		-- local function dotext( cursor, te )
+		-- 	local element 		= layout.getelement(te.eid)
+		-- 	local render 		= layout.getrenderobj(te.eid)
+		-- 	local dim 			= geom[element.gid]
+		-- 	element.pos.left 	= cursor.left 
+		-- 	element.pos.top 	= cursor.top
+		-- 	geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
+		-- 	geom.update(element.gid)
+		-- 	-- render.cursor.left 	= cursor.left 
+		-- 	-- render.cursor.top 	= cursor.top
+		-- end
 
-		for i,v in ipairs(tablenode.children) do
-			local relement 		= layout.getelement(v.eid)
-			for idx, c in ipairs(v.children) do 
-				if(c.children) then dotext( cursor, c.children[1] ) end
-				doelement( cursor, c, idx)
-			end
-			common.stepline( { cursor = cursor, frame = local_g.frame }, style)
-		end
+		-- for i,v in ipairs(tablenode.children) do
+		-- 	local relement 		= layout.getelement(v.eid)
+		-- 	for idx, c in ipairs(v.children) do 
+		-- 		if(c.children) then dotext( cursor, c.children[1] ) end
+		-- 		doelement( cursor, c, idx)
+		-- 	end
+		-- 	common.stepline( { cursor = cursor, frame = local_g.frame }, style)
+		-- end
 
 		local element 		= layout.getelement(style.elementid)
 		local obj 			= geom.get( element.gid )

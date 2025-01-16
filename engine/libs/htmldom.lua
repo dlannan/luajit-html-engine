@@ -64,39 +64,13 @@ end
 ----------------------------------------------------------------------------------
 
 dom.reset = function()
-    dom.root = {
-        parent = nil, 
-        children = {},
-        eid = nil,
-    }
+    dom.root = nil
     dom.elookup = {}
     return dom.root
 end 
 
 ----------------------------------------------------------------------------------
-
-dom.newnode = function( eid, xml )
-    local node = { parent = node, children = {}, eid = eid, xml = xml }
-    return node 
-end
-
-----------------------------------------------------------------------------------
-
-dom.addnode = function( node, newnode )
-    tinsert(node.children, newnode )
-    dom.elookup[newnode.eid] = newnode
-    return newnode
-end
-
-----------------------------------------------------------------------------------
-
-dom.addelement = function( node, eid, xml )
-    local newnode = dom.newnode(eid, xml)
-    return dom.addnode(node, newnode)
-end
-
-----------------------------------------------------------------------------------
-
+-- Get the xml node and remove it.
 dom.delnode = function( node )
     if(node == nil) then return nil end 
     -- This isnt overly intuitive, but we want to remove from the parent child list.
@@ -172,7 +146,8 @@ dom.refreshnodes = function( topnode )
 end
 
 ----------------------------------------------------------------------------------
-
+-- The xmlhandler is intended for creating a base dom. With all the info needed
+--   to be able to "rerun" the dom tree as needed.
 local function xmlhandler( ctx, xml )
 
 	local currstyle = stylestack[#stylestack]
@@ -183,7 +158,7 @@ local function xmlhandler( ctx, xml )
 	if(style.padding == nil) then style.padding = htmle.defaultpadding(style) end
 	if(style.border == nil) then style.border = htmle.defaultborder(style) end
 	local g = { ctx=ctx, cursor = dom.ctx.cursor, frame = dom.ctx.frame }
-
+    
 	-- Check element names 
 	local label = nil
 	if( xml.label ) then label = string.lower(xml.label) end
@@ -193,10 +168,8 @@ local function xmlhandler( ctx, xml )
 		if(iselement and iselement.opened) then 
 			-- Assign parent
 			style.pstyle = currstyle
-			iselement.opened( g, style, xml.xarg ) 
+			iselement.opened( g, style, xml.xarg, xml ) 
 		end
-
-        this_node = dom.addelement( curr_node, style.elementid, xml )
 		tinsert(stylestack, style)
 	end 
 
@@ -205,26 +178,21 @@ local function xmlhandler( ctx, xml )
 
 			-- Might be a string index
 			if(type(k) == "number") then
-				if( type(v) == "string") then
-					if(string.find(v, "DOCTYPE") == nil) then
-						local tstyle = deepcopy(style)
-						tstyle.pstyle = style
-						tinsert(stylestack, tstyle)
 
-                        if(this_node) then curr_node = this_node end
-                        this_node = dom.addelement( curr_node, tstyle.elementid+1, xml )
-
-						htmle.addtextobject( g, tstyle, xml.arg, v )
-
-                        curr_node = dom.getparent(this_node)
-
-						tremove( stylestack ) 
-					end
-				end
+                if(v and type(v) == "string") then
+                    if(string.find(v, "DOCTYPE") == nil) then
+                        local txt = v
+                        xml[k] = {
+                            label = "text",
+                            xarg = { text = txt },
+                        }
+                        print("---------",utils.tdump(xml[k]))
+                        xmlhandler(ctx, xml[k])
+                    end 
+                end
 
 				if(type(v) == "table") then
-					if(this_node) then curr_node = this_node end
-					xmlhandler( ctx, v ) 
+					xmlhandler(ctx, v) 
 				end
 			end
 		end
@@ -233,9 +201,8 @@ local function xmlhandler( ctx, xml )
 	-- Check label to close the element
 	if(label) then 
 		local iselement = htmlelements[xml.label]
-		if(iselement and iselement.closed) then iselement.closed( g, style, this_node ) end 
+		if(iselement and iselement.closed) then iselement.closed( g, style, xml ) end 
 		tremove( stylestack ) 
-		if(this_node) then curr_node = dom.getparent(this_node) end
 	end
 end 
 
@@ -266,18 +233,20 @@ dom.loadxml = function( xmldata )
     -- Process the xml into our elements and dom tree items
     xmlhandler( dom.renderCtx, dom.xmldoc )
     -- xmlp.dumpxml(dom.xmldoc)
+
+    -- print("----> ", utils.tdump(dom.xmldoc))
 end
 
 ----------------------------------------------------------------------------------
 
 dom.render = function(frame, cursor)
-    curr_node = dom.reset()
+    
     --xmlhandler( dom.renderCtx, dom.xmldoc )
     -- Do a normal traverse of the dom tree - not xml tree
     local geom = layout.getgeom()
 
     -- visit each node like layout does and call layout methods
-    dom.traversenodes( topnode, function(node) 
+    dom.traversenodes( dom.root, function(node) 
         local e = layout.getelement(node.eid)
         if(e) then 
             local iselement = htmlelements[e.etype]

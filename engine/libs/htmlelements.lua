@@ -30,6 +30,7 @@ htmlelements["h6"]  		= require("engine.libs.elements.headings")
 
 ----------------------------------------------------------------------------------
 -- Text elements 
+htmlelements["text"]  		= require("engine.libs.elements.text")
 htmlelements["p"]  			= require("engine.libs.elements.text_paragraph")
 htmlelements["i"]  			= require("engine.libs.elements.text_italics")
 htmlelements["b"]  			= require("engine.libs.elements.text_bold")
