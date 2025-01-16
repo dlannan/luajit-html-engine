@@ -18,23 +18,17 @@ local utils 		= require("lua.utils")
 --   and td & th widths need to be recalculated based on the biggest for each column
 --      which can be stored anyway.
 
-local stored_g = {}
-
 return {
 	opened 		= function( g, style, attribs )
 		-- Make a table stack. This stores rows that contain td widths for post update
 		common.elementopen(g, style, attribs)
-		stored_g[style.elementid] = { 
-			cursor = { left = g.cursor.left, top = g.cursor.top }, 
-			frame = { left = g.frame.left, top = g.frame.top, width = g.frame.width, height = g.frame.height },
-		}
 	end,
 	closed 		= function( g, style, tablenode)
 
 		local geom = layout.getgeom()
 		-- -- print(utils.tdump(tablenode))
 
-		-- -- -- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
+		-- -- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
 		-- local cols = {}
 		-- for i,v in ipairs(tablenode.children) do
 		-- 	for idx, c in ipairs(v.children) do 
@@ -84,10 +78,19 @@ return {
 
 		element.width 		= obj.width
 		element.height 		= obj.height
-		g.cursor.top = g.cursor.top + obj.height / 2
 
 		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
 		common.elementclose(g, style)
+	end,
+
+	-- This is used for changes in layout - like tables and divs where styles and contraints might
+	--   need to adjust the table based on specific criteria (like column sizes in tables)
+	layout 		= function(g, xml)
+
+	end,
+	
+	render 		= function(g, style, xml)
+
 	end,
 }
 

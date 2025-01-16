@@ -94,9 +94,7 @@ end
 ----------------------------------------------------------------------------------
 
 local function getrenderobj( gid )
-	print(utils.tdump(render_lookup))
 	local rid = render_lookup[gid] or nil
-	print(rid)
 	return render[rid] or nil
 end
 
@@ -338,7 +336,6 @@ local function addtextobject( g, style, text )
 	-- Render objects are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
 	render_lookup[renderobj.eid] = #render
-	print(renderobj.eid, #render)
 end 
 
 

@@ -110,17 +110,22 @@ end
 
 ----------------------------------------------------------------------------------
 -- Simple node traversal
-dom.traversenodes = function( node, func )
+---   funcs is a set of functions that are called at different stages 
+---   - funcs.pre  - execute before an element 
+---   - funcs.post - execute after the exit of an element (like a close tag)
+dom.traversenodes = function( ctx, node, funcs )
 
     if(node) then 
-        if(node.children) then 
-            for k,v in ipairs( node.children ) do 
-                if(v.children) then 
-                    dom.traversenodes( v, func ) 
-                end 
-            end
+        funcs.pre(ctx, node)
+        for k,v in pairs(node) do 
+			-- Might be a string index
+			if(type(k) == "number") then
+				if(type(v) == "table") then
+                    dom.traversenodes( ctx, v, funcs ) 
+				end
+			end
         end
-        func(node)
+        funcs.post(ctx, node)
     end
 end
 
@@ -131,24 +136,25 @@ dom.refreshnodes = function( topnode )
     local geom = layout.getgeom()
 
     -- visit each node like layout does and call layout methods
-    dom.traversenodes( topnode, function(node) 
-        local e = layout.getelement(node.eid)
-        if(e) then 
-            local iselement = htmlelements[e.etype]
-            if(iselement) then 
-                local obj 			= geom.get( e.gid )
-                e.width 		= obj.width
-                e.height 		= obj.height
-                geom.renew( e.gid, e.pos.left, e.pos.top, e.width, e.height )
-            end
-        end
-    end)
+    -- dom.traversenodes( topnode, function(node) 
+    --     local e = layout.getelement(node.eid)
+    --     if(e) then 
+    --         local iselement = htmlelements[e.etype]
+    --         if(iselement) then 
+    --             local obj 			= geom.get( e.gid )
+    --             e.width 		= obj.width
+    --             e.height 		= obj.height
+    --             geom.renew( e.gid, e.pos.left, e.pos.top, e.width, e.height )
+    --         end
+    --     end
+    -- end)
 end
 
 ----------------------------------------------------------------------------------
 -- The xmlhandler is intended for creating a base dom. With all the info needed
 --   to be able to "rerun" the dom tree as needed.
-local function xmlhandler( ctx, xml )
+local nodefuncs = {}
+nodefuncs.pre = function( ctx, xml )
 
 	local currstyle = stylestack[#stylestack]
 	local style = deepcopy(currstyle)
@@ -158,7 +164,7 @@ local function xmlhandler( ctx, xml )
 	if(style.padding == nil) then style.padding = htmle.defaultpadding(style) end
 	if(style.border == nil) then style.border = htmle.defaultborder(style) end
 	local g = { ctx=ctx, cursor = dom.ctx.cursor, frame = dom.ctx.frame }
-    
+
 	-- Check element names 
 	local label = nil
 	if( xml.label ) then label = string.lower(xml.label) end
@@ -169,7 +175,7 @@ local function xmlhandler( ctx, xml )
 			-- Assign parent
 			style.pstyle = currstyle
 			iselement.opened( g, style, xml.xarg, xml ) 
-		end
+		end    
 		tinsert(stylestack, style)
 	end 
 
@@ -186,21 +192,33 @@ local function xmlhandler( ctx, xml )
                             label = "text",
                             xarg = { text = txt },
                         }
-                        print("---------",utils.tdump(xml[k]))
-                        xmlhandler(ctx, xml[k])
+                        -- xmlhandler(ctx, xml[k])
                     end 
                 end
 
-				if(type(v) == "table") then
-					xmlhandler(ctx, v) 
-				end
+				-- if(type(v) == "table") then
+				-- 	xmlhandler(ctx, v) 
+				-- end
 			end
 		end
 	end 
 
+    xml.style     = style
+    xml.g         = g
+    xml.label     = label
+end
+
+----------------------------------------------------------------------------------
+
+nodefuncs.post = function(ctx, xml)
+
+    local style     = xml.style
+    local g         = xml.g
+    local label     = xml.label
+
 	-- Check label to close the element
 	if(label) then 
-		local iselement = htmlelements[xml.label]
+		local iselement = htmlelements[label]
 		if(iselement and iselement.closed) then iselement.closed( g, style, xml ) end 
 		tremove( stylestack ) 
 	end
@@ -231,7 +249,8 @@ dom.loadxml = function( xmldata )
     -- TODO: Put validation here later
     dom.xmldoc = xmldata
     -- Process the xml into our elements and dom tree items
-    xmlhandler( dom.renderCtx, dom.xmldoc )
+    dom.traversenodes( dom.renderCtx, dom.xmldoc, nodefuncs ) 
+    -- xmlhandler( dom.renderCtx, dom.xmldoc )
     -- xmlp.dumpxml(dom.xmldoc)
 
     -- print("----> ", utils.tdump(dom.xmldoc))
@@ -246,18 +265,18 @@ dom.render = function(frame, cursor)
     local geom = layout.getgeom()
 
     -- visit each node like layout does and call layout methods
-    dom.traversenodes( dom.root, function(node) 
-        local e = layout.getelement(node.eid)
-        if(e) then 
-            local iselement = htmlelements[e.etype]
-            if(iselement) then 
-                local obj 			= geom.get( e.gid )
-                e.width 		= obj.width
-                e.height 		= obj.height
-                geom.renew( e.gid, e.pos.left, e.pos.top, e.width, e.height )
-            end
-        end
-    end)    
+    -- dom.traversenodes( dom.root, function(node) 
+    --     local e = layout.getelement(node.eid)
+    --     if(e) then 
+    --         local iselement = htmlelements[e.etype]
+    --         if(iselement) then 
+    --             local obj 			= geom.get( e.gid )
+    --             e.width 		= obj.width
+    --             e.height 		= obj.height
+    --             geom.renew( e.gid, e.pos.left, e.pos.top, e.width, e.height )
+    --         end
+    --     end
+    -- end)    
 end
 
 ----------------------------------------------------------------------------------
