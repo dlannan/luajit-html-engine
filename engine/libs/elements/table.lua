@@ -20,30 +20,24 @@ local utils 		= require("lua.utils")
 
 return {
 	opened 		= function( g, style, xml )
+
+		-- Need to add check for css style
+		libstyle.setmargins(style, 0, 0, 0, 0)
+		libstyle.setpadding(style, 8, 0, 8, 0)
+		libstyle.setborders(style, 17, 5, 17, 5)
+
 		-- Make a table stack. This stores rows that contain td widths for post update
 		common.elementopen(g, style, xml)
 	end,
 	closed 		= function( g, style, xml)
 
-		-- -- print(utils.tdump(tablenode))
-		local element 		= layout.getelement(xml.eid)
-		local geom 			= layout.getgeom()
-		local obj 			= geom.get( element.gid )
-
-		element.width 		= obj.width
-		element.height 		= obj.height
-
-		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
-		common.elementclose(g, style)
-	end,
-
-	-- This is used for changes in layout - like tables and divs where styles and contraints might
-	--   need to adjust the table based on specific criteria (like column sizes in tables)
-	layout 		= function(g, xml)
+	-- -- This is used for changes in layout - like tables and divs where styles and contraints might
+	-- --   need to adjust the table based on specific criteria (like column sizes in tables)
+	-- layout 		= function(g, xml)
 
 		local geom 			= layout.getgeom()
 		local element 		= layout.getelement(xml.eid)
-		local geomobj 		= xml.geom
+		local geomobj 		= geom.get( element.gid )
 
 		-- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
 		local cols = {}
@@ -76,9 +70,10 @@ return {
 			cursor.left 	= cursor.left + element.width
 		end
 
-		local function dotext( cursor, te )
-			local element 		= layout.getelement(te.eid+1)
-			local render 		= layout.getrenderobj(te.eid+1)
+		local function dotext( cursor, te, pe )
+
+			local element 		= layout.getelement(te.eid)
+			local render 		= layout.getrenderobj(te.eid)
 			local dim 			= geom[element.gid]
 			element.pos.left 	= cursor.left
 			element.pos.top 	= cursor.top
@@ -92,9 +87,8 @@ return {
 				local relement 		= layout.getelement(v.eid)
 				for kc, vc in pairs(v) do 
 					if(type(kc) == "number" and type(vc) == "table") then
-						-- print("----",utils.tdump(vc))
 						if(vc[1].label == "text") then 
-							dotext( cursor, vc[1] ) 
+							dotext( cursor, vc[1], vc ) 
 						end
 						doelement( cursor, vc, idx)
 						idx = idx + 1
@@ -105,6 +99,16 @@ return {
 				-- common.stepline( { cursor = cursor, frame = xml.g.frame }, xml.style)
 			end
 		end
+
+		local element 		= layout.getelement(xml.eid)
+		local geom 			= layout.getgeom()
+		local obj 			= geom.get( element.gid )
+
+		element.width 		= obj.width
+		element.height 		= obj.height
+
+		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
+		common.elementclose(g, style)		
 	end,
 }
 

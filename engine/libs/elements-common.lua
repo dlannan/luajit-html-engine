@@ -21,6 +21,19 @@ local function elementclose( g, style )
 	local geom 			= layout.getgeom()
 	local dim 			= geom[element.gid]
 
+	local pdim 			= geom[dim.pid]
+	local pstyle 		= style.pstyle 
+	if(pdim and pstyle and style.etype == "text") then 
+		local alignoff = 0
+		if(pstyle["text-align"] == "center") then 
+			dim.left = dim.left + pdim.width / 2 - element.width / 2
+			element.pos.left = element.pos.left + pdim.width / 2
+		elseif(pstyle["text-align"] == "right") then
+			dim.left = dim.left + pdim.width - element.width
+			element.pos.left = element.pos.left + pdim.width - element.width
+		end
+	end
+
 	-- print(element.etype, dim.left, dim.top, dim.width, dim.height)
 	geom.renew( element.gid, dim.left, dim.top, dim.width, dim.height )
 end 
@@ -28,27 +41,36 @@ end
 
 ----------------------------------------------------------------------------------
 -- 
-local function textdefault( g, style, xml )
+local function textopened( g, style, xml )
 
 	-- remove any newlines or tabs from text!
 	local text = xml.xarg["text"] or ""
 	text = string.gsub(text, "[\n\r\t]", "")
 	
 	style.etype = "text"
-	libstyle.gettextsize(g, style, text) 
-	local element 	= layout.addelement( g, style, xml.xarg )	
+	libstyle.gettextsize(g, style, text ) 
+	local element 	= elementopen( g, style, xml )	
 
 	if(style.linesize < style.height) then style.linesize = style.height end 
 	
 	layout.addtextobject( g, style, text )	
+	-- if parent is th, then check alignment or if style.text_align is set 
+	-- elementclose(g, style)
+end
+
+----------------------------------------------------------------------------------
+
+local function textclosed(g, style, xml)
+
 	g.cursor.left 	= g.cursor.left + style.width 
 	elementclose(g, style)
 
 	if(style.height + style.margin.bottom > style.pstyle.linesize) then 
 		style.pstyle.linesize  = style.height
 		g.cursor.element_top = g.cursor.top + style.height 
-	end
-end
+	end	
+end 
+
 ----------------------------------------------------------------------------------
 
 local function textnone( g, style, text )
@@ -95,7 +117,8 @@ end
 return {
     elementopen     = elementopen,
     elementclose    = elementclose,
-    textdefault     = textdefault,
+    textopened     	= textopened,
+	textclosed 		= textclosed,
     defaultclose    = defaultclose,
     closenone       = closenone,
 

@@ -115,13 +115,17 @@ local function rendertext( g, v )
 
 	local text 		= v.text
 	local style 	= v.style
+
 	if(type(text) ~= "string") then return end 
-	local ele = getelement( v.eid )
+
+	local ele 	= getelement( v.eid )
 
 	-- This pushes a font!
 	g.ctx.ctx.setstyle(style)
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
 	rapi.set_window_font_scale(style.textsize/g.ctx.ctx.fontsize)
+	rapi.set_text_align(style["text-align"])
+	rapi.set_text_color(style["color"])
 	rapi.text( text, ele.width + g.cursor.left + g.frame.left )
 	-- Always do this when using fontface
 	g.ctx.ctx.unsetstyle()

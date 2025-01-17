@@ -5,13 +5,8 @@ local layout    	= require("engine.libs.htmllayout")
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= function( g, style, xml )
-		common.elementopen( g, style, xml )
-		common.textdefault( g, style, xml )
-	end,
-	closed 		= function( g, style )
-		common.elementclose(g, style)
-	end,
+	opened 		= common.textopened,
+	closed 		= common.textclosed,
 }
 
 ----------------------------------------------------------------------------------

@@ -62,6 +62,11 @@ htmlelements["div"] 		= require("engine.libs.elements.div")
 -- Script elements 
 htmlelements["script"] 		= require("engine.libs.elements.script")
 
+
+----------------------------------------------------------------------------------
+-- Style/CSS elements 
+htmlelements["style"] 		= require("engine.libs.elements.style")
+
 ----------------------------------------------------------------------------------
 -- Head specific elements 
 htmlelements["head"] 		= require("engine.libs.elements.head")
@@ -72,7 +77,7 @@ htmlelements["title"] 		= require("engine.libs.elements.head_title")
 return {
 	FONT_SIZES 		= libstyle.FONT_SIZES,
 
-	addtextobject 	= common.textdefault,
+	addtextobject 	= layout.addtextdefault,
 
 	defaultmargin	= libstyle.defaultmargin,
 	defaultpadding	= libstyle.defaultpadding,

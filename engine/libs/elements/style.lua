@@ -1,13 +1,12 @@
 
-
 ----------------------------------------------------------------------------------
 
 return  {
-	opened 		= function (g, style, xml) 
-		style.notextprocess = true
+	opened 		= function(g, style, xml)
+		style.notextprocess   = true
+		style.cssprocess 	  = true
 	end,
-	closed 		= function( g, style )	
-	end,
+	closed 		= function() end ,
 }
 
 ----------------------------------------------------------------------------------

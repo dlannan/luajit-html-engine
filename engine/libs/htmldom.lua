@@ -50,6 +50,7 @@ local dom_node = {
 local dom = {
     root        = dom_node,
     elookup     = {},    -- As elements are added, they are mapped here for fast eid->node fetch
+    styles      = {},    -- A collection of styles loaded in from css and style tags
 }
 
 local dom_root 		= dom.root
@@ -118,12 +119,13 @@ dom.traversenodes = function( ctx, node, funcs )
     if(node) then 
         funcs.pre(ctx, node)
         for k,v in pairs(node) do 
-			-- Might be a string index
-			if(type(k) == "number") then
-				if(type(v) == "table") then
+            -- Might be a string index
+            if(type(k) == "number") then
+                if(type(v) == "table") then
                     dom.traversenodes( ctx, v, funcs ) 
-				end
-			end
+                    v.parent = node
+                end
+            end
         end
         funcs.post(ctx, node)
     end
@@ -179,7 +181,7 @@ nodefuncs.pre = function( ctx, xml )
 		tinsert(stylestack, style)
 	end 
 
-	if(style.dontprocess == nil) then 
+	if(style.notextprocess == nil) then 
 		for k,v in pairs(xml) do 
 
 			if(type(k) == "number") then
@@ -209,6 +211,21 @@ nodefuncs.post = function(ctx, xml)
     local g         = xml.g
     local label     = xml.label
 
+    -- Called by style and link tags for css processing
+    if(style.cssprocess) then 
+        -- For initial processing, we store style text and css files into a lib. 
+        -- Layout pass handles the application of the styling.
+        for k,v in pairs(xml) do 
+            if(type(k) == "number" and type(v) == "string") then
+                local styledata = {
+                    data    = tostring(v),  -- force string 
+                    source  = "style",      -- changes if using link or css files
+                    node    = xml.parent,   -- which node owns this
+                }
+            end 
+        end
+    end
+    
 	-- Check label to close the element
 	if(label) then 
 		local iselement = htmlelements[label]

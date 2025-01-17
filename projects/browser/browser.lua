@@ -11,6 +11,8 @@ sg              = sgp
 sgl 			= sgp
 fs 				= sgp
 
+-- --------------------------------------------------------------------------------------
+
 local slib      = require("sokol_libs") -- Warn - always after gfx!!
 
 local hmm       = require("hmm")
@@ -18,13 +20,17 @@ local hutils    = require("hmm_utils")
 
 local duk 		= require("duktape")
 
-local utils     = require("utils")
-
-local ffi       = require("ffi")
-
-
 local htmlr 	= require("engine.libs.htmlrenderer") 
 local rapi 		= require("engine.libs.htmlrender-api")
+
+local utils     = require("utils")
+local ffi       = require("ffi")
+
+-- --------------------------------------------------------------------------------------
+
+ffi.cdef[[
+	void Sleep(uint32_t ms);
+]]
 
 -- --------------------------------------------------------------------------------------
 
@@ -78,6 +84,7 @@ browser.init = function (self)
 	htmlr.rendersize(w/2, h/1.2)
 
 	local filename = "projects/browser/data/html/sample01.html"
+	-- local filename = "projects/browser/data/html/tests/css-simple01.html"
 	htmlr.load(self, filename)
 
 	-- Toggle the visual profiler on hot reload.
@@ -165,7 +172,6 @@ end
 
 -- --------------------------------------------------------------------------------------
 
-
 browser.on_reload = function(self)
 end
 
@@ -200,7 +206,7 @@ local function input(event)
 end
 
 -- --------------------------------------------------------------------------------------
-
+local tick =0
 local function frame()
 
     -- Get current window size.
@@ -208,6 +214,9 @@ local function frame()
     local h         = sapp.sapp_heightf()
     local t         = (sapp.sapp_frame_duration() * 60.0)
     local ratio = w/h
+	tick = tick + 1
+
+	if(tick % 60 == 0) then print(t) end
 
     -- Begin recording draw commands for a frame buffer of size (width, height).
     sgp.sgp_begin(w, h)
@@ -247,13 +256,16 @@ local function frame()
     sgp.sgp_flush()
     -- Finish a draw command queue, clearing it.
     sgp.sgp_end()
-
+	-- Render the draw queue
 	sgl.sgl_draw()
 
     -- End render pass.
     sgp.sg_end_pass()
     -- Commit Sokol render.
     sg.sg_commit()
+
+	-- Give up some idle time - TODO: this is shitty. will remove
+	ffi.C.Sleep(10)
 end
 
 -- --------------------------------------------------------------------------------------
@@ -261,7 +273,6 @@ end
 local function cleanup()
 
 	browser:final()
-
     sgp.sgp_shutdown()
     sg.sg_shutdown()
 end
@@ -269,14 +280,14 @@ end
 -- --------------------------------------------------------------------------------------
 
 local app_desc = ffi.new("sapp_desc[1]")
-app_desc[0].init_cb     = init
-app_desc[0].frame_cb    = frame
-app_desc[0].cleanup_cb  = cleanup
-app_desc[0].event_cb	= input
-app_desc[0].width       = 1920
-app_desc[0].height      = 1080
-app_desc[0].window_title = "Browser Prototype (Sokol GP)"
-app_desc[0].fullscreen  = false
+app_desc[0].init_cb     	= init
+app_desc[0].frame_cb    	= frame
+app_desc[0].cleanup_cb  	= cleanup
+app_desc[0].event_cb		= input
+app_desc[0].width       	= 1920
+app_desc[0].height      	= 1080
+app_desc[0].window_title 	= "Browser Prototype (Sokol GP)"
+app_desc[0].fullscreen  	= false
 app_desc[0].icon.sokol_default = true 
 app_desc[0].logger.func = slib.slog_func 
 

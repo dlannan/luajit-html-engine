@@ -7,6 +7,7 @@ local layout    = require("engine.libs.htmllayout")
 
 return {
 	opened 		= function( g, style, xml )
+		libstyle.setpadding(style, 8, 0, 8, 0)
 		common.elementopen(g, style, xml)
 	end,
 	closed 		= function( g, style )

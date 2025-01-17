@@ -168,6 +168,7 @@ return {
 
     FONT_SIZES              = FONT_SIZES,
     TEXT_CONST              = TEXT_CONST,
+    TEXT_ALIGN              = TEXT_ALIGN,
 
     defaultmargin           = defaultmargin,
     defaultpadding          = defaultpadding,

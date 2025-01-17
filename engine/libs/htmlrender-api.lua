@@ -34,8 +34,11 @@ local cached_data 		= {}
 local state 			= ffi.new("state_t")
 local linear_sampler 	= ffi.new("sg_sampler[1]")
 
--- Helper methods
 -----------------------------------------------------------------------------------------------------------------------------------
+-- Helper methods
+
+local defaultalign 		= bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP)
+local defaultcolor 		= { r=255, g=255, b=255, a=255 }
 
 local function getRGBAColor( hexColor )
 
@@ -100,6 +103,7 @@ local function colorRect(x, y, w, h, color)
 end 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+
 local destrect = ffi.new("sgp_rect")
 local src_images 	= {}
 local function texRect(imageid, x, y, w, h, color)
@@ -141,8 +145,8 @@ local function load_image( filename)
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------
-local fontHeight = ffi.new("float[1]", {0.0})
 
+local fontHeight = ffi.new("float[1]", {0.0})
 local function getTextSize( text )
 	local ptr = ffi.cast("const char *", ffi.string(text))
 	local w = fs.fonsTextBounds(state.fons, 0, 0, ptr, nil, nil) / render_api.fontsize
@@ -152,6 +156,7 @@ local function getTextSize( text )
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------
+
 local lineCache = {}
 local function calcMultiLines(x, y, textw, texth, wrapwidth, text )
 	
@@ -298,7 +303,6 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Get the size of the text - returns width, and height
-
 render_api.text_getsize = function( text, fontscale, fontface, wrap_size )
 
 	fs.fonsSetSize(state.fons, fontscale * render_api.fontsize)
@@ -336,16 +340,38 @@ render_api.text = function( text, wrapwidth )
 	local w, h = getTextSize(text)
 	if(w > wrapwidth) then 
 		local parts  = calcMultiLines(x, y, w, h, wrapwidth, text)
-		fs.fonsSetAlign(state.fons, bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP))
+		--fs.fonsSetAlign(state.fons, bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP))
 		for i,p in ipairs(parts) do 
 			-- Alignment needs to be done by the css/style
 			fs.fonsDrawText(state.fons, x + p.x, y + p.y, p.text, nil)
 		end
 	else
 		-- Alignment needs to be done by the css/style
-		fs.fonsSetAlign(state.fons, bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP))
+		--fs.fonsSetAlign(state.fons, bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP))
 		fs.fonsDrawText(state.fons, x, y, text, nil)
 	end
+end
+
+-----------------------------------------------------------------------------------------------------------------------------------
+--  Set the text alignment of the following text
+render_api.set_text_align = function( align )
+
+	if(align == "center") then 
+		align = bit.bor(fs.FONS_ALIGN_CENTER, fs.FONS_ALIGN_TOP)
+	elseif(alight == "right") then 
+		align = bit.bor(fs.FONS_ALIGN_RIGHT, fs.FONS_ALIGN_TOP)
+	else 
+		align = bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP)
+	end
+
+	fs.fonsSetAlign(state.fons, align)
+end
+
+-----------------------------------------------------------------------------------------------------------------------------------
+--  Set the color of the following text
+render_api.set_text_color = function( text, color )
+	color = color or defaultcolor
+	fs.fonsSetColor(state.fons, fs.sfons_rgba(color.r, color.g, color.b, color.a))
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------
