@@ -1,3 +1,6 @@
+
+----------------------------------------------------------------------------------
+
 local cssColors = {
     aliceblue = {240, 248, 255, 255},
     antiquewhite = {250, 235, 215, 255},
@@ -142,6 +145,8 @@ local cssColors = {
 }
 --Use it: cssColors["aquamarine"]  
 
+----------------------------------------------------------------------------------
+
 local function getcolor(colorname)
     local col = cssColors[colorname]
     if(col == nil) then return nil end 
@@ -154,7 +159,11 @@ local function getcolor(colorname)
     }
 end 
 
+----------------------------------------------------------------------------------
+
 return  {
     colors      = cssColors,
     rgba_color  = getcolor,
 }
+
+----------------------------------------------------------------------------------
