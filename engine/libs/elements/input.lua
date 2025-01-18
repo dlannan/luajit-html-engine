@@ -12,7 +12,7 @@ return {
 		style.textsize 		= libstyle.FONT_SIZES.p
 		style.linesize 		= common.getlineheight(style)
 
-		-- Get the correct text size for the button
+        -- Get the correct text size for the button
 		local w, h = layout.gettextsize(g, style, attribs.value or "") 
 	
 		if(atype == "button" or atype == "submit") then 

@@ -17,6 +17,7 @@ local tremove       = table.remove
 local xmlp 		    = require("engine.libs.xmlparser") 
 local htmle 		= require("engine.libs.htmlelements")
 local layout        = require("engine.libs.htmllayout")
+local rapi 		    = require("engine.libs.htmlrender-api")
 
 local pcss          = require("lua.cssparse")
 local utils         = require("lua.utils")
@@ -29,12 +30,17 @@ local FONT_SIZES 	= htmle.FONT_SIZES
 ----------------------------------------------------------------------------------
 
 local styleempty = { 
-	textsize = FONT_SIZES.p, 
-	linesize = FONT_SIZES.p * 1.5, 
+	textsize    = FONT_SIZES.p, 
+	linesize    = FONT_SIZES.p * 1.5, 
 	maxlinesize = 0, 
-	width = 0, 
-	height = 0 
+	width       = 0, 
+	height      = 0,
 }
+
+styleempty.margin      = htmle.defaultmargin(styleempty)
+styleempty.padding     = htmle.defaultpadding(styleempty)
+styleempty.border      = htmle.defaultborder(styleempty)
+
 local stylestack    = {}
 stylestack[1] = deepcopy(styleempty)
 
@@ -143,7 +149,17 @@ end
 ----------------------------------------------------------------------------------
 -- Decode css and build lookups and selects for the html
 dom.processstyles = function()
+
+    -- Preprocess fonts first, and pass to rapi 
     -- Process style css format 1 line at a time. No tokenisation - I dont believe its needed?
+    for i,v in ipairs(dom.styles) do 
+        local csstbl = pcss.parse_css(v.data)
+        local fonts = pcss.preprocess_fonts(v.data)
+        for fi, fv in ipairs(fonts) do 
+            dom.renderCtx.add_font(fv.family, fv.src )
+        end
+    end
+
     for i,v in ipairs(dom.styles) do 
         local csstbl = pcss.parse_css(v.data)
         -- pcss.print_table(csstbl)
@@ -210,24 +226,31 @@ nodefuncs.pre = function( ctx, xml )
 	local style = deepcopy(currstyle)
 	local this_node = nil
 
-	if(style.margin == nil) then style.margin = htmle.defaultmargin(style) end
-	if(style.padding == nil) then style.padding = htmle.defaultpadding(style) end
-	if(style.border == nil) then style.border = htmle.defaultborder(style) end
 	local g = { ctx=ctx, cursor = dom.ctx.cursor, frame = dom.ctx.frame }
-
 	-- Check element names 
 	local label = nil
 	if( xml.label ) then label = string.lower(xml.label) end
 	if(label) then 
-		style.etype = label
+
+        style.etype = label
 		local iselement = htmlelements[label]	
 		if(iselement and iselement.opened) then 
 			-- Assign parent
 			style.pstyle = currstyle
+
             -- Fetch any selectors on this tag type 
-            if(dom.selectors[label]) then 
+            if(style and dom.selectors[label]) then 
                 style = utils.tmerge(style, dom.selectors[label]) 
             end
+            local class = xml.xarg["class"]
+            if(style and class and dom.selectors["."..class]) then 
+                style = utils.tmerge(style, dom.selectors["."..class]) 
+            end
+            local id = xml.xarg["id"]
+            if(style and id and dom.selectors["#"..id]) then 
+                style = utils.tmerge(style, dom.selectors["#"..id]) 
+            end
+
 			iselement.opened( g, style, xml ) 
 		end    
 		tinsert(stylestack, style)
@@ -250,8 +273,6 @@ nodefuncs.pre = function( ctx, xml )
 		end
 	end 
 
-    -- TODO: This isnt great. Needs to be better way to move state around.
-    xml.style     = style
     xml.g         = g
 end
 
@@ -259,7 +280,7 @@ end
 
 nodefuncs.post = function(ctx, xml)
 
-    local style     = xml.style
+    local style     = stylestack[#stylestack]
     local g         = xml.g
     local label     = xml.label
     
@@ -315,7 +336,7 @@ dom.loadxml = function( xmldata )
     -- remove parent style hierarchies from nodes
     dom.traversenodes( dom.renderCtx, dom.xmldoc, {
         pre = function(ctx, xml)
-            if(xml.style.pstyle) then xml.style.pstyle = nil end
+            if(xml.style and xml.style.pstyle) then xml.style.pstyle = nil end
         end,
         post = function(ctx, xml)
         end,

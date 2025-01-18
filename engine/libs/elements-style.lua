@@ -1,5 +1,6 @@
-local rapi 		= require("engine.libs.htmlrender-api")
-local layout    = require("engine.libs.htmllayout")
+local rapi 		    = require("engine.libs.htmlrender-api")
+local layout        = require("engine.libs.htmllayout")
+local styleprops    = require("engine.libs.styles.cssprop-handlers")
 
 ----------------------------------------------------------------------------------
 
@@ -102,6 +103,7 @@ end
 ----------------------------------------------------------------------------------
 
 local function gettextsize( g, style, text )
+    
 	local fontface 	= g.ctx.getstyle(style)
 	local fontscale = style.textsize/g.ctx.fontsize
 	local wrapwidth = (g.frame.width - g.cursor.left - style.margin.right) / (g.ctx.fontsize )
@@ -162,6 +164,43 @@ local function checkmargins( g, style )
 	end
 end 
 
+
+----------------------------------------------------------------------------------
+
+local function styleopen( g, style, xml )
+
+    -- TODO: This is a little slow, would prefer direct prop events/handler calls. 
+    --       Future work will remove this.
+    for k,v in pairs(style) do 
+        local sprop = styleprops[k]
+        if(sprop and sprop.open_handler ) then 
+            --- dostyle prop handling here. 
+            sprop.open_handler( g, style, xml )
+        end
+    end
+end
+
+----------------------------------------------------------------------------------
+
+local function styleclose( g, style, xml )
+    
+    local element 		= layout.getelement(style.elementid)
+	local geom 			= layout.getgeom()
+	local dim 			= geom[element.gid]
+    local pdim 			= geom[dim.pid]
+
+    for k,v in pairs(style) do 
+        local sprop = styleprops[k]
+        if( sprop and sprop.closed_handler ) then 
+            --- dostyle prop handling here. 
+            sprop.closed_handler( g, style, element, dim, pdim )
+        end
+    end
+
+	-- print(element.etype, dim.left, dim.top, dim.width, dim.height)
+	geom.renew( element.gid, dim.left, dim.top, dim.width, dim.height )
+end
+
 ----------------------------------------------------------------------------------
 
 return {
@@ -181,6 +220,8 @@ return {
     setborders              = style_setborders,
     checkmargins            = checkmargins,
 
+    close                   = styleclose,
+    open                    = styleopen,
 }
 
 ----------------------------------------------------------------------------------

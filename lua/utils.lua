@@ -79,7 +79,7 @@ end
 -- ---------------------------------------------------------------------------
 
 function tmerge(t1, t2)
-	if(t1 == nil) then t1 = {} end 
+	t1 = t1 or {}
 	if(t2 == nil) then return t1 end 
 	
 	for k, v in pairs(t2) do

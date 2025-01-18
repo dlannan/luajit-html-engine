@@ -40,10 +40,6 @@ local linear_sampler 	= ffi.new("sg_sampler[1]")
 local defaultalign 		= bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP)
 local defaultcolor 		= { r=255, g=255, b=255, a=255 }
 
-local lookupcolor		= {
-	red 		= { r=255, g=0, b=0, a=255 },
-}
-
 local function getRGBAColor( hexColor )
 
 	return {
@@ -222,10 +218,13 @@ render_api.setup = function(self)
 	self.renderCtx.fontsize = render_api.fontsize
 
 	self.renderCtx.getstyle = function( style )
+
 		local fontface = style.fontface or "Regular"
-		if(style.fontweight == 1) then fontface = "Bold" end 
-		if(style.fontstyle == 1) then fontface = "Italic" end 
-		if(style.fontstyle == 1 and style.fontweight == 1) then fontface = "BoldItalic" end 
+		if(fontface == "Regular") then 
+			if(style.fontweight == 1) then fontface = "Bold" end 
+			if(style.fontstyle == 1) then fontface = "Italic" end 
+			if(style.fontstyle == 1 and style.fontweight == 1) then fontface = "BoldItalic" end 
+		end
 		return self.renderCtx.fonts[fontface]
 	end 	
 
@@ -236,6 +235,13 @@ render_api.setup = function(self)
 
 	self.renderCtx.unsetstyle = function()
 	end 
+
+	self.renderCtx.add_font = function(fontname, fontfilename )
+
+		local fontloaded = fs.fonsAddFont(state.fons, fontname, fontfilename)
+		assert(fontloaded > -1)
+		self.renderCtx.fonts[fontname] = fontloaded
+	end
 
 	self.renderCtx.fsctx = fsctx
 	-- imgui.set_style_color(imgui.ImGuiCol_WindowBg, 1.00, 1.00, 1.00, 1.00)
@@ -374,7 +380,6 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Set the color of the following text
 render_api.set_text_color = function( color )
-	if(type(color) == "string") then color = lookupcolor[color] or nil end
 	color = color or defaultcolor
 	fs.fonsSetColor(state.fons, fs.sfons_rgba(color.r, color.g, color.b, color.a))
 end

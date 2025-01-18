@@ -83,8 +83,11 @@ browser.init = function (self)
     local h        	= sapp.sapp_heightf()
 	htmlr.rendersize(w/2, h/1.2)
 
-	local filename = "projects/browser/data/html/sample01.html"
+	-- local filename = "projects/browser/data/html/sample01.html"
 	-- local filename = "projects/browser/data/html/tests/css-simple01.html"
+	-- local filename = "projects/browser/data/html/tests/css-fonts01.html"
+	-- local filename = "projects/browser/data/html/tests/css-selectors-class01.html"
+	local filename = "projects/browser/data/html/tests/css-selectors-id01.html"
 	htmlr.load(self, filename)
 
 	-- Toggle the visual profiler on hot reload.

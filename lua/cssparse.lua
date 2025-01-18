@@ -38,6 +38,44 @@ local function parse_css(css_string)
     return css_table
 end
 
+local function preprocess_fonts(css)
+    -- Pattern to extract @font-face blocks from the CSS
+    local font_face_pattern = "@font%-face%s*{(.-)}"
+    local fonts = {}
+
+    -- Extract all @font-face rules
+    for font_block in css:gmatch(font_face_pattern) do
+        local font = {}
+        
+        -- Find the font-family and font-source (src) in the block
+        font.family = font_block:match("font%-family%s*:%s*([^;]+);")
+        font.src = font_block:match("src%s*:%s*([^;]+);")
+        
+        if font.family and font.src then
+            font.family = font.family:gsub("[\"']", "")
+            -- cleanup font.src to remove url(...) and only use the string
+            font.src = font.src:match("url%((.+)%)") or font.src
+            font.src = font.src:gsub("[\"']", "")
+            -- Store the fonts and the font source (you can use the font source URL here)
+            table.insert(fonts, font)
+        end
+    end
+
+    -- Print out the fonts for debugging
+    for _, font in ipairs(fonts) do
+        print("Font Family: " .. font.family)
+        print("Font Source: " .. font.src)
+        
+        -- Example: Simulate loading the font here (this is a placeholder)
+        -- In a real scenario, you would either download the font file or link it in the HTML.
+        -- For now, we'll just print that the font is "loaded".
+        print("Loading font " .. font.family .. " from source: " .. font.src)
+    end
+
+    -- Once fonts are processed, you can continue with the rest of the CSS parsing.
+    return fonts
+end
+
 -- Print the resulting table
 local function print_table(tbl, indent)
     indent = indent or 0
@@ -67,8 +105,9 @@ local function test()
 end 
 
 return {
-    parse_css       = parse_css,
-    print_table     = print_table,
+    parse_css           = parse_css,
+    print_table         = print_table,
+    preprocess_fonts    = preprocess_fonts,
 
-    test            = test,
+    test                = test,
 }

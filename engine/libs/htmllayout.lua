@@ -109,6 +109,7 @@ end
 local function updateelement( eid, element )
 	elements[eid] = element 
 end
+
 ----------------------------------------------------------------------------------
 -- TODO: this need to be changed to use element geometry instead of cursor.
 local function rendertext( g, v )

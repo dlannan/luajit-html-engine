@@ -12,8 +12,7 @@ return {
 		style.linesize 	= style.textsize
         if(style.pstyle) then 
             style.width = g.frame.width 
-        end
-
+        end        
 		libstyle.checkmargins( g, style )
 		common.elementopen(g, style, xml)
 	end,
