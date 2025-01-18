@@ -18,6 +18,7 @@ local xmlp 		    = require("engine.libs.xmlparser")
 local htmle 		= require("engine.libs.htmlelements")
 local layout        = require("engine.libs.htmllayout")
 
+local pcss          = require("lua.cssparse")
 local utils         = require("lua.utils")
 
 ----------------------------------------------------------------------------------
@@ -51,6 +52,7 @@ local dom = {
     root        = dom_node,
     elookup     = {},    -- As elements are added, they are mapped here for fast eid->node fetch
     styles      = {},    -- A collection of styles loaded in from css and style tags
+    selectors   = {},    -- From the styles a selectors table is build. To be used in xml parsing
 }
 
 local dom_root 		= dom.root
@@ -110,6 +112,14 @@ dom.getparent = function( node )
 end
 
 ----------------------------------------------------------------------------------
+
+dom.addstylesource = function( styledata )
+    
+    tinsert(dom.styles, styledata)
+    return #dom.styles
+end
+
+----------------------------------------------------------------------------------
 -- Simple node traversal
 ---   funcs is a set of functions that are called at different stages 
 ---   - funcs.pre  - execute before an element 
@@ -123,7 +133,6 @@ dom.traversenodes = function( ctx, node, funcs )
             if(type(k) == "number") then
                 if(type(v) == "table") then
                     dom.traversenodes( ctx, v, funcs ) 
-                    v.parent = node
                 end
             end
         end
@@ -132,24 +141,63 @@ dom.traversenodes = function( ctx, node, funcs )
 end
 
 ----------------------------------------------------------------------------------
--- Refreshes the layout data and geom for parent and children nodes
-dom.refreshnodes = function( topnode )
+-- Decode css and build lookups and selects for the html
+dom.processstyles = function()
+    -- Process style css format 1 line at a time. No tokenisation - I dont believe its needed?
+    for i,v in ipairs(dom.styles) do 
+        local csstbl = pcss.parse_css(v.data)
+        -- pcss.print_table(csstbl)
+        utils.tmerge( dom.selectors, csstbl )
+    end
+end
 
-    local geom = layout.getgeom()
+----------------------------------------------------------------------------------
+-- Pass js to duktape so it can be readied to be run. 
+--  NOTE: many core doms will need to be registered in duktape for this to work - TBD
+dom.processscripts = function()
+end
 
-    -- visit each node like layout does and call layout methods
-    -- dom.traversenodes( topnode, function(node) 
-    --     local e = layout.getelement(node.eid)
-    --     if(e) then 
-    --         local iselement = htmlelements[e.etype]
-    --         if(iselement) then 
-    --             local obj 			= geom.get( e.gid )
-    --             e.width 		= obj.width
-    --             e.height 		= obj.height
-    --             geom.renew( e.gid, e.pos.left, e.pos.top, e.width, e.height )
-    --         end
-    --     end
-    -- end)
+----------------------------------------------------------------------------------
+-- The style functions for preprocessing style data
+local stylefuncs = {}
+stylefuncs.pre = function(ctx, xml)
+
+    if(xml.label) then 
+        -- For initial processing, we store style text and css files into a lib. 
+        -- Layout pass handles the application of the styling.
+        if(xml.label == "style" or xml.label == "link") then 
+
+            if(xml.xarg["href"]) then 
+                local styledata = {
+                    data    = utils.loaddata(xml.xarg["href"]),  
+                    srctype = xml.label,    -- changes if using link or css files
+                    node    = xml.parent,   -- which node owns this
+                } 
+                if(xml.xarg["ref"]) then styledata.ref = xml.xarg["ref"] end
+                if(xml.xarg["type"]) then styledata.stype = xml.xarg["type"] end
+                dom.addstylesource( styledata )
+            else 
+                for k,v in pairs(xml) do 
+                    if(type(k) == "number" and type(v) == "string") then
+                        local styledata = {
+                            data    = tostring(v),  -- force string 
+                            srctype = xml.label,    -- changes if using link or css files
+                            node    = xml.parent,   -- which node owns this
+                        }
+                        dom.addstylesource( styledata )
+                    end 
+                end
+            end
+        end 
+
+        if(xml.label == "script") then 
+        end
+    end
+end
+
+----------------------------------------------------------------------------------
+
+stylefuncs.post = function(ctx, xml)
 end
 
 ----------------------------------------------------------------------------------
@@ -176,6 +224,10 @@ nodefuncs.pre = function( ctx, xml )
 		if(iselement and iselement.opened) then 
 			-- Assign parent
 			style.pstyle = currstyle
+            -- Fetch any selectors on this tag type 
+            if(dom.selectors[label]) then 
+                style = utils.tmerge(style, dom.selectors[label]) 
+            end
 			iselement.opened( g, style, xml ) 
 		end    
 		tinsert(stylestack, style)
@@ -210,21 +262,6 @@ nodefuncs.post = function(ctx, xml)
     local style     = xml.style
     local g         = xml.g
     local label     = xml.label
-
-    -- Called by style and link tags for css processing
-    if(style.cssprocess) then 
-        -- For initial processing, we store style text and css files into a lib. 
-        -- Layout pass handles the application of the styling.
-        for k,v in pairs(xml) do 
-            if(type(k) == "number" and type(v) == "string") then
-                local styledata = {
-                    data    = tostring(v),  -- force string 
-                    source  = "style",      -- changes if using link or css files
-                    node    = xml.parent,   -- which node owns this
-                }
-            end 
-        end
-    end
     
 	-- Check label to close the element
 	if(label) then 
@@ -264,6 +301,13 @@ dom.loadxml = function( xmldata )
 
     -- TODO: Put validation here later
     dom.xmldoc = xmldata
+
+    -- Pre process all style and css - this allows lookups when xml is processed and layout
+    dom.traversenodes( dom.renderCtx, dom.xmldoc, stylefuncs) 
+
+    dom.processstyles() 
+    dom.processscripts()
+
     -- Process the xml into our elements and dom tree items
     dom.traversenodes( dom.renderCtx, dom.xmldoc, nodefuncs ) 
     -- xmlp.dumpxml(dom.xmldoc)

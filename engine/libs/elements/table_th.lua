@@ -9,7 +9,7 @@ return {
 		style.fontweight 	= 1
 		common.elementopen(g, style, xml)
 	end,
-	closed 		= function( g, style )
+	closed 		= function( g, style, xml )
 
 		local element 		= layout.getelement(style.elementid)
 		local geom 			= layout.getgeom()
@@ -20,7 +20,7 @@ return {
 
 		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
 
-		common.elementclose(g, style)
+		common.elementclose(g, style, xml)
 		style.fontweight = nil
 	end,
 }

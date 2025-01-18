@@ -3,6 +3,37 @@ local layout        = require("engine.libs.htmllayout")
 
 ----------------------------------------------------------------------------------
 
+local function dostyles( g, style, xml )
+
+	local element 		= layout.getelement(style.elementid)
+	local geom 			= layout.getgeom()
+	local dim 			= geom[element.gid]
+
+	local pdim 			= geom[dim.pid]
+	local pstyle 		= style.pstyle 
+	local pwidth 		= pstyle.maxwidth or pstyle.width
+
+	-- TODO: This goes in a style check/runner
+	if(pdim and pstyle and style.etype == "text") then 
+
+		if(pstyle["text-align"] == "center") then 
+			dim.left = dim.left + pwidth / 2 - element.width / 2
+			element.pos.left = element.pos.left + pwidth / 2
+		elseif(pstyle["text-align"] == "right") then
+			dim.left = dim.left + pwidth - element.width
+			element.pos.left = element.pos.left + pwidth - element.width
+		end
+
+		if(element.color) then 
+
+
+		end 
+	end
+end
+
+
+----------------------------------------------------------------------------------
+
 local function elementopen( g, style, xml )
 
 	local element 		= layout.addelement( g, style, xml.xarg )
@@ -15,24 +46,13 @@ end
 
 ----------------------------------------------------------------------------------
 
-local function elementclose( g, style )
+local function elementclose( g, style, xml )
 
 	local element 		= layout.getelement(style.elementid)
 	local geom 			= layout.getgeom()
 	local dim 			= geom[element.gid]
 
-	local pdim 			= geom[dim.pid]
-	local pstyle 		= style.pstyle 
-	if(pdim and pstyle and style.etype == "text") then 
-		local alignoff = 0
-		if(pstyle["text-align"] == "center") then 
-			dim.left = dim.left + pdim.width / 2 - element.width / 2
-			element.pos.left = element.pos.left + pdim.width / 2
-		elseif(pstyle["text-align"] == "right") then
-			dim.left = dim.left + pdim.width - element.width
-			element.pos.left = element.pos.left + pdim.width - element.width
-		end
-	end
+	dostyles(g, style, xml)
 
 	-- print(element.etype, dim.left, dim.top, dim.width, dim.height)
 	geom.renew( element.gid, dim.left, dim.top, dim.width, dim.height )

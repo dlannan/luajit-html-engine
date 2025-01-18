@@ -10,6 +10,9 @@ return {
 		style.textsize 	= libstyle.FONT_SIZES.p
 		style.margin 	= libstyle.getmargin(style, libstyle.TEXT_CONST.MARGINS, 2)
 		style.linesize 	= style.textsize
+        if(style.pstyle) then 
+            style.width = g.frame.width 
+        end
 
 		libstyle.checkmargins( g, style )
 		common.elementopen(g, style, xml)

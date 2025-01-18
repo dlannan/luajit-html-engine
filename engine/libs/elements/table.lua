@@ -108,7 +108,7 @@ return {
 		element.height 		= obj.height
 
 		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
-		common.elementclose(g, style)		
+		common.elementclose(g, style, xml)		
 	end,
 }
 

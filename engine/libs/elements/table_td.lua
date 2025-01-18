@@ -10,7 +10,7 @@ return {
 		libstyle.setpadding(style, 8, 0, 8, 0)
 		common.elementopen(g, style, xml)
 	end,
-	closed 		= function( g, style )
+	closed 		= function( g, style, xml )
 
 
 		local element 		= layout.getelement(style.elementid)
@@ -21,7 +21,7 @@ return {
 		element.height 		= obj.height
 
 		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
-		common.elementclose(g, style)
+		common.elementclose(g, style, xml)
 	end,
 }
 

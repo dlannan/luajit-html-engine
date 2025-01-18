@@ -9,8 +9,8 @@ return {
 		style.fontweight 	= 1
 		common.elementopen(g, style, xml)
 	end,
-	closed 		= function( g, style )
-		common.elementclose(g, style)
+	closed 		= function( g, style, xml )
+		common.elementclose(g, style, xml)
 		style.fontweight = nil
 	end,
 }

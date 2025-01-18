@@ -40,6 +40,10 @@ local linear_sampler 	= ffi.new("sg_sampler[1]")
 local defaultalign 		= bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP)
 local defaultcolor 		= { r=255, g=255, b=255, a=255 }
 
+local lookupcolor		= {
+	red 		= { r=255, g=0, b=0, a=255 },
+}
+
 local function getRGBAColor( hexColor )
 
 	return {
@@ -369,7 +373,8 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Set the color of the following text
-render_api.set_text_color = function( text, color )
+render_api.set_text_color = function( color )
+	if(type(color) == "string") then color = lookupcolor[color] or nil end
 	color = color or defaultcolor
 	fs.fonsSetColor(state.fons, fs.sfons_rgba(color.r, color.g, color.b, color.a))
 end

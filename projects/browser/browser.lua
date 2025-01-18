@@ -126,6 +126,7 @@ end
 -- Handle incoming input events from mouse/keyboard/touch etc
 
 browser.on_input = function(self, event)
+
 	-- if action_id == LEFT_MOUSE or action_id == MIDDLE_MOUSE or action_id == RIGHT_MOUSE then
 	-- 	if action.pressed then
 	-- 		self.mouse.buttons[action_id] = 1
@@ -216,7 +217,7 @@ local function frame()
     local ratio = w/h
 	tick = tick + 1
 
-	if(tick % 60 == 0) then print(t) end
+	-- if(tick % 60 == 0) then print(t) end
 
     -- Begin recording draw commands for a frame buffer of size (width, height).
     sgp.sgp_begin(w, h)
@@ -240,6 +241,9 @@ local function frame()
     -- sgp.sgp_rotate_at(time, 0.0, 0.0)
     -- sgp.sgp_draw_filled_rect(-0.5, -0.5, 1.0, 1.0)
 
+	-- Must go here because the sokol 2d drawing happens within the rapi
+	--  NOTE: This might be separated later with procs so we can have multiple render 
+	--        processes running (making best use of cores and mp)
 	browser:update(t)
 
     -- Begin a render pass.
