@@ -183,6 +183,14 @@ local function renderimage( g, v )
 end 
 
 ----------------------------------------------------------------------------------
+
+local function renderrectfilled( g, v )
+	local ele = getelement( v.eid )
+	local posx, posy = ele.pos.left + g.ctx.ctx.window.x, ele.pos.top + g.ctx.ctx.window.y
+	rapi.draw_rect_filled( posx, posy, ele.width, ele.height, v.bgcolor)
+end
+
+----------------------------------------------------------------------------------
 local bgcolor		= { r=1, g=1, b=1, a=1 }
 local brdrcolor 	= { r=0, g=0, b=0, a=1 }
 local margincolor 	= { r=0, g=0, b=1, a=1 }
@@ -218,6 +226,11 @@ local function doraster( )
 	for k, v in ipairs( render ) do 
 
 		local g = { ctx = v.ctx, cursor=v.cursor, frame = v.frame }
+
+		if(v.bgcolor) then 
+			renderrectfilled(g, v)
+		end
+
 		if( v.etype == "inputtext" ) then 
 			renderinputtext(g, v)
 		end 
@@ -422,6 +435,34 @@ local function addimageobject( g, style )
 	render_lookup[renderobj.eid] = #render
 end 
 
+
+----------------------------------------------------------------------------------
+
+local function addbackground( g, style )
+
+	local stylecopy = deepcopy(style)
+
+	-- Try to treat _all_ output as text + style. Style here means a css objects type
+	--    like border, background, size, margin etc
+	local renderobj = { 
+		ctx 	= g, 
+		etype 	= style.etype,
+		eid 	= style.elementid,
+		style 	= stylecopy, 
+		bgcolor = style["background-color"],
+		cursor 	= { top = g.cursor.top, left = g.cursor.left },
+		frame  	= { top = g.frame.top, left = g.frame.left },
+	}
+
+	local pid = getparent(style)
+	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
+	geom.update( renderobj.gid )
+
+	-- Render obejcts are queued in order of the output data with the correct styles
+	tinsert(render, renderobj)
+	render_lookup[renderobj.eid] = #render
+end 
+
 ----------------------------------------------------------------------------------
 
 local function addlayout( layout )
@@ -447,6 +488,7 @@ return {
 	addbuttonobject	= addbuttonobject,
 	addinputtextobject = addinputtextobject,
 	addimageobject	= addimageobject,
+	addbackground	= addbackground,
 
 	addtablecolumn	= addtablecolumn,
 	addtablerow 	= addtablerow,

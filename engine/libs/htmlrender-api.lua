@@ -440,10 +440,24 @@ end
 
 render_api.draw_rect = function( x, y, w, h, color )
 
-	local c = getRGBAColor(color)
+	local c = color or defaultcolor
+	if(type(c) == "number") then c = getRGBAColor(color) end
 	-- print( c.r, c.g, c.b, c.a )
 	sgp.sgp_set_color( c.r, c.g, c.b, c.a )
     drawRect(x, y, tonumber(w), tonumber(h))
+	-- print( string.format("%03d %03d %03d %03d  %04x", x, y, w, h, color) )
+end
+
+-----------------------------------------------------------------------------------------------------------------------------------
+--  Draw rectangles filled
+
+render_api.draw_rect_filled = function( x, y, w, h, color )
+
+	local c = color or defaultcolor
+	if(type(c) == "number") then c = getRGBAColor(color) end
+	-- print( c.r, c.g, c.b, c.a )
+	sgp.sgp_set_color( c.r, c.g, c.b, c.a )
+    colorRect(x, y, tonumber(w), tonumber(h), color)
 	-- print( string.format("%03d %03d %03d %03d  %04x", x, y, w, h, color) )
 end
 

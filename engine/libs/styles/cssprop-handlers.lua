@@ -28,7 +28,7 @@ local css_properties = {
     
     -- Background
     "background",     -- Background shorthand (color/image)
-    "background-color", -- Background color
+    ["background-color"]  = require("engine.libs.styles.handler-background-color"), -- Background color
     "background-image", -- Background image URL
     "background-repeat", -- Repeat pattern (no-repeat, repeat-x, etc.)
     "background-size", -- Background size (cover, contain, etc.)

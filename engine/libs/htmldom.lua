@@ -181,8 +181,18 @@ stylefuncs.pre = function(ctx, xml)
     if(xml.label) then 
         -- For initial processing, we store style text and css files into a lib. 
         -- Layout pass handles the application of the styling.
-        if(xml.label == "style" or xml.label == "link") then 
-
+        if(xml.label == "style" ) then 
+            for k,v in pairs(xml) do 
+                if(type(k) == "number" and type(v) == "string") then
+                    local styledata = {
+                        data    = tostring(v),  -- force string 
+                        srctype = xml.label,    -- changes if using link or css files
+                        node    = xml.parent,   -- which node owns this
+                    }
+                    dom.addstylesource( styledata )
+                end 
+            end
+        elseif(xml.label == "link") then 
             if(xml.xarg["href"]) then 
                 local styledata = {
                     data    = utils.loaddata(xml.xarg["href"]),  
@@ -192,17 +202,6 @@ stylefuncs.pre = function(ctx, xml)
                 if(xml.xarg["ref"]) then styledata.ref = xml.xarg["ref"] end
                 if(xml.xarg["type"]) then styledata.stype = xml.xarg["type"] end
                 dom.addstylesource( styledata )
-            else 
-                for k,v in pairs(xml) do 
-                    if(type(k) == "number" and type(v) == "string") then
-                        local styledata = {
-                            data    = tostring(v),  -- force string 
-                            srctype = xml.label,    -- changes if using link or css files
-                            node    = xml.parent,   -- which node owns this
-                        }
-                        dom.addstylesource( styledata )
-                    end 
-                end
             end
         end 
 

@@ -5,6 +5,7 @@ local no_close_tags = {
   ["br"]     = true,
   ["img"]    = true,
   ["input"]  = true,
+  ["link"]   = true,
 }
 
 local function parseargs(s)

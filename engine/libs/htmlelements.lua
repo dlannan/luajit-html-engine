@@ -66,6 +66,7 @@ htmlelements["script"] 		= require("engine.libs.elements.script")
 ----------------------------------------------------------------------------------
 -- Style/CSS elements 
 htmlelements["style"] 		= require("engine.libs.elements.style")
+htmlelements["link"] 		= require("engine.libs.elements.link")
 
 ----------------------------------------------------------------------------------
 -- Head specific elements 

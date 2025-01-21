@@ -7,10 +7,15 @@ local function elementopen( g, style, xml )
 
 	libstyle.open(g, style, xml)
 	local element 		= layout.addelement( g, style, xml.xarg )
+	
     -- style.peid          = style.elementid
 	style.elementid 	= element.id
 	xml.eid 			= element.id
 	element.cursor_top 	= g.cursor.top
+
+	if(style["background-color"]) then 
+		layout.addbackground( g, style )
+	end
 
 	return element
 end 

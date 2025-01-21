@@ -1,22 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="stylesheet" type="text/css" href="projects/browser/data/css/mystyle.css">
 <style>
-p.center {
-  text-align: center;
-  color: red;
-}
-
-p.large {
-  font-size: 300%;
-}
+body {background-color: linen;}
 </style>
 </head>
-<body>
+<body style="background-color: lavender">
 
-<h1 class="center">This heading will not be affected</h1>
-<p class="center">This paragraph will be red and center-aligned.</p>
-<p class="center large">This paragraph will be red, center-aligned, and in a large font-size.</p> 
+<h1>Multiple Styles Will Cascade into One</h1>
+<p>Here, the background color of the page is set with inline CSS, and also with an internal CSS, and also with an external CSS.</p>
+<p>Try experimenting by removing styles to see how the cascading stylesheets work (try removing the inline CSS first, then the internal, then the external).</p>
 
 </body>
 </html>
