@@ -162,8 +162,9 @@ end
 ----------------------------------------------------------------------------------
 
 return  {
-    colors      = cssColors,
-    rgba_color  = getcolor,
+    buttoncolor     = getcolor("lightgray"),
+    colors          = cssColors,
+    rgba_color      = getcolor,
 }
 
 ----------------------------------------------------------------------------------

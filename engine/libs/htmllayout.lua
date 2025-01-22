@@ -6,6 +6,7 @@ local tremove 	= table.remove
 require("engine.utils.copy")
 local GM 		= require("engine.libs.htmlgeom")
 local rapi 		= require("engine.libs.htmlrender-api")
+local csscolors = require("engine.libs.styles.csscolors")
 
 local utils 	= require("lua.utils")
 
@@ -142,7 +143,8 @@ local function renderbutton( g, v )
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
 	-- imgui.begin_child(tostring(v.eid), ele.width, ele.height)
 	g.ctx.ctx.setstyle(style)
-	local changed, pressed = rapi.button(v.text or "", ele.width, ele.height )
+	local color = csscolors.buttoncolor
+	local changed, pressed = rapi.button(v.text or "", ele.width, ele.height, color )
 	if changed then 
 		-- self.counter = self.counter + 1
 	end

@@ -395,11 +395,11 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Render buttons using the specified interface
-render_api.button = function( text, w, h )
+render_api.button = function( text, w, h, color )
 
 	local x, y = render_api.left + render_api.window.x, render_api.top + render_api.window.y
 	-- imgui.button( text, w, h ) 
-	colorRect( x, y, tonumber(w), tonumber(h))
+	colorRect( x, y, tonumber(w), tonumber(h), color)
 	fs.fonsDrawText(state.fons, x, y, text, nil)
 end
 
