@@ -38,7 +38,7 @@ local linear_sampler 	= ffi.new("sg_sampler[1]")
 -- Helper methods
 
 local defaultalign 		= bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP)
-local defaultcolor 		= { r=255, g=255, b=255, a=255 }
+local defaultcolor 		= { r=0, g=0, b=0, a=255.0 }
 
 local function getRGBAColor( hexColor )
 
@@ -97,7 +97,7 @@ end
 local function colorRect(x, y, w, h, color)
 	color = color or { r = 1.0, g = 0.0, b = 1.0, a = 1.0 }
 	sgp.sgp_push_transform()
-	sgp.sgp_set_color(color.r, color.g, color.b, color.a)
+	sgp.sgp_set_color(color.r * 0.00390625, color.g * 0.00390625, color.b * 0.00390625, color.a * 0.00390625)
 	sgp.sgp_draw_filled_rect(x, y, w, h)
 	sgp.sgp_pop_transform()
 end 

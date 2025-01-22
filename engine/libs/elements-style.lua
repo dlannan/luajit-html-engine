@@ -44,6 +44,11 @@ local TEXT_ALIGN = {
 
 ----------------------------------------------------------------------------------
 
+local defaultlinesize 	= FONT_SIZES.normal
+local defaultheight 	= FONT_SIZES.normal
+
+----------------------------------------------------------------------------------
+
 local function defaultmargin( style ) 
 
 	return { 
@@ -77,6 +82,20 @@ local function defaultborder( style )
 		right 	= 0,
 	}
 end 
+
+----------------------------------------------------------------------------------
+
+local defaultstyle = { 
+	textsize    = FONT_SIZES.normal, 
+	linesize    = FONT_SIZES.normal, 
+	maxlinesize = 0, 
+	width       = 0, 
+	height      = 0,
+}
+
+defaultstyle.margin      = defaultmargin(defaultstyle)
+defaultstyle.padding     = defaultpadding(defaultstyle)
+defaultstyle.border      = defaultborder(defaultstyle)
 
 ----------------------------------------------------------------------------------
 
@@ -183,7 +202,7 @@ end
 ----------------------------------------------------------------------------------
 
 local function styleclose( g, style, xml )
-    
+
     local element 		= layout.getelement(style.elementid)
 	local geom 			= layout.getgeom()
 	local dim 			= geom[element.gid]
@@ -209,9 +228,14 @@ return {
     TEXT_CONST              = TEXT_CONST,
     TEXT_ALIGN              = TEXT_ALIGN,
 
+	defaultstyle			= defaultstyle,
+	 
     defaultmargin           = defaultmargin,
     defaultpadding          = defaultpadding,
     defaultborder           = defaultborder, 
+
+	defaultlinesize			= defaultlinesize,
+	defaultheight 			= defaultheight,
 
     getmargin               = getmargin,
     setmargins              = style_setmargins,

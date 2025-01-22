@@ -273,6 +273,7 @@ nodefuncs.pre = function( ctx, xml )
 	end 
 
     xml.g         = g
+    xml.style     = style
 end
 
 ----------------------------------------------------------------------------------

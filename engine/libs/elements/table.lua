@@ -58,7 +58,7 @@ return {
 		end
 
 		-- Reset cursor to match this current table node position
-		local cursor = { left = geomobj.left, top = geomobj.top }
+		g.cursor = { left = geomobj.left, top = geomobj.top }
 
 		local function doelement( cursor, c, idx )
 			local element 		= layout.getelement(c.eid)
@@ -81,6 +81,7 @@ return {
 			geom.update(element.gid)
 		end
 
+		local height = g.cursor.top
 		for k,v in pairs(xml) do
 			if(type(k) == "number" and type(v) == "table") then
 				local idx = 1
@@ -88,26 +89,29 @@ return {
 				for kc, vc in pairs(v) do 
 					if(type(kc) == "number" and type(vc) == "table") then
 						if(vc[1].label == "text") then 
-							dotext( cursor, vc[1], vc ) 
+							dotext( g.cursor, vc[1], vc ) 
 						end
-						doelement( cursor, vc, idx)
+						doelement( g.cursor, vc, idx)
 						idx = idx + 1
 					end
 				end
-				cursor.left = geomobj.left
-				cursor.top = cursor.top + xml.style.linesize
-				-- common.stepline( { cursor = cursor, frame = xml.g.frame }, xml.style)
+				g.cursor.left = geomobj.left			
+				-- cursor.top = cursor.top + xml.style.linesize end
+				common.stepline( g, xml.style)
 			end
 		end
+		height = g.cursor.top - height
 
 		local element 		= layout.getelement(xml.eid)
 		local geom 			= layout.getgeom()
 		local obj 			= geom.get( element.gid )
 
 		element.width 		= obj.width
-		element.height 		= obj.height
+		element.height 		= height
+		print(height)
 
 		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
+		geom.update( element.gid )
 		common.elementclose(g, style, xml)		
 	end,
 }

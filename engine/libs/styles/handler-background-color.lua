@@ -15,7 +15,6 @@ return {
         end
         -- Convert from various types to rgba in use in rapi
         style["background-color"] = color
-        print("TYPE:", style.etype)
     end 
 }
 

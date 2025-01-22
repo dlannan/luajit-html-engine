@@ -184,10 +184,11 @@ end
 
 ----------------------------------------------------------------------------------
 
-local function renderrectfilled( g, v )
+local function renderrectfilled( g, v)
 	local ele = getelement( v.eid )
-	local posx, posy = ele.pos.left + g.ctx.ctx.window.x, ele.pos.top + g.ctx.ctx.window.y
-	rapi.draw_rect_filled( posx, posy, ele.width, ele.height, v.bgcolor)
+	local geomobj = geom[ele.gid]
+	local posx, posy =  geomobj.left + g.ctx.ctx.window.x,  geomobj.top + g.ctx.ctx.window.y
+	rapi.draw_rect_filled( posx, posy, geomobj.width, geomobj.height, v.bgcolor)
 end
 
 ----------------------------------------------------------------------------------
@@ -223,13 +224,18 @@ end
 
 local function doraster( )
 
+	-- Process backgrounds first - this will need to be z-index ordered at some stage
+	local g = { ctx = elements[1].ctx, cursor=elements[1].cursor, frame = elements[1].frame }
+	for k, v in ipairs( render ) do 
+		if(v.bgcolor) then 
+			-- print(v.etype, v.bgcolor.r, v.bgcolor.g, v.bgcolor.b, v.width, v.height)
+			if(v.etype ~= "p") then renderrectfilled(g, v) end
+		end
+	end
+
 	for k, v in ipairs( render ) do 
 
 		local g = { ctx = v.ctx, cursor=v.cursor, frame = v.frame }
-
-		if(v.bgcolor) then 
-			renderrectfilled(g, v)
-		end
 
 		if( v.etype == "inputtext" ) then 
 			renderinputtext(g, v)
@@ -438,29 +444,37 @@ end
 
 ----------------------------------------------------------------------------------
 
-local function addbackground( g, style )
+local function addbackground( g, style, xml )
 
-	local stylecopy = deepcopy(style)
+	local robj = render[render_lookup[style.elementid]]
+	-- If element already has been added to geom, then just set its bgcolor)
+	if(robj) then 
+		local geomobj 	= geom[style.elementid]
+		robj.bgcolor = style["background-color"]
+	else
+		local stylecopy = deepcopy(style)
 
-	-- Try to treat _all_ output as text + style. Style here means a css objects type
-	--    like border, background, size, margin etc
-	local renderobj = { 
-		ctx 	= g, 
-		etype 	= style.etype,
-		eid 	= style.elementid,
-		style 	= stylecopy, 
-		bgcolor = style["background-color"],
-		cursor 	= { top = g.cursor.top, left = g.cursor.left },
-		frame  	= { top = g.frame.top, left = g.frame.left },
-	}
+		-- Try to treat _all_ output as text + style. Style here means a css objects type
+		--    like border, background, size, margin etc
+		local renderobj = { 
+			ctx 	= g, 
+			etype 	= style.etype,
+			eid 	= style.elementid,
+			style 	= stylecopy, 
+			bgcolor = style["background-color"],
+			cursor 	= { top = g.cursor.top, left = g.cursor.left },
+			frame  	= { top = g.frame.top, left = g.frame.left },
+		}
 
-	local pid = getparent(style)
-	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
-	geom.update( renderobj.gid )
+		local geomobj 	= geom[renderobj.eid]
+		local pid = getparent(style)
+		renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
+		geom.update( renderobj.gid )
 
-	-- Render obejcts are queued in order of the output data with the correct styles
-	tinsert(render, renderobj)
-	render_lookup[renderobj.eid] = #render
+		-- Render obejcts are queued in order of the output data with the correct styles
+		tinsert(render, renderobj)
+		render_lookup[renderobj.eid] = #render
+	end
 end 
 
 ----------------------------------------------------------------------------------

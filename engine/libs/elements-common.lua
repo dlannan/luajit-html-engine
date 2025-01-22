@@ -13,10 +13,6 @@ local function elementopen( g, style, xml )
 	xml.eid 			= element.id
 	element.cursor_top 	= g.cursor.top
 
-	if(style["background-color"]) then 
-		layout.addbackground( g, style )
-	end
-
 	return element
 end 
 
@@ -25,8 +21,10 @@ end
 local function elementclose( g, style, xml )
 
 	libstyle.close(g, style, xml)
+	if(style["background-color"]) then 
+		layout.addbackground( g, style, xml )
+	end
 end 
-
 
 ----------------------------------------------------------------------------------
 -- 
@@ -79,6 +77,8 @@ end
 
 local function stepline( g, style )
 	-- Step a line
+	--style = style or libstyle.defaultstyle
+
 	g.cursor.top 	= g.cursor.top + style.linesize
 	-- Add in the collated margin from the bottom
 	g.cursor.element_top = g.cursor.top
