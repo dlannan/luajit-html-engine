@@ -40,9 +40,7 @@ local function textopened( g, style, xml )
 
 	if(style.linesize < style.height) then style.linesize = style.height end 
 	
-	layout.addtextobject( g, style, text )	
-	-- if parent is th, then check alignment or if style.text_align is set 
-	-- elementclose(g, style)
+	layout.addtextobject( g, style, text )		
 end
 
 ----------------------------------------------------------------------------------

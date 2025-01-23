@@ -121,6 +121,7 @@ local function rendertext( g, v )
 	if(type(text) ~= "string") then return end 
 
 	local ele 	= getelement( v.eid )
+-- if(text == "Company") then print(v.etype, v.eid) end
 
 	-- This pushes a font!
 	g.ctx.ctx.setstyle(style)

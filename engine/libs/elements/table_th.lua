@@ -8,11 +8,12 @@ return {
 	opened 		= function( g, style, xml )
 		style.fontweight 	= 1
 		common.elementopen(g, style, xml)
+		style["text-align"] = "center"
 	end,
 	closed 		= function( g, style, xml )
 
-		local element 		= layout.getelement(style.elementid)
 		local geom 			= layout.getgeom()
+		local element 		= layout.getelement(style.elementid)
 		local obj 			= geom.get( element.gid )
 
 		element.width 		= obj.width

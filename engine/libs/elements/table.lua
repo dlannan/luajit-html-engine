@@ -70,14 +70,21 @@ return {
 			cursor.left 	= cursor.left + element.width
 		end
 
-		local function dotext( cursor, te, pe )
+		local function dotext( cursor, te, pe, idx )
 
 			local element 		= layout.getelement(te.eid)
 			local render 		= layout.getrenderobj(te.eid)
 			local dim 			= geom[element.gid]
-			element.pos.left 	= cursor.left
+
+			local off = 0
+			local pelement 		= layout.getelement(pe.eid)
+			if(pelement.etype == "th") then 
+				off = cols[idx]/2 
+			end
+
+			element.pos.left 	= cursor.left + off
 			element.pos.top 	= cursor.top
-			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
+			geom.renew( element.gid, element.pos.left, element.pos.top, dim.width, dim.height )
 			geom.update(element.gid)
 		end
 
@@ -89,13 +96,13 @@ return {
 				for kc, vc in pairs(v) do 
 					if(type(kc) == "number" and type(vc) == "table") then
 						if(vc[1].label == "text") then 
-							dotext( g.cursor, vc[1], vc ) 
+							dotext( g.cursor, vc[1], vc, idx ) 
 						end
 						doelement( g.cursor, vc, idx)
 						idx = idx + 1
 					end
 				end
-				g.cursor.left = geomobj.left			
+
 				-- cursor.top = cursor.top + xml.style.linesize end
 				common.stepline( g, xml.style)
 			end
@@ -108,7 +115,6 @@ return {
 
 		element.width 		= obj.width
 		element.height 		= height
-		print(height)
 
 		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
 		geom.update( element.gid )
