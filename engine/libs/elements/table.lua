@@ -65,6 +65,8 @@ return {
 			local dim 			= geom[element.gid]
 			dim.width = cols[idx]
 			element.width = cols[idx]
+			element.pos.left 	= cursor.left
+			element.pos.top 	= cursor.top
 			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
 			geom.update(element.gid)
 			cursor.left 	= cursor.left + element.width
@@ -79,7 +81,7 @@ return {
 			local off = 0
 			local pelement 		= layout.getelement(pe.eid)
 			if(pelement.etype == "th") then 
-				off = cols[idx]/2 
+				off = cols[idx]/2 - dim.width/2
 			end
 
 			element.pos.left 	= cursor.left + off

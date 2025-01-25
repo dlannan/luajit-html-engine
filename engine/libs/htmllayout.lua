@@ -127,9 +127,8 @@ local function rendertext( g, v )
 	g.ctx.ctx.setstyle(style)
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
 	rapi.set_window_font_scale(style.textsize/g.ctx.ctx.fontsize)
-	rapi.set_text_align(style["text-align"])
 	rapi.set_text_color(style["color"])
-	rapi.text( text, ele.width + g.cursor.left + g.frame.left )
+	rapi.text( text, ele.width + g.frame.left, style["text-align"] )
 	-- Always do this when using fontface
 	g.ctx.ctx.unsetstyle()
 end 

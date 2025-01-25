@@ -344,10 +344,16 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Render text using the specified interface
-render_api.text = function( text, wrapwidth )
+render_api.text = function( text, wrapwidth, align )
 
+	align = align or "left"
+	render_api.set_text_align(align)
 	local x, y = render_api.left + render_api.window.x, render_api.top + render_api.window.y
 	local w, h = getTextSize(text)
+
+	-- If align is center then text is positionsed by its middle. Add half text width!
+	if(align == "center") then x = x + w/2 end
+
 	if(w > wrapwidth) then 
 		local parts  = calcMultiLines(x, y, w, h, wrapwidth, text)
 		--fs.fonsSetAlign(state.fons, bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP))
