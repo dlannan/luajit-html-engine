@@ -19,12 +19,14 @@ local hmm       = require("hmm")
 local hutils    = require("hmm_utils")
 
 local duk 		= require("duktape")
+local events 	= require("projects.browser.events")
 
 local htmlr 	= require("engine.libs.htmlrenderer") 
 local rapi 		= require("engine.libs.htmlrender-api")
 
 local utils     = require("utils")
 local ffi       = require("ffi")
+
 
 -- --------------------------------------------------------------------------------------
 
@@ -64,6 +66,8 @@ function native_print(ctx)
 	print(string.format("%s", ffi.string(duk.duk_to_string(ctx, 0))))
 	return 0 
 end
+
+-- --------------------------------------------------------------------------------------
 
 browser.init = function (self)
 
@@ -116,8 +120,9 @@ end
 browser.update = function(self, dt)
 
 	rapi.start(self)
-	htmlr.render( { left=10, top=10.0 } )
+	htmlr.render( { left=50, top=50.0 } )
 	rapi.finish(self)
+	events.process()
 end
 
 -- --------------------------------------------------------------------------------------
@@ -131,6 +136,9 @@ end
 -- Handle incoming input events from mouse/keyboard/touch etc
 
 browser.on_input = function(self, event)
+
+	events.add_event(event)
+    -- const float dpi_scale = _snuklear.desc.dpi_scale;
 
 	-- if action_id == LEFT_MOUSE or action_id == MIDDLE_MOUSE or action_id == RIGHT_MOUSE then
 	-- 	if action.pressed then

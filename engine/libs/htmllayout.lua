@@ -10,6 +10,8 @@ local csscolors = require("engine.libs.styles.csscolors")
 
 local utils 	= require("lua.utils")
 
+local events 	= require("projects.browser.events")
+
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
 local enableDebug 			= 1
 local enableDebugElements 	= nil
@@ -275,17 +277,39 @@ end
 
 ----------------------------------------------------------------------------------
 -- Gen new geom layout every frame?!! (for now - this will be cached later)
-geom 		= GM.create(frame, cursor)
+geom 		= GM.create(frame, cursor) 
+
+-- --------------------------------------------------------------------------------------
+
+function MouseMoved(ev) 
+
+	print(ev.pos.x, ev.pos.y)
+	local results = geom.query(ev.pos.x - geom.frame.left, ev.pos.y- geom.frame.top)
+	print("Results: ", #results)
+end
+
+-- --------------------------------------------------------------------------------------
 
 local function init(frame, cursor) 
 	layout 		= {}
+
+	geom.frame 		= frame 
+	geom.cursor 	= cursor
+	rapi.window.x 	= frame.left
+	rapi.window.y 	= frame.top
 
 	-- These are now all generated during load of xml objects. 
 	--   New objects can be added at runtime too!
 	-- render 		= {}
 	-- elements 	= {}
 	-- geom.clear()
+
+	-- add some simple responders for events 
+	events.clear_responders()
+	events.add_responder( sg.SAPP_EVENTTYPE_MOUSE_MOVE, MouseMoved )
 end 
+
+-- --------------------------------------------------------------------------------------
 
 local function drawall() 
 

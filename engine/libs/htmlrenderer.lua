@@ -18,6 +18,14 @@ local cursor 		= { top = 0.0, left = 0.0 }
 local frame 		= { focussed = nil, top = 0.0, left = 0.0, width = 0.0, height = 0.0 }
 
 ----------------------------------------------------------------------------------
+-- Load the xml file and process it
+
+local function load( ctx, filename )
+
+	htmldom.loadxmlfile( ctx, filename, frame, cursor)
+end
+
+----------------------------------------------------------------------------------
 -- Render should render the dom. 
 --     Xml render should only occur once on load of xml objects.
 
@@ -25,8 +33,8 @@ local function render( position )
 
 	frame.top 		= position.top or 0.0
 	frame.left 		= position.left or 0.0
-	cursor.top 		= frame.top
-	cursor.left 	= frame.left
+	cursor.top 		= frame.top or 0.0
+	cursor.left 	= frame.left or 0.0
 	cursor.element_top = nil
 
 	if(htmle.dirty) then
@@ -39,13 +47,7 @@ local function render( position )
 end
 
 ----------------------------------------------------------------------------------
--- Load the xml file and process it
 
-local function load( ctx, filename )
-	htmldom.loadxmlfile( ctx, filename, frame, cursor)
-end
-
-----------------------------------------------------------------------------------
 local function rendersize( x, y )
 
 	frame.width, frame.height 		= x, y

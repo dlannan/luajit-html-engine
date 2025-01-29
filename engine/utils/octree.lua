@@ -6,7 +6,6 @@ local MAX_LEVELS = 50
 
 local function intersects(box,item)
     local intersect = {x=false,y=false,z=false}
-    ---[[
     for _,axis in ipairs(AXIS) do
         if item.max[axis] > box.min[axis] and item.min[axis] < box.max[axis] then
             intersect[axis] = true

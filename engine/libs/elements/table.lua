@@ -63,13 +63,15 @@ return {
 		local function doelement( cursor, c, idx )
 			local element 		= layout.getelement(c.eid)
 			local dim 			= geom[element.gid]
-			dim.width = cols[idx]
-			element.width = cols[idx]
+
+			dim.width 			= cols[idx]
+			element.width 		= cols[idx]
 			element.pos.left 	= cursor.left
 			element.pos.top 	= cursor.top
+			
 			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
 			geom.update(element.gid)
-			cursor.left 	= cursor.left + element.width
+			return dim.width
 		end
 
 		local function dotext( cursor, te, pe, idx )
@@ -78,7 +80,7 @@ return {
 			local render 		= layout.getrenderobj(te.eid)
 			local dim 			= geom[element.gid]
 
-			local off = 0
+			local off 			= 0
 			local pelement 		= layout.getelement(pe.eid)
 			if(pelement.etype == "th") then 
 				off = cols[idx]/2 - dim.width/2
@@ -86,7 +88,7 @@ return {
 
 			element.pos.left 	= cursor.left + off
 			element.pos.top 	= cursor.top
-			geom.renew( element.gid, element.pos.left, element.pos.top, dim.width, dim.height )
+			geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
 			geom.update(element.gid)
 		end
 
@@ -94,14 +96,15 @@ return {
 		for k,v in pairs(xml) do
 			if(type(k) == "number" and type(v) == "table") then
 				local idx = 1
-				local relement 		= layout.getelement(v.eid)
+				--local relement 		= layout.getelement(v.eid)
 				for kc, vc in pairs(v) do 
 					if(type(kc) == "number" and type(vc) == "table") then
+						local width = doelement( g.cursor, vc, idx)
 						if(vc[1].label == "text") then 
 							dotext( g.cursor, vc[1], vc, idx ) 
 						end
-						doelement( g.cursor, vc, idx)
 						idx = idx + 1
+						g.cursor.left 	= g.cursor.left + width
 					end
 				end
 

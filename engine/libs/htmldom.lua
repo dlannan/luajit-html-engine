@@ -314,6 +314,9 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
 	local xml = utils.loaddata(filename)
 	local xmldata = xmlp.parse(xml)
     dom.loadxml(xmldata)
+
+    local geom = layout.getgeom()
+    geom.aabbtreeprint()
 end
 
 ----------------------------------------------------------------------------------

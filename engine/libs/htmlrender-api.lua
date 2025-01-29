@@ -198,7 +198,7 @@ render_api.setup = function(self)
 
 	state.dpi_scale = sapp.sapp_dpi_scale()
 	render_api.fontsize = state.dpi_scale
-	render_api.window = { x = 50, y = 50 }
+	render_api.window = { x = 0, y = 0 }
 
 	self.renderCtx.fonts = {}
 	self.renderCtx.window = render_api.window

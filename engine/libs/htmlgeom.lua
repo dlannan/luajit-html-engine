@@ -4,6 +4,8 @@
 local tinsert 		= table.insert 
 local tremove 		= table.remove 
 
+local aabblib 		= require("engine.utils.aabbtree")
+
 local MAX_WIDTH 	= 999999
 local MAX_HEIGHT 	= 999999
 
@@ -58,7 +60,9 @@ geommanager.create 	= function( frame, cursor )
 
 	-- The geom object you will work with
 	local geom 				= {}
-	
+
+	geom.aabbtree 			= aabblib.new()
+
 	-- All the geometries 
 	geom.geometries 		= {}
 	geom.geomid 			= 0
@@ -135,6 +139,10 @@ geommanager.create 	= function( frame, cursor )
 
 		geom.geometries[newgeom.gid] = newgeom 	
 		geom.addchildtoparent(newgeom)
+
+		local depth = 1 -- to be used with z-index later
+		local newaabb = aabblib.createAABB(left, top, left+width, top+height)
+		geom.aabbtree:add( newaabb, newgeom, depth )
 		return newgeom.gid
 	end
 
@@ -182,6 +190,10 @@ geommanager.create 	= function( frame, cursor )
 		return true
 	end
 
+	geom.query 		= function( x, y )
+		return geom.aabbtree:queryPoint( x, y )
+	end
+
 	-- Display the tree hierachy of the geometries
 	geom.dump 		= function( startid, tabs ) 
 
@@ -196,6 +208,10 @@ geommanager.create 	= function( frame, cursor )
 			geom.dump( v, tabs+1 )
 		end 
 	end 
+
+	geom.aabbtreeprint	= function()
+		geom.aabbtree:print()
+	end
 	
 	setmetatable( geom, 
 	{
