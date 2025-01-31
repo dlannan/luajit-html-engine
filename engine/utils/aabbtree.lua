@@ -166,6 +166,39 @@ function AABBTree:remove(object)
     end
 end
 
+function AABBTree:update(node, newAABB)
+    -- Step 1: Remove node (and recursively its children)
+    self:remove(node)
+
+    -- Step 2: Update AABB bounds
+    node.minX = newAABB.minX
+    node.minY = newAABB.minY
+    node.maxX = newAABB.maxX
+    node.maxY = newAABB.maxY
+
+    -- Step 3: If it's a parent, update children recursively
+    if node.left or node.right then
+        self:rebuildSubtree(node)
+    else
+        -- Step 4: Reinsert the updated node
+        self:add(newAABB, node.object, node.depth)
+    end
+end
+
+-- Helper function to rebuild a subtree
+function AABBTree:rebuildSubtree(parentNode)
+    if parentNode.left then
+        self:update(parentNode.left, recalculateAABB(parentNode.left))
+    end
+    if parentNode.right then
+        self:update(parentNode.right, recalculateAABB(parentNode.right))
+    end
+
+    -- Reinsert the parent with its updated bounds
+    self:add(parentNode, recalculateAABB(parentNode))
+end
+
+
 function AABBTree:print(node, depth)
     depth = depth or 0
     node = node or self.root  -- Start from root if not provided
