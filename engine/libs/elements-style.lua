@@ -218,7 +218,11 @@ local function styleclose( g, style, xml )
     end
 
 	-- print(element.etype, dim.left, dim.top, dim.width, dim.height)
-	geom.renew( element.gid, dim.minX, dim.minY, dim.maxX-dim.minX, dim.maxY - dim.minY )
+	element.pos.left = dim.minX
+	element.pos.top = dim.minY
+	element.width = dim.maxX-dim.minX
+	element.height = dim.maxY - dim.minY
+	layout.updateelement(element.id, element)
 end
 
 ----------------------------------------------------------------------------------

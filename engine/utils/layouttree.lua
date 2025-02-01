@@ -156,7 +156,7 @@ local function traverse( node, prefunc, postfunc, nodedata )
     if not node then return end
     if(prefunc) then prefunc( node, nodedata ) end
     for i,v in ipairs(node.children) do 
-        traverse(v, nodefunc, nodedata)
+        traverse(v, prefunc, postfunc, nodedata)
     end
     if(postfunc) then postfunc( node, nodedata ) end
 end    

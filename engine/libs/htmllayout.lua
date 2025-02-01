@@ -4,7 +4,6 @@ local tinsert 	= table.insert
 local tremove 	= table.remove
 
 require("engine.utils.copy")
-local GM 		= require("engine.libs.htmlgeom")
 local rapi 		= require("engine.libs.htmlrender-api")
 local csscolors = require("engine.libs.styles.csscolors")
 
@@ -271,34 +270,30 @@ local function doraster( )
 			end 
 		end 
 
-		local g = { ctx = elements[1].ctx, cursor=elements[1].cursor, frame = elements[1].frame }
-		for k, v in ipairs(geom.geometries) do 
-			rendergeom( g, v )
-		end
+		-- local g = { ctx = elements[1].ctx, cursor=elements[1].cursor, frame = elements[1].frame }
+		-- for k, v in ipairs(geom.geometries) do 
+		-- 	rendergeom( g, v )
+		-- end
 	end
-	-- geom.dump()
 end
-
-----------------------------------------------------------------------------------
--- Gen new geom layout every frame?!! (for now - this will be cached later)
-geom 		= GM.create(frame, cursor) 
 
 -- --------------------------------------------------------------------------------------
 
 function MouseMoved(ev) 
 
 	print(ev.pos.x, ev.pos.y)
-	local results = geom.query(ev.pos.x - geom.frame.left, ev.pos.y- geom.frame.top)
+	local results = ltree:queryPoint(ev.pos.x - layout.frame.left, ev.pos.y- layout.frame.top)
 	print("Results: ", #results)
 end
 
 -- --------------------------------------------------------------------------------------
 
 local function init(frame, cursor) 
-	layout 		= {}
+	layout 		= {
+		frame 	= frame,
+		cursor 	= cursor,
+	}
 
-	geom.frame 		= frame 
-	geom.cursor 	= cursor
 	rapi.window.x 	= frame.left
 	rapi.window.y 	= frame.top
 
@@ -476,7 +471,6 @@ local function addbackground( g, style, xml )
 	local robj = render[render_lookup[style.elementid]]
 	-- If element already has been added to geom, then just set its bgcolor)
 	if(robj) then 
-		local geomobj 	= geom[style.elementid]
 		robj.bgcolor = style["background-color"]
 	else
 		local stylecopy = deepcopy(style)
