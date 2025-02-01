@@ -217,13 +217,14 @@ local function renderelement( g, ele )
 	g.ctx.ctx.unsetstyle()
 end	
 
-local function rendergeom( g, tg ) 
+local function rendergeom( node, g ) 
 
 	-- local ele = getelement( v.eid )
 	-- g.gcairo:RenderBox( ele.pos.left, ele.pos.top, ele.width, ele.height, 0, bgcolor, brdrcolor )
 	-- print("TG:", tg.gid, tg.left, tg.top, tg.width, tg.height)
-	local posx, posy = tg.left + g.ctx.ctx.window.x, tg.top + g.ctx.ctx.window.y
-	rapi.draw_rect( posx, posy, tg.width, tg.height, 0xffff0000) -- , brdrcolor )
+	local posx, posy = node.aabb.minX + g.ctx.ctx.window.x, node.aabb.minY + g.ctx.ctx.window.y
+	local width, height = node.aabb.maxX - node.aabb.minX, node.aabb.maxY - node.aabb.minY
+	rapi.draw_rect( posx, posy, width, height, 0xffff0000) -- , brdrcolor )
 	--g.gcairo:RenderText( tostring(tg.gid), tg.left, tg.top, 16, tcolor )
 end	
 
@@ -270,10 +271,8 @@ local function doraster( )
 			end 
 		end 
 
-		-- local g = { ctx = elements[1].ctx, cursor=elements[1].cursor, frame = elements[1].frame }
-		-- for k, v in ipairs(geom.geometries) do 
-		-- 	rendergeom( g, v )
-		-- end
+		local g = { ctx = elements[1].ctx, cursor=elements[1].cursor, frame = elements[1].frame }
+		ltreelib.traverse( ltree.root, rendergeom, nil, g)
 	end
 end
 

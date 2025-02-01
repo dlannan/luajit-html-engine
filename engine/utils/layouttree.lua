@@ -230,6 +230,7 @@ LayoutTree.createAABB         = createAABB
 LayoutTree.createNode         = createNode
 LayoutTree.combineAABB        = combineAABB
 LayoutTree.recalculateAABB    = recalculateAABB
+LayoutTree.traverse           = traverse
 
 return LayoutTree
 
