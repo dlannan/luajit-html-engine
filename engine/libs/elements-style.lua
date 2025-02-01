@@ -2,6 +2,8 @@ local rapi 		    = require("engine.libs.htmlrender-api")
 local layout        = require("engine.libs.htmllayout")
 local styleprops    = require("engine.libs.styles.cssprop-handlers")
 
+local utils 		= require("lua.utils")
+
 ----------------------------------------------------------------------------------
 
 local FONT_SIZES = {
@@ -204,9 +206,8 @@ end
 local function styleclose( g, style, xml )
 
     local element 		= layout.getelement(style.elementid)
-	local geom 			= layout.getgeom()
-	local dim 			= geom[element.gid]
-    local pdim 			= geom[dim.pid]
+	local dim 			= layout.getelementdim(element.id)
+    local pdim 			= layout.getelementdim(element.pid)
 
     for k,v in pairs(style) do 
         local sprop = styleprops[k]
@@ -217,7 +218,7 @@ local function styleclose( g, style, xml )
     end
 
 	-- print(element.etype, dim.left, dim.top, dim.width, dim.height)
-	geom.renew( element.gid, dim.left, dim.top, dim.width, dim.height )
+	geom.renew( element.gid, dim.minX, dim.minY, dim.maxX-dim.minX, dim.maxY - dim.minY )
 end
 
 ----------------------------------------------------------------------------------

@@ -11,6 +11,7 @@ local csscolors = require("engine.libs.styles.csscolors")
 local utils 	= require("lua.utils")
 
 local events 	= require("projects.browser.events")
+local ltreelib 	= require("engine.utils.layouttree")
 
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
 local enableDebug 			= 1
@@ -26,13 +27,18 @@ local layout 		= {}
 
 -- A mapping of elements - using id's. This allows for referential structuring so we can 
 --   easily replicate operations on a dom using it.
+-- This is a list not a table, because we want the insertion order (i think?)
 local elements		= {}
+
+-- Helpers for fast hash lookups (works well up to about 50-100K elements)
+local element_nodes = {} -- ltree node lookups by element id
+local element_ids 	= {} -- element data from element id itself.
 
 -- A table stack for currently processing tables
 local tables		= {}
 
-
-local geom 			= nil
+--local geom 			= nil
+local ltree 		= ltreelib.new()
 
 local tcolor = { r=0.0, b=0.0, g=0.0, a=1.0 }
 
@@ -68,22 +74,8 @@ local function getparent( style )
 
 	local pid = nil 
 	if(style.pstyle and style.pstyle.elementid) then 
-		local eid 			= elements[style.pstyle.elementid]
-		if(eid) then 
-			local pelement 	= geom[eid.gid]
-			pid = pelement.gid or nil
-		end
+		pid = element_ids[style.pstyle.elementid].id
 	end
-	return pid
-end 
-
-----------------------------------------------------------------------------------
-
-local function getparentgid( gid )
-
-	local pid = nil 
-	local pelement 	= geom[gid]
-	pid = pelement.gid or nil
 	return pid
 end 
 
@@ -91,7 +83,7 @@ end
 
 local function getgeometry( )
 
-	return geom
+	return ltree
 end 
 
 ----------------------------------------------------------------------------------
@@ -104,13 +96,24 @@ end
 ----------------------------------------------------------------------------------
 local function getelement(eid)
 
-	return elements[eid] or nil
+	return element_ids[eid] or nil
+end
+
+----------------------------------------------------------------------------------
+
+local function getelementdim(eid)
+	local node = element_nodes[eid]
+	if(node == nil) then return nil end
+	return node.aabb
 end
 
 ----------------------------------------------------------------------------------
 
 local function updateelement( eid, element )
-	elements[eid] = element 
+	-- Need to propagate the update to parents in tree
+	local node = element_nodes[eid]
+	local newaabb = ltreelib.createAABB(element.pos.left, element.pos.top, element.pos.left + element.width, element.pos.top + element.height)
+	ltree:update(node, newaabb)
 end
 
 ----------------------------------------------------------------------------------
@@ -190,9 +193,10 @@ end
 
 local function renderrectfilled( g, v)
 	local ele = getelement( v.eid )
-	local geomobj = geom[ele.gid]
-	local posx, posy =  geomobj.left + g.ctx.ctx.window.x,  geomobj.top + g.ctx.ctx.window.y
-	rapi.draw_rect_filled( posx, posy, geomobj.width, geomobj.height, v.bgcolor)
+	local geomobj = element_nodes[ele.id].aabb
+	local posx, posy =  geomobj.minX + g.ctx.ctx.window.x,  geomobj.minY + g.ctx.ctx.window.y
+	local width, height = geomobj.maxX - geomobj.minX, geomobj.maxY - geomobj.minY
+	rapi.draw_rect_filled( posx, posy, width, height, v.bgcolor)
 end
 
 ----------------------------------------------------------------------------------
@@ -321,6 +325,23 @@ local function drawall()
 end
 
 ----------------------------------------------------------------------------------
+
+local function addaabbnode( element, style )
+	local zindex 		= style["z-index"] or 1
+
+	local left 		= element.pos.left
+	local top  		= element.pos.top
+	local right 	= left + element.width
+	local bottom 	= top + element.height
+	
+	local newaabb 	= ltreelib.createAABB(left, top, right, bottom)
+	local node 		= ltreelib.createNode(newaabb, element, zindex)
+	local parent 	= element_nodes[element.pid]
+	ltree:add( node, parent )
+	element_nodes[element.id] = node
+end	
+
+----------------------------------------------------------------------------------
 -- Try to replicate css properties here. 
 local function addelement( g, style, attribs )
 
@@ -334,6 +355,7 @@ local function addelement( g, style, attribs )
 	element.width 		= tonumber(style.width or 0)
 	element.height 		= tonumber(style.height or 0)
 	element.id 			= #elements + 1
+	element.pid 		= getparent(style)
 
 	if(attribs) then 
 		element.attr = deepcopy(attribs) 
@@ -341,16 +363,10 @@ local function addelement( g, style, attribs )
 		if(attribs.height and tonumber(attribs.height) > element.height) then element.height = tonumber(attribs.height) end
 	end 
 
-	local pid = getparent(style)
-	element.gid 		= geom.add( style.etype, pid, 
-				element.pos.left, 
-				element.pos.top, 
-				element.width, 
-				element.height )
-	geom.update( element.gid )
-	
-	style.elementid 	= element.id
+	addaabbnode(element, style)
+	style.elementid 			= element.id
 	tinsert(elements, element)
+	element_ids[element.id] 	= element
 	return element
 end 
 
@@ -371,12 +387,9 @@ local function addtextobject( g, style, text )
 		cursor 	= { top = g.cursor.top, left = g.cursor.left },
 		frame  	= { top = g.frame.top, left = g.frame.left },
 	}
+	
+	--addaabbnode(element_ids[renderobj.eid], stylecopy)
 
-	local pid = getparent(style)
-	-- if(pid) then print(text, style.width, pid, style.pstyle.etype) end
-	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
-	geom.update( renderobj.gid )
-		
 	-- Render objects are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
 	render_lookup[renderobj.eid] = #render
@@ -405,10 +418,6 @@ local function addbuttonobject( g, style, attribs )
 		renderobj.text = attribs.value
 	end
 	
-	local pid = getparent(style)
-	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
-	geom.update( renderobj.gid )
-	
 	-- Render obejcts are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
 	render_lookup[renderobj.eid] = #render
@@ -432,10 +441,6 @@ local function addinputtextobject( g, style, attribs )
 		frame  	= { top = g.frame.top, left = g.frame.left },
 	}
 	
-	local pid = getparent(style)
-	renderobj.gid 		= geom.add( renderobj.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
-	geom.update( renderobj.gid )
-
 	-- Render obejcts are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
 	render_lookup[renderobj.eid] = #render
@@ -457,10 +462,6 @@ local function addimageobject( g, style )
 		cursor 	= { top = g.cursor.top, left = g.cursor.left },
 		frame  	= { top = g.frame.top, left = g.frame.left },
 	}
-
-	local pid = getparent(style)
-	renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
-	geom.update( renderobj.gid )
 
 	-- Render obejcts are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
@@ -492,11 +493,6 @@ local function addbackground( g, style, xml )
 			frame  	= { top = g.frame.top, left = g.frame.left },
 		}
 
-		local geomobj 	= geom[renderobj.eid]
-		local pid = getparent(style)
-		renderobj.gid 		= geom.add( style.etype, pid, g.cursor.left, g.cursor.top, style.width, style.height )
-		geom.update( renderobj.gid )
-
 		-- Render obejcts are queued in order of the output data with the correct styles
 		tinsert(render, renderobj)
 		render_lookup[renderobj.eid] = #render
@@ -513,6 +509,12 @@ end
 
 ----------------------------------------------------------------------------------
 
+local function ltreeprint() 
+	ltree:print()
+end
+
+----------------------------------------------------------------------------------
+
 return {
 
 	init 			= init,
@@ -522,6 +524,7 @@ return {
 
 	addelement		= addelement,
 	getelement		= getelement,
+	getelementdim 	= getelementdim,
 	updateelement	= updateelement,
 	
 	addtextobject 	= addtextobject,
@@ -534,10 +537,10 @@ return {
 	addtablerow 	= addtablerow,
 
 	addlayout 		= addlayout,
+	ltreeprint		= ltreeprint,
 
 	getgeom 		= getgeometry,
 	getparent 		= getparent,
-	getparentgid	= getparentgid,
 }
 
 ----------------------------------------------------------------------------------

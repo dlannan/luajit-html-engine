@@ -141,7 +141,7 @@ geommanager.create 	= function( frame, cursor )
 		geom.addchildtoparent(newgeom)
 
 		local depth = 1 -- to be used with z-index later
-		local newaabb = aabblib.createAABB(left, top, left+width, top+height)
+		local newaabb = aabblib.createAABB(left + geom.frame.left, top + geom.frame.top, left+width+ geom.frame.left, top+height+ geom.frame.top)
 		geom.aabbtree:add( newaabb, newgeom, depth )
 		return newgeom.gid
 	end

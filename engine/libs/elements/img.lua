@@ -19,21 +19,27 @@ return {
 
 		--checkmargins( g, style )
 		
-		local element 		= layout.addelement( g, style, xml )
+		local element 		= layout.addelement( g, style, xml.xarg )
+		style.elementid 	= element.id
+		xml.eid 			= element.id
+		element.cursor_top 	= g.cursor.top
+
 		layout.addimageobject( g, style )
 	end,
 	
 	closed 		= function( g, style )	
 		-- Push the size of the element into the button object
 		local element 		= layout.getelement(style.elementid)
-		local geom = layout.getgeom()
-		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
+		local dim 			= layout.getelementdim(element.id)
 
+		element.height 		= tonumber(style.height)
+		print(element.height)
+		layout.updateelement(element.id, element)
+		
 		-- Return to leftmost + parent margin
 		g.cursor.left 	= g.cursor.left + element.width
 		g.cursor.element_left = g.cursor.left
 		
-		-- g.cursor.top 	= geom[ element.gid ].top
 		if(element.height > style.pstyle.linesize) then style.pstyle.linesize  = element.height end
 	end,
 }

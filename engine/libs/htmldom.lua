@@ -291,8 +291,7 @@ nodefuncs.post = function(ctx, xml)
 
             iselement.closed( g, style, xml ) 
             local element 		= layout.getelement(style.elementid)
-            local geom 			= layout.getgeom()
-            xml.geom = geom.get(element.gid)
+            xml.geom = layout.getelementdim(element.id)
         end 
 		tremove( stylestack ) 
 	end
@@ -315,8 +314,7 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
 	local xmldata = xmlp.parse(xml)
     dom.loadxml(xmldata)
 
-    local geom = layout.getgeom()
-    geom.aabbtreeprint()
+    layout.ltreeprint()
 end
 
 ----------------------------------------------------------------------------------

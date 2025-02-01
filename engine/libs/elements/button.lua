@@ -23,14 +23,12 @@ local function elementbuttonclose( g, style )
 	
 	-- Push the size of the element into the button object
 	local element 		= layout.getelement(style.elementid)
-	local geom 			= layout.getgeom()
-	local obj 			= geom.get( element.gid )
+	local obj 			= layout.getelementdim( element.id )
 
-	element.width 		= obj.width
-	element.height 		= obj.height
-
-	geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
-
+	element.width 		= obj.maxX - obj.minX
+	element.height 		= obj.maxY - obj.minY
+print("button: ", element.width, element.height)
+	layout.updateelement(element.id, element)
 	if(element.height > style.pstyle.linesize) then style.pstyle.linesize  = element.height end
 end 
 

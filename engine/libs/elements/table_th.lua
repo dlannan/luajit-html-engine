@@ -12,14 +12,13 @@ return {
 	end,
 	closed 		= function( g, style, xml )
 
-		local geom 			= layout.getgeom()
 		local element 		= layout.getelement(style.elementid)
-		local obj 			= geom.get( element.gid )
+		local obj 			= layout.getelementdim( element.id )
 
-		element.width 		= obj.width
-		element.height 		= obj.height
+		element.width 		= obj.maxX - obj.minX
+		element.height 		= obj.maxY - obj.minY
 
-		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
+		layout.updateelement(element.id, element)
 
 		common.elementclose(g, style, xml)
 		style.fontweight = nil

@@ -11,10 +11,14 @@ return {
         if(pdim and pstyle and style.etype == "text") then 
 
             if(pstyle["text-align"] == "center") then 
-                dim.left = dim.left + pwidth / 2 - element.width / 2
+                local moveX = pwidth / 2 - element.width / 2
+                dim.minX = dim.minX + moveX
+                dim.maxX = dim.maxX + moveX
                 element.pos.left = element.pos.left + pwidth / 2
             elseif(pstyle["text-align"] == "right") then
-                dim.left = dim.left + pwidth - element.width
+                local moveX = pwidth - element.width
+                dim.minX = dim.minX + moveX
+                dim.maxX = dim.maxX + moveX
                 element.pos.left = element.pos.left + pwidth - element.width
             end
         end

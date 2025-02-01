@@ -35,9 +35,8 @@ return {
 	-- --   need to adjust the table based on specific criteria (like column sizes in tables)
 	-- layout 		= function(g, xml)
 
-		local geom 			= layout.getgeom()
 		local element 		= layout.getelement(xml.eid)
-		local geomobj 		= geom.get( element.gid )
+		local geomobj 		= layout.getelementdim( element.id )
 
 		-- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
 		local cols = {}
@@ -58,38 +57,34 @@ return {
 		end
 
 		-- Reset cursor to match this current table node position
-		g.cursor = { left = geomobj.left, top = geomobj.top }
+		g.cursor = { left = element.pos.left, top = element.pos.top }
 
 		local function doelement( cursor, c, idx )
 			local element 		= layout.getelement(c.eid)
-			local dim 			= geom[element.gid]
+			local dim 			= layout.getelementdim( element.id )
 
-			dim.width 			= cols[idx]
 			element.width 		= cols[idx]
 			element.pos.left 	= cursor.left
 			element.pos.top 	= cursor.top
 			
-			geom.renew( element.gid, cursor.left, cursor.top, dim.width, dim.height )
-			geom.update(element.gid)
-			return dim.width
+			layout.updateelement(element.id, element)
+			return cols[idx]
 		end
 
 		local function dotext( cursor, te, pe, idx )
 
 			local element 		= layout.getelement(te.eid)
-			local render 		= layout.getrenderobj(te.eid)
-			local dim 			= geom[element.gid]
+			local dim 			= layout.getelementdim( element.id )
 
 			local off 			= 0
 			local pelement 		= layout.getelement(pe.eid)
 			if(pelement.etype == "th") then 
-				off = cols[idx]/2 - dim.width/2
+				off = cols[idx]/2 - (dim.maxX - dim.minX)/2
 			end
 
 			element.pos.left 	= cursor.left + off
 			element.pos.top 	= cursor.top
-			geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
-			geom.update(element.gid)
+			layout.updateelement(element.id, element)
 		end
 
 		local height = g.cursor.top
@@ -114,15 +109,12 @@ return {
 		end
 		height = g.cursor.top - height
 
-		local element 		= layout.getelement(xml.eid)
-		local geom 			= layout.getgeom()
-		local obj 			= geom.get( element.gid )
+		local obj 			= layout.getelementdim( element.id )
 
-		element.width 		= obj.width
+		element.width 		= obj.maxX - obj.minX
 		element.height 		= height
+		layout.updateelement(element.id, element)
 
-		geom.renew( element.gid, element.pos.left, element.pos.top, element.width, element.height )
-		geom.update( element.gid )
 		common.elementclose(g, style, xml)		
 	end,
 }
