@@ -118,8 +118,8 @@ local function colorBorderedRect( x, y, w, h, color, cr )
 	
 	if(points_buffer == nil) then 
 		local div = 1.0 / 4
-		if(cr > 10) then div = 8 end
-		
+		if(cr > 16) then div = 8 end
+
 		points_buffer = ffi.new("sgp_vec2[?]", 28 * 3 + 1)
 		local idx = 0
 		local sx, sy = 0, 0

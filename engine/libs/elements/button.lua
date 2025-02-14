@@ -12,8 +12,8 @@ local function elementbutton( g, style, xml )
 
 	-- A button is inserted as an "empty" div which is expanded as elements are added.
 	local element = common.elementopen(g, style, xml)
-
 	libstyle.applypadding( g, style, element )
+
 	layout.addbuttonobject( g, style, xml.xargs )
 end
 
@@ -26,10 +26,13 @@ local function elementbuttonclose( g, style )
 
 	element.width 		= obj.maxX - obj.minX
 	element.height 		= obj.maxY - obj.minY
+
 	libstyle.applyspacing( g, style, element )
 
 	layout.updateelement(element.id, element)
 	if(element.height > style.pstyle.linesize) then style.pstyle.linesize  = element.height end
+
+	common.elementclose(g, style, xml)
 end 
 
 ----------------------------------------------------------------------------------
