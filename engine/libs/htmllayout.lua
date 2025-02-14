@@ -13,7 +13,7 @@ local events 	= require("projects.browser.events")
 local ltreelib 	= require("engine.utils.layouttree")
 
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
-local enableDebug 			= 1
+local enableDebug 			= nil
 local enableDebugElements 	= nil
 
 ----------------------------------------------------------------------------------
@@ -111,7 +111,12 @@ end
 local function updateelement( eid, element )
 	-- Need to propagate the update to parents in tree
 	local node = element_nodes[eid]
-	local newaabb = ltreelib.createAABB(element.pos.left, element.pos.top, element.pos.left + element.width, element.pos.top + element.height)
+	local newaabb = ltreelib.createAABB(
+		element.pos.left, 
+		element.pos.top, 
+		element.pos.left + element.width,  
+		element.pos.top + element.height
+	)
 	ltree:update(node, newaabb)
 end
 
@@ -143,12 +148,13 @@ local function renderbutton( g, v )
 
 	local text 		= v.text
 	local style 	= v.style
+	local cnr 		= style["border-radius"]
 	local ele = getelement( v.eid )
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
 	-- imgui.begin_child(tostring(v.eid), ele.width, ele.height)
 	g.ctx.ctx.setstyle(style)
 	local color = csscolors.buttoncolor
-	local changed, pressed = rapi.button(v.text or "", ele.width, ele.height, color )
+	local changed, pressed = rapi.button(v.text or "", ele.width, ele.height, color, cnr )
 	if changed then 
 		-- self.counter = self.counter + 1
 	end
@@ -216,6 +222,8 @@ local function renderelement( g, ele )
 	rapi.text( tostring(tg.gid) )
 	g.ctx.ctx.unsetstyle()
 end	
+
+----------------------------------------------------------------------------------
 
 local function rendergeom( node, g ) 
 
@@ -342,9 +350,10 @@ local function addelement( g, style, attribs )
 	local element = {}
 	element.ctx 		= g
 	element.etype 		= style.etype
-	element.border 		= { width = 0, height = 0 }
 	element.background 	= { color = style.background or "#aaaaaa" }
 	element.margin 		= { top = style.margin.top or 0, bottom = style.margin.bottom or 0, left = style.margin.left or 0, right = style.margin.right or 0 }
+	element.padding		= { top = style.padding.top or 0, bottom = style.padding.bottom or 0, left = style.padding.left or 0, right = style.padding.right or 0 }
+	element.border		= { top = style.border.top or 0, bottom = style.border.bottom or 0, left = style.border.left or 0, right = style.border.right or 0 }
 	element.pos 		= { top = g.cursor.top, left = g.cursor.left }
 	element.width 		= tonumber(style.width or 0)
 	element.height 		= tonumber(style.height or 0)

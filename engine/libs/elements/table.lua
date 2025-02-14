@@ -25,18 +25,19 @@ return {
 		libstyle.setmargins(style, 0, 0, 0, 0)
 		libstyle.setpadding(style, 8, 0, 8, 0)
 		libstyle.setborders(style, 17, 5, 17, 5)
-
+		libstyle.checkmargins( g, style )
+		
 		-- Make a table stack. This stores rows that contain td widths for post update
 		common.elementopen(g, style, xml)
 	end,
 	closed 		= function( g, style, xml)
 
-	-- -- This is used for changes in layout - like tables and divs where styles and contraints might
-	-- --   need to adjust the table based on specific criteria (like column sizes in tables)
-	-- layout 		= function(g, xml)
+	-- This is used for changes in layout - like tables and divs where styles and contraints might
+	--   need to adjust the table based on specific criteria (like column sizes in tables)
+	-- TODO: There is surely a nicer way to handle this in the layout manager
 
-		local element 		= layout.getelement(xml.eid)
-		local geomobj 		= layout.getelementdim( element.id )
+		local telement 		= layout.getelement(xml.eid)
+		local geomobj 		= layout.getelementdim( telement.id )
 
 		-- Calculate largest colums ( just iterate rowes and collect max width for each th/td )
 		local cols = {}
@@ -56,8 +57,8 @@ return {
 			end
 		end
 
-		-- Reset cursor to match this current table node position
-		g.cursor = { left = element.pos.left, top = element.pos.top }
+		-- Reset cursor to match this current table node position (top left)
+		g.cursor = { left = telement.pos.left, top = telement.pos.top }
 
 		local function doelement( cursor, c, idx )
 			local element 		= layout.getelement(c.eid)
@@ -107,13 +108,6 @@ return {
 				common.stepline( g, xml.style)
 			end
 		end
-		height = g.cursor.top - height
-
-		local obj 			= layout.getelementdim( element.id )
-
-		element.width 		= obj.maxX - obj.minX
-		element.height 		= height
-		layout.updateelement(element.id, element)
 
 		common.elementclose(g, style, xml)		
 	end,

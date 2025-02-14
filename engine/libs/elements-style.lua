@@ -161,6 +161,16 @@ end
 
 ----------------------------------------------------------------------------------
 
+local function style_defaultbutton( style )
+
+	style_setmargins(style, 0, 0, 0, 0)
+	style_setpadding(style, 4, 2, 4, 2)
+	style_setborders(style, 2, 1, 2, 1)
+	style["border-radius"] = style["border-radius"] or 2
+end
+
+----------------------------------------------------------------------------------
+
 local function checkmargins( g, style )
 
 	-- Check if previous margin is big enough for this style otherwise add difference.
@@ -185,6 +195,21 @@ local function checkmargins( g, style )
 	end
 end 
 
+----------------------------------------------------------------------------------
+
+local function applypadding( g, style, element )
+	g.cursor.left = g.cursor.left + style.padding.left + style.border.left 
+	g.cursor.top = g.cursor.top + style.padding.top + style.border.top 
+end
+
+----------------------------------------------------------------------------------
+
+local function applyspacing( g, style, element )
+	element.width = element.width + style.padding.left + style.padding.right
+	element.height = element.height + style.padding.top + style.padding.bottom
+	g.cursor.top = g.cursor.top - style.padding.top - style.border.top 
+	g.cursor.left = g.cursor.left + style.padding.right + style.padding.left
+end
 
 ----------------------------------------------------------------------------------
 
@@ -242,12 +267,17 @@ return {
 	defaultlinesize			= defaultlinesize,
 	defaultheight 			= defaultheight,
 
+	defaultbutton			= style_defaultbutton,
+
     getmargin               = getmargin,
     setmargins              = style_setmargins,
     gettextsize             = gettextsize,
     setpadding              = style_setpadding,
     setborders              = style_setborders,
     checkmargins            = checkmargins,
+
+	applyspacing		 	= applyspacing,
+	applypadding			= applypadding,
 
     close                   = styleclose,
     open                    = styleopen,

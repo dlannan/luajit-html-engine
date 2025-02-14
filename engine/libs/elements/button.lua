@@ -8,13 +8,12 @@ local function elementbutton( g, style, xml )
 	-- TODO: Need to make these default style settings for buttons
 
 	-- Need to add check for css style
-	libstyle.setmargins(style, 0, 0, 0, 0)
-	libstyle.setpadding(style, 8, 10, 8, 10)
-	libstyle.setborders(style, 17, 5, 17, 5)
+	libstyle.defaultbutton(style)
 
 	-- A button is inserted as an "empty" div which is expanded as elements are added.
-	common.elementopen(g, style, xml)
+	local element = common.elementopen(g, style, xml)
 
+	libstyle.applypadding( g, style, element )
 	layout.addbuttonobject( g, style, xml.xargs )
 end
 
@@ -27,7 +26,8 @@ local function elementbuttonclose( g, style )
 
 	element.width 		= obj.maxX - obj.minX
 	element.height 		= obj.maxY - obj.minY
-print("button: ", element.width, element.height)
+	libstyle.applyspacing( g, style, element )
+
 	layout.updateelement(element.id, element)
 	if(element.height > style.pstyle.linesize) then style.pstyle.linesize  = element.height end
 end 

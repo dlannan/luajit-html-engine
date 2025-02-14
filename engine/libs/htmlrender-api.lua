@@ -103,6 +103,63 @@ local function colorRect(x, y, w, h, color)
 end 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+-- Makes a button type rect - can have sharp corners or curved.
+local pbuffer 	= {}
+local function colorBorderedRect( x, y, w, h, color, cr )
+
+	local hw = w * 0.5
+	local hh = h * 0.5
+    sgp.sgp_push_transform()
+    sgp.sgp_translate(x + hw, y + hh)
+    sgp.sgp_set_color(color.r * 0.00390625, color.g * 0.00390625, color.b * 0.00390625, color.a * 0.00390625)
+
+	local pbuffid = string.format("%d_%d_%d_%d_%d", x, y, w, h, cr)
+	local points_buffer = pbuffer[pbuffid] 
+	
+	if(points_buffer == nil) then 
+		local div = 1.0 / 4
+		if(cr > 10) then div = 8 end
+		
+		points_buffer = ffi.new("sgp_vec2[?]", 28 * 3 + 1)
+		local idx = 0
+		local sx, sy = 0, 0
+		points_buffer[idx] = { x=sx, y=sy }
+
+		local n90 = math.pi * 0.5
+		local step = math.pi * 0.5 * div
+		-- Top right corner
+		local crclist = {
+			{ hw - cr, hh - cr, 1, 1, 0, n90, step },
+			{ - hw + cr, hh - cr, -1, 1, n90, 0, -step },
+			{ - hw + cr, - hh + cr, -1, -1, 0, n90, step},
+			{ hw - cr, - hh + cr, 1, -1, n90, 0, -step },
+		}
+
+		local theta = 0
+		
+		for cnrs = 1, 4 do 
+			local crc = crclist[cnrs]
+			for theta = crc[5], crc[6], crc[7] do 
+				points_buffer[idx] = { x = crc[1] + crc[3] * cr*math.cos(theta), y= crc[2] + crc[4] * cr*math.sin(theta)}
+				idx = idx + 1
+				if (idx % 3 == 1) then 
+					points_buffer[idx] = { x=sx, y=sy }
+					idx = idx + 1
+				end
+			end
+		end
+		theta = 0
+		local crc = crclist[1]
+		points_buffer[idx] = { x = crc[1] + crc[3] * cr*math.cos(theta), y= crc[2] + crc[4] * cr*math.sin(theta)}
+
+		pbuffer[pbuffid] = points_buffer
+	end
+
+	sgp.sgp_draw_filled_triangles_strip(points_buffer, 28 * 3 + 1)
+	sgp.sgp_pop_transform()
+end
+
+-----------------------------------------------------------------------------------------------------------------------------------
 
 local destrect = ffi.new("sgp_rect")
 local src_images 	= {}
@@ -401,11 +458,13 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Render buttons using the specified interface
-render_api.button = function( text, w, h, color )
+render_api.button = function( text, w, h, color, cnr )
 
+	local cnr = cnr or 0
 	local x, y = render_api.left + render_api.window.x, render_api.top + render_api.window.y
 	-- imgui.button( text, w, h ) 
-	colorRect( x, y, tonumber(w), tonumber(h), color)
+	colorBorderedRect( x, y, tonumber(w), tonumber(h), color, cnr)
+	-- colorRect( x, y, tonumber(w), tonumber(h), color)
 	fs.fonsDrawText(state.fons, x, y, text, nil)
 end
 
