@@ -460,7 +460,6 @@ end
 --  Render buttons using the specified interface
 render_api.button = function( text, w, h, color, cnr )
 
-	local cnr = cnr or 0
 	local x, y = render_api.left + render_api.window.x, render_api.top + render_api.window.y
 	-- imgui.button( text, w, h ) 
 	colorBorderedRect( x, y, tonumber(w), tonumber(h), color, cnr)

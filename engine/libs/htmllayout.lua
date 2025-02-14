@@ -13,7 +13,7 @@ local events 	= require("projects.browser.events")
 local ltreelib 	= require("engine.utils.layouttree")
 
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
-local enableDebug 			= 1
+local enableDebug 			= nil
 local enableDebugElements 	= nil
 
 ----------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ local function renderbutton( g, v )
 
 	local text 		= v.text
 	local style 	= v.style
-	local cnr 		= style["border-radius"]
+	local cnr 		= style["border-radius"] or 0
 	local ele = getelement( v.eid )
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
 	-- imgui.begin_child(tostring(v.eid), ele.width, ele.height)
