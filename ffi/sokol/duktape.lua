@@ -81,27 +81,37 @@ void duk_destroy_heap(duk_context *ctx);
 duk_idx_t duk_push_c_function(duk_context *ctx, duk_c_function func, duk_idx_t nargs);
 
 duk_bool_t duk_put_global_string(duk_context *ctx, const char *key);
+duk_bool_t duk_get_global_string(duk_context *ctx, const char *key);
 
 duk_int_t duk_eval_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
 duk_int_t duk_compile_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
 
-duk_int_t duk_get_int(duk_context *ctx, duk_idx_t idx);
-const char *duk_to_string(duk_context *ctx, duk_idx_t idx);
-
-void duk_push_pointer(duk_context *ctx, void *p);
+void duk_call(duk_context *ctx, duk_idx_t nargs);
 duk_int_t duk_safe_call(duk_context *ctx, duk_safe_call_function func, void *udata, duk_idx_t nargs, duk_idx_t nrets);
-void *duk_get_pointer(duk_context *ctx, duk_idx_t idx);
-const char *duk_safe_to_lstring(duk_context *ctx, duk_idx_t idx, duk_size_t *out_len);
+
 void duk_pop(duk_context *ctx);
+void duk_pop_2(duk_context *ctx);
+
+duk_idx_t duk_get_top(duk_context *ctx);
+
+void duk_push_null(duk_context *ctx);
+
+duk_int_t duk_get_int(duk_context *ctx, duk_idx_t idx);
+duk_int_t duk_to_int(duk_context *ctx, duk_int_t index);
+
+const char *duk_to_string(duk_context *ctx, duk_idx_t idx);
+const char *duk_safe_to_lstring(duk_context *ctx, duk_idx_t idx, duk_size_t *out_len);
 const char *duk_push_string(duk_context *ctx, const char *str);
 const char *duk_push_lstring(duk_context *ctx, const char *str, duk_size_t len);
+const char *duk_require_lstring(duk_context *ctx, duk_idx_t idx, duk_size_t *out_len);
+
+duk_bool_t duk_get_prop_string(duk_context *ctx, duk_idx_t obj_idx, const char *key);
+
+void duk_push_pointer(duk_context *ctx, void *p);
+void *duk_get_pointer(duk_context *ctx, duk_idx_t idx);
 
 void duk_inspect_callstack_entry(duk_context *ctx, duk_int_t level);
-duk_bool_t duk_get_prop_string(duk_context *ctx, duk_idx_t obj_idx, const char *key);
-void duk_pop_2(duk_context *ctx);
-duk_int_t duk_to_int(duk_context *ctx, duk_int_t index);
 const char *duk_to_stacktrace(duk_context *ctx, duk_idx_t idx);
-
 
 enum {
    DUK_COMPILE_EVAL = 8,

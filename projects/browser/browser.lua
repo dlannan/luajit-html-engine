@@ -59,24 +59,24 @@ end
 -- --------------------------------------------------------------------------------------
 
 local function duk_eval_string( ctx )
-	local codestr = duk.duk_get_pointer(ctx, -1)
+	local codestr = duk.duk_require_lstring(ctx, 0, nil)
 	local code = ffi.string(codestr)
 	local flags = bit.bor( duk.DUK_COMPILE_EVAL, 
 					bit.bor( duk.DUK_COMPILE_NOSOURCE, 
 						bit.bor( duk.DUK_COMPILE_STRLEN, duk.DUK_COMPILE_NOFILENAME ) ) )
-	return duk.duk_eval_raw(ctx, code, ffi.sizeof(codestr), flags )
+	duk.duk_eval_raw(ctx, code, ffi.sizeof(codestr), flags )
+	return 1
 end
 
 -- --------------------------------------------------------------------------------------
+local slen = ffi.new("duk_size_t[1]")
 
 local function duk_safe_eval( ctx, str, filename )
 	
 	filename = filename or "string."
-	local code = ffi.new("char[?]", #str, str)
-	duk.duk_push_pointer(ctx, ffi.cast("char *", code));
+	duk.duk_push_lstring(ctx, str, #str)
 	local err = duk.duk_safe_call(ctx, duk_eval_string, nil, 1 , 1 )
 	if(err ~= 0) then 
-		local slen = ffi.new("duk_size_t[1]")
 		local outstr = ffi.string(duk.duk_safe_to_lstring(ctx, -1, slen))
 		print(string.format("[Duktape] In file: %s", filename))
 		print(string.format("[Duktape] \tError %d : %s", err, outstr))
@@ -98,6 +98,15 @@ local function duk_compile_filename( ctx, filename )
 		print(string.format("[DukTape] Cannot open file: %s", filename ))
 		return nil
 	end
+end
+
+-- --------------------------------------------------------------------------------------
+
+local function native_invoke_function(ctx, funcname) 
+    duk.duk_get_global_string(ctx, funcname)
+    duk.duk_call(ctx, 0)
+	duk.duk_pop(ctx)
+    return 0
 end
 
 -- --------------------------------------------------------------------------------------
@@ -160,12 +169,25 @@ browser.init = function (self)
 	local err = duk_compile_filename(jsctx, "projects/browser/data/js/zepto.js")
 	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/jquery.min.js")
 	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/startmin.js")
+	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/mandel.js")
 
 	local err = duk_safe_eval(jsctx, [[
 var div = document.createElement("div");
 div.innerHTML = "Hello!";
+div.setAttribute("id", "some_element");
 document.body.appendChild(div);
 print("Div added to fake DOM");
+
+var root = $('#some_element')[0];
+dumpDOM(root);  
+print($.camelCase('hello-there')); 
+]])
+
+	local err = duk_safe_eval(jsctx, [[
+$.get('html/tests/css-simple01.html', function(err, status, xhr) {
+	print(status);
+	print(xhr.responseText);			
+	});		
 ]])
 
 	browser.jsctx = jsctx
@@ -185,6 +207,7 @@ browser.update = function(self, dt)
 	htmlr.render( { left=50, top=50.0 } )
 	rapi.finish(self)
 	events.process()
+	native_invoke_function(browser.jsctx, "runTimers" )
 end
 
 -- --------------------------------------------------------------------------------------
