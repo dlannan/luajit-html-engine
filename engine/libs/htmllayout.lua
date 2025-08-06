@@ -175,7 +175,7 @@ local function renderinputtext( g, v )
 	g.ctx.ctx.setstyle(style)
 	local changed, value = rapi.input_text( ele.attr.value or "", "Label" )
 	if(changed) then 
-		print(changed, value)
+		-- print(changed, value)
 		ele.attr.value = value
 	end
 	g.ctx.ctx.unsetstyle()
@@ -288,9 +288,9 @@ end
 
 function MouseMoved(ev) 
 
-	print(ev.pos.x, ev.pos.y)
+	--print(ev.pos.x, ev.pos.y)
 	local results = ltree:queryPoint(ev.pos.x - layout.frame.left, ev.pos.y- layout.frame.top)
-	print("Results: ", #results)
+	--print("Results: ", #results)
 end
 
 -- --------------------------------------------------------------------------------------

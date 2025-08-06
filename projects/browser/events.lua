@@ -230,7 +230,7 @@ allevents.process = function( timeout, limit )
     for i, v in ipairs(allevents.queue) do
         local resp = responders[v.evtid]
         if(resp) then 
-            print(v.evtid)
+            -- print(v.evtid)
             -- Can have multiple responders to a single event
             for ir, respfunc in ipairs(resp) do 
                 if(respfunc) then respfunc( v ) end 

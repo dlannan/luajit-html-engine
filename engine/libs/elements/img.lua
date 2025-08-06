@@ -33,7 +33,7 @@ return {
 		local dim 			= layout.getelementdim(element.id)
 
 		element.height 		= tonumber(style.height)
-		print(element.height)
+		--print(element.height)
 		layout.updateelement(element.id, element)
 		
 		-- Return to leftmost + parent margin

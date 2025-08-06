@@ -27,6 +27,7 @@ local rapi 		= require("engine.libs.htmlrender-api")
 local utils     = require("utils")
 local ffi       = require("ffi")
 
+local pprint 	= require("pprint")
 
 -- --------------------------------------------------------------------------------------
 
@@ -47,23 +48,71 @@ local vcolor 	= { r=1.0, b=0.0, g=0.0, a=1.0 }
 
 local browser = {}
 
-local function duk_eval_string( ctx, src)  
-	return duk.duk_eval_raw(ctx, src, #src,  
-				bit.bor(duk.DUK_COMPILE_EVAL, 
-					bit.bor( duk.DUK_COMPILE_NOSOURCE, 
-						bit.bor( duk.DUK_COMPILE_STRLEN, duk.DUK_COMPILE_NOFILENAME) ) ) )
+-- --------------------------------------------------------------------------------------
+
+function core_eval_func(ctx) 
+    local code = ffi.string(duk.duk_get_pointer(ctx, -1))
+    duk.duk_eval_raw(ctx, code, #code, 0)
+    return 1
 end
 
+-- --------------------------------------------------------------------------------------
+
+local function duk_eval_string( ctx )
+	local codestr = duk.duk_get_pointer(ctx, -1)
+	local code = ffi.string(codestr)
+	local flags = bit.bor( duk.DUK_COMPILE_EVAL, 
+					bit.bor( duk.DUK_COMPILE_NOSOURCE, 
+						bit.bor( duk.DUK_COMPILE_STRLEN, duk.DUK_COMPILE_NOFILENAME ) ) )
+	return duk.duk_eval_raw(ctx, code, ffi.sizeof(codestr), flags )
+end
+
+-- --------------------------------------------------------------------------------------
+
+local function duk_safe_eval( ctx, str, filename )
+	
+	filename = filename or "string."
+	local code = ffi.new("char[?]", #str, str)
+	duk.duk_push_pointer(ctx, ffi.cast("char *", code));
+	local err = duk.duk_safe_call(ctx, duk_eval_string, nil, 1 , 1 )
+	if(err ~= 0) then 
+		local slen = ffi.new("duk_size_t[1]")
+		local outstr = ffi.string(duk.duk_safe_to_lstring(ctx, -1, slen))
+		print(string.format("[Duktape] In file: %s", filename))
+		print(string.format("[Duktape] \tError %d : %s", err, outstr))
+	end
+	duk.duk_pop(ctx)
+end
+
+-- --------------------------------------------------------------------------------------
 
 local function duk_compile_filename( ctx, filename )
-	return duk.duk_compile_raw(ctx, filename, 0, bit.bor(1, 
-						bit.bor( duk.DUK_COMPILE_NOSOURCE, duk.DUK_COMPILE_STRLEN) ) )
+	local fh = io.open(filename, "rb")
+	if(fh) then 
+		local fbuffer = fh:read("*a")
+		fh:close()
+		-- return duk.duk_compile_raw(ctx, fbuffer, #fbuffer, bit.bor(1, 
+		-- 				bit.bor( duk.DUK_COMPILE_NOSOURCE, duk.DUK_COMPILE_STRLEN) ) )
+		return duk_safe_eval( ctx, fbuffer, filename)
+	else 
+		print(string.format("[DukTape] Cannot open file: %s", filename ))
+		return nil
+	end
+end
+
+-- --------------------------------------------------------------------------------------
+
+local function duck_checkerr(jsctx, err)
+
+	local msg = duk.duk_to_string(jsctx, -1)
+	print(string.format("[DukTape] Fatal Error: %s", ffi.string(msg) ))
 end
 
 -- --------------------------------------------------------------------------------------
 
 function native_print(ctx) 
-	print(string.format("%s", ffi.string(duk.duk_to_string(ctx, 0))))
+	local outstr = ffi.string(duk.duk_to_string(ctx, -1))
+	print(string.format("[JS] %s", outstr))
 	return 0 
 end
 
@@ -101,18 +150,31 @@ browser.init = function (self)
 
 	-- setup js interpreter
 	local jsctx = duk.duk_create_heap(nil,nil,nil,nil,nil)
-	duk.duk_push_c_function(jsctx, native_print, 1)
-	local err = duk_compile_filename(jsctx, "projects/browser/data/js/jquery.min.js")
-	print(string.format("Error: %d", err))
-	local err = duk_compile_filename(jsctx, "projects/browser/data/js/startmin.js")
-	print(string.format("Error: %d", err))
-	duk.duk_destroy_heap(jsctx)	
 
+	duk.duk_push_c_function(jsctx, native_print, 1)
+	duk.duk_put_global_string(jsctx, "print"); 
+
+	-- Inject the DOM stub JS before jQuery
+	local err = duk_compile_filename(jsctx, "projects/browser/data/js/errordebug.js")
+	local err = duk_compile_filename(jsctx, "projects/browser/data/js/domshim.js")
+	local err = duk_compile_filename(jsctx, "projects/browser/data/js/zepto.js")
+	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/jquery.min.js")
+	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/startmin.js")
+
+	local err = duk_safe_eval(jsctx, [[
+var div = document.createElement("div");
+div.innerHTML = "Hello!";
+document.body.appendChild(div);
+print("Div added to fake DOM");
+]])
+
+	browser.jsctx = jsctx
 end
 
 -- --------------------------------------------------------------------------------------
 
 browser.final = function(self)
+	duk.duk_destroy_heap(jsctx)	
 end
 
 -- --------------------------------------------------------------------------------------
