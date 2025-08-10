@@ -29,6 +29,8 @@ local ffi       = require("ffi")
 
 local pprint 	= require("pprint")
 
+local tinsert 	= table.insert
+
 -- --------------------------------------------------------------------------------------
 
 ffi.cdef[[
@@ -46,7 +48,9 @@ local vcolor 	= { r=1.0, b=0.0, g=0.0, a=1.0 }
 
 -- --------------------------------------------------------------------------------------
 
-local browser = {}
+local browser = {
+	messages 	= {},
+}
 
 -- --------------------------------------------------------------------------------------
 
@@ -75,7 +79,7 @@ local function duk_safe_eval( ctx, str, filename )
 	
 	filename = filename or "string."
 	duk.duk_push_lstring(ctx, str, #str)
-	local err = duk.duk_safe_call(ctx, duk_eval_string, nil, 1 , 1 )
+	local err = duk.duk_safe_call(ctx, duk_eval_string, nil, 0 , 0 )
 	if(err ~= 0) then 
 		local outstr = ffi.string(duk.duk_safe_to_lstring(ctx, -1, slen))
 		print(string.format("[Duktape] In file: %s", filename))
@@ -127,6 +131,20 @@ end
 
 -- --------------------------------------------------------------------------------------
 
+function shim_done(ctx) 
+	browser.ready = true
+	return 0 
+end
+
+-- --------------------------------------------------------------------------------------
+
+browser.send_message = function( src, dst, msg )
+
+	tinsert(browser.messages, { src = src, dst = dst, msg = msg })
+end
+
+-- --------------------------------------------------------------------------------------
+
 browser.init = function (self)
 
 	self.buttons = { 0,0,0 }
@@ -163,6 +181,9 @@ browser.init = function (self)
 	duk.duk_push_c_function(jsctx, native_print, 1)
 	duk.duk_put_global_string(jsctx, "print"); 
 
+	duk.duk_push_c_function(jsctx, shim_done, 0)
+	duk.duk_put_global_string(jsctx, "shimdone"); 
+
 	-- Inject the DOM stub JS before jQuery
 	local err = duk_compile_filename(jsctx, "projects/browser/data/js/errordebug.js")
 	local err = duk_compile_filename(jsctx, "projects/browser/data/js/domshim.js")
@@ -171,24 +192,8 @@ browser.init = function (self)
 	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/startmin.js")
 	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/mandel.js")
 
-	local err = duk_safe_eval(jsctx, [[
-var div = document.createElement("div");
-div.innerHTML = "Hello!";
-div.setAttribute("id", "some_element");
-document.body.appendChild(div);
-print("Div added to fake DOM");
-
-var root = $('#some_element')[0];
-dumpDOM(root);  
-print($.camelCase('hello-there')); 
-]])
-
-	local err = duk_safe_eval(jsctx, [[
-$.get('html/tests/css-simple01.html', function(err, status, xhr) {
-	print(status);
-	print(xhr.responseText);			
-	});		
-]])
+	browser.send_message( "main", "test.example1", {} )
+	browser.send_message( "main", "test.example2", {} )
 
 	browser.jsctx = jsctx
 end
@@ -207,14 +212,41 @@ browser.update = function(self, dt)
 	htmlr.render( { left=50, top=50.0 } )
 	rapi.finish(self)
 	events.process()
-	native_invoke_function(browser.jsctx, "runTimers" )
+	if(browser.ready and browser.jsctx) then
+		native_invoke_function(browser.jsctx, "runTimers" )
+	end
 end
+
+
 
 -- --------------------------------------------------------------------------------------
 
-browser.on_message = function(self, message_id, message, sender)
-	-- Add message-handling code here
-	-- Remove this function if not needed
+browser.check_messages = function(self)
+	
+	if(browser.ready == nil) then return end
+	for k,msg in ipairs(browser.messages) do 
+		if(msg.dst == "test.example1") then 
+			local err = duk_safe_eval(browser.jsctx, [[
+				var div = document.createElement("div");
+				div.innerHTML = "Hello!";
+				div.setAttribute("id", "some_element");
+				document.body.appendChild(div);
+				print("Div added to fake DOM");
+				
+				var root = $('#some_element')[0];
+				dumpDOM(root);  
+				print($.camelCase('hello-there')); 
+				]])
+		elseif(msg.dst == "test.example2") then 
+			local err = duk_safe_eval(browser.jsctx, [[
+				$.get('html/tests/css-simple01.html', function(err, status, xhr) {
+					print(status);
+					print(xhr.responseText);			
+				});		
+				]])
+		end
+	end 
+	browser.messages = {}
 end
 
 -- --------------------------------------------------------------------------------------
@@ -316,6 +348,7 @@ local function frame()
 	tick = tick + 1
 
 	-- if(tick % 60 == 0) then print(t) end
+	browser:check_messages()
 
     -- Begin recording draw commands for a frame buffer of size (width, height).
     sgp.sgp_begin(w, h)
@@ -367,7 +400,7 @@ local function frame()
     sg.sg_commit()
 
 	-- Give up some idle time - TODO: this is shitty. will remove
-	ffi.C.Sleep(10)
+	ffi.C.Sleep(1)
 end
 
 -- --------------------------------------------------------------------------------------

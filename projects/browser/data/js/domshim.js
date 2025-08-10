@@ -1,6 +1,9 @@
 // === Globals ===
 var window = this;
 var document = {};
+
+// ---------------------------- WINDOW -------------------
+
 window.document = document;
 window.location = { href: "" };
 
@@ -13,14 +16,15 @@ window.getComputedStyle = function(elem) {
     };
 };
 
-// === Event System ===
+
+// ---------------------------- EVENT ---------------------
 function Event(type) {
     this.type = type;
     this.target = null;
 }
 window.Event = Event;
 
-// === Node/Element system ===
+// ----------------------- NODE/ELEMENT -------------------
 function Node() {}
 
 function Element(tagName) {
@@ -107,7 +111,8 @@ Element.prototype = new Node();
 window.HTMLElement = Element;
 window.Node = Node;
 
-// === Document methods ===
+// ---------------------------- DOCUMENT -------------------
+
 document.createElement = function(tagName) {
     return new Element(tagName);
 };
@@ -157,7 +162,7 @@ Element.prototype.dispatchEvent = function(event) {
     }
 };
 
-// === Optional Lua Bridge ===
+// ---------------------------- LUA BRIDGE -------------------
 window.LuaBridge = {
     log: function(msg) {
         // Hook to Lua print/log
@@ -166,7 +171,7 @@ window.LuaBridge = {
     // createElement, appendChild, etc
 };   
 
-// ---------------------------- Timers 
+// ---------------------------- TIMERS -------------------
 (function() {
     var _nextTimerId = 1;
     var _timers = {};
@@ -193,7 +198,7 @@ window.LuaBridge = {
                 }
             }
         }
-        Duktape.gc();
+        // Duktape.gc();
     }
 
     this.setTimeout = function(fn, delay) {
@@ -226,6 +231,8 @@ window.LuaBridge = {
     this.runTimers = runTimers;
 })(typeof window !== 'undefined' ? window : this);
 
+// ---------------------------- XHR -------------------
+
 (function(global) {
     function FakeXHR() {
         this.readyState = 0;
@@ -241,6 +248,8 @@ window.LuaBridge = {
         this._method = method;
         this._url = url;
         this.readyState = 1;
+        print(method) 
+        print(url)
         if (this.onreadystatechange) this.onreadystatechange();
     };
 
@@ -290,3 +299,9 @@ window.LuaBridge = {
 
 })(typeof window !== "undefined" ? window : this);
 
+// ---------------------------------------------------
+
+// Calls back to lua, to say the JS has a fake dom ready to use
+shimdone();
+
+// ---------------------------------------------------
