@@ -198,7 +198,6 @@ window.LuaBridge = {
                 }
             }
         }
-        // Duktape.gc();
     }
 
     this.setTimeout = function(fn, delay) {

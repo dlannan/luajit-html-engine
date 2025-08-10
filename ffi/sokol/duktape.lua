@@ -27,6 +27,7 @@ typedef int duk_int_t;
 typedef int duk_ret_t;
 typedef unsigned int duk_uint_t;
 typedef bool duk_bool_t;
+typedef double duk_double_t;
 
 typedef duk_int_t duk_codepoint_t;
 typedef duk_uint_t duk_ucodepoint_t;
@@ -93,8 +94,11 @@ void duk_pop(duk_context *ctx);
 void duk_pop_2(duk_context *ctx);
 
 duk_idx_t duk_get_top(duk_context *ctx);
+void duk_gc(duk_context *ctx, duk_uint_t flags);
 
 void duk_push_null(duk_context *ctx);
+
+duk_double_t duk_random(duk_context *ctx);
 
 duk_int_t duk_get_int(duk_context *ctx, duk_idx_t idx);
 duk_int_t duk_to_int(duk_context *ctx, duk_int_t index);
@@ -112,6 +116,12 @@ void *duk_get_pointer(duk_context *ctx, duk_idx_t idx);
 
 void duk_inspect_callstack_entry(duk_context *ctx, duk_int_t level);
 const char *duk_to_stacktrace(duk_context *ctx, duk_idx_t idx);
+
+void duk_json_decode(duk_context *ctx, duk_idx_t idx);
+const char *duk_json_encode(duk_context *ctx, duk_idx_t idx);
+
+void duk_base64_decode(duk_context *ctx, duk_idx_t idx);
+const char *duk_base64_encode(duk_context *ctx, duk_idx_t idx);
 
 enum {
    DUK_COMPILE_EVAL = 8,

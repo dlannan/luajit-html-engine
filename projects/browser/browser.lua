@@ -54,6 +54,14 @@ local browser = {
 
 -- --------------------------------------------------------------------------------------
 
+function duck_checkerr(jsctx, err)
+
+	local msg = duk.duk_to_string(jsctx, -1)
+	print(string.format("[DukTape] Fatal Error: %s", ffi.string(msg) ))
+end
+
+-- --------------------------------------------------------------------------------------
+
 function core_eval_func(ctx) 
     local code = ffi.string(duk.duk_get_pointer(ctx, -1))
     duk.duk_eval_raw(ctx, code, #code, 0)
@@ -115,14 +123,6 @@ end
 
 -- --------------------------------------------------------------------------------------
 
-local function duck_checkerr(jsctx, err)
-
-	local msg = duk.duk_to_string(jsctx, -1)
-	print(string.format("[DukTape] Fatal Error: %s", ffi.string(msg) ))
-end
-
--- --------------------------------------------------------------------------------------
-
 function native_print(ctx) 
 	local outstr = ffi.string(duk.duk_to_string(ctx, -1))
 	print(string.format("[JS] %s", outstr))
@@ -176,26 +176,44 @@ browser.init = function (self)
 	self.profile = true
 
 	-- setup js interpreter
-	local jsctx = duk.duk_create_heap(nil,nil,nil,nil,nil)
+	browser.jsctx = duk.duk_create_heap(nil,nil,nil,nil,duck_checkerr)
 
-	duk.duk_push_c_function(jsctx, native_print, 1)
-	duk.duk_put_global_string(jsctx, "print"); 
+	duk.duk_push_c_function(browser.jsctx, native_print, 1)
+	duk.duk_put_global_string(browser.jsctx, "print"); 
 
-	duk.duk_push_c_function(jsctx, shim_done, 0)
-	duk.duk_put_global_string(jsctx, "shimdone"); 
+	duk.duk_push_c_function(browser.jsctx, shim_done, 0)
+	duk.duk_put_global_string(browser.jsctx, "shimdone"); 
 
 	-- Inject the DOM stub JS before jQuery
-	local err = duk_compile_filename(jsctx, "projects/browser/data/js/errordebug.js")
-	local err = duk_compile_filename(jsctx, "projects/browser/data/js/domshim.js")
-	local err = duk_compile_filename(jsctx, "projects/browser/data/js/zepto.js")
-	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/jquery.min.js")
-	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/startmin.js")
-	-- local err = duk_compile_filename(jsctx, "projects/browser/data/js/mandel.js")
+	local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/errordebug.js")
+	local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/domshim.js")
+	local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/zepto.js")
+	-- local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/jquery.min.js")
+	-- local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/startmin.js")
+	-- local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/mandel.js")
 
-	browser.send_message( "main", "test.example1", {} )
-	browser.send_message( "main", "test.example2", {} )
+	browser.send_message( "main", "js.eval", {
+		cmd = [[
+			var div = document.createElement("div");
+			div.innerHTML = "Hello!";
+			div.setAttribute("id", "some_element");
+			document.body.appendChild(div);
+			print("Div added to fake DOM");
+			
+			var root = $('#some_element')[0];
+			dumpDOM(root);  
+			print($.camelCase('hello-there')); 
+		]],
+	} )
 
-	browser.jsctx = jsctx
+	browser.send_message( "main", "js.eval", {
+		cmd = [[
+			$.get('html/tests/css-simple01.html', function(err, status, xhr) {
+				print(status);
+				print(xhr.responseText);			
+			});		
+		]],
+	} )
 end
 
 -- --------------------------------------------------------------------------------------
@@ -212,41 +230,23 @@ browser.update = function(self, dt)
 	htmlr.render( { left=50, top=50.0 } )
 	rapi.finish(self)
 	events.process()
-	if(browser.ready and browser.jsctx) then
-		native_invoke_function(browser.jsctx, "runTimers" )
-	end
 end
-
-
 
 -- --------------------------------------------------------------------------------------
 
 browser.check_messages = function(self)
 	
-	if(browser.ready == nil) then return end
+	if(browser.ready == nil or browser.jsctx == nil) then return end
+
 	for k,msg in ipairs(browser.messages) do 
-		if(msg.dst == "test.example1") then 
-			local err = duk_safe_eval(browser.jsctx, [[
-				var div = document.createElement("div");
-				div.innerHTML = "Hello!";
-				div.setAttribute("id", "some_element");
-				document.body.appendChild(div);
-				print("Div added to fake DOM");
-				
-				var root = $('#some_element')[0];
-				dumpDOM(root);  
-				print($.camelCase('hello-there')); 
-				]])
-		elseif(msg.dst == "test.example2") then 
-			local err = duk_safe_eval(browser.jsctx, [[
-				$.get('html/tests/css-simple01.html', function(err, status, xhr) {
-					print(status);
-					print(xhr.responseText);			
-				});		
-				]])
+		if(msg.dst == "js.eval") then 
+			local err = duk_safe_eval(browser.jsctx, msg.msg.cmd)
 		end
 	end 
 	browser.messages = {}
+
+	-- Update timers in duktape.
+	native_invoke_function(browser.jsctx, "runTimers" )
 end
 
 -- --------------------------------------------------------------------------------------
@@ -348,7 +348,6 @@ local function frame()
 	tick = tick + 1
 
 	-- if(tick % 60 == 0) then print(t) end
-	browser:check_messages()
 
     -- Begin recording draw commands for a frame buffer of size (width, height).
     sgp.sgp_begin(w, h)
@@ -398,6 +397,8 @@ local function frame()
     sgp.sg_end_pass()
     -- Commit Sokol render.
     sg.sg_commit()
+
+	browser:check_messages()
 
 	-- Give up some idle time - TODO: this is shitty. will remove
 	ffi.C.Sleep(1)
