@@ -50,6 +50,8 @@ local vcolor 	= { r=1.0, b=0.0, g=0.0, a=1.0 }
 
 local browser = {
 	messages 	= {},
+	timers 		= {},
+	timers_count = 0,
 }
 
 -- --------------------------------------------------------------------------------------
@@ -81,7 +83,6 @@ local function duk_eval_string( ctx )
 end
 
 -- --------------------------------------------------------------------------------------
-local slen = ffi.new("duk_size_t[1]")
 
 local function duk_safe_eval( ctx, str, filename )
 	
@@ -89,6 +90,7 @@ local function duk_safe_eval( ctx, str, filename )
 	duk.duk_push_lstring(ctx, str, #str)
 	local err = duk.duk_safe_call(ctx, duk_eval_string, nil, 0 , 0 )
 	if(err ~= 0) then 
+		local slen = ffi.new("duk_size_t[1]")
 		local outstr = ffi.string(duk.duk_safe_to_lstring(ctx, -1, slen))
 		print(string.format("[Duktape] In file: %s", filename))
 		print(string.format("[Duktape] \tError %d : %s", err, outstr))
@@ -116,6 +118,8 @@ end
 
 local function native_invoke_function(ctx, funcname) 
     duk.duk_get_global_string(ctx, funcname)
+	duk.duk_push_null(ctx);
+	duk.duk_put_global_string(ctx, funcname)
     duk.duk_call(ctx, 0)
 	duk.duk_pop(ctx)
     return 0
@@ -132,9 +136,51 @@ end
 -- --------------------------------------------------------------------------------------
 
 function shim_done(ctx) 
+
+	local time = duk.duk_get_number(ctx, 0)
+	browser.timeoffset = time - slib.stm_ms(slib.stm_now())
 	browser.ready = true
 	return 0 
 end
+
+-- --------------------------------------------------------------------------------------
+
+function new_timer( ctx )
+
+	local id = duk.duk_get_int(ctx, 0)
+	local time = (duk.duk_get_number(ctx, 1) - browser.timeoffset)
+	local delay = duk.duk_get_uint(ctx, 2)
+	local rep = duk.duk_get_boolean(ctx, 3)
+	-- print(id, time, delay, rep)
+	browser.timers[id] = { id = id, time = time, delay = delay, rep = rep } 
+	browser.timers_count = browser.timers_count + 1
+	return 0
+end
+
+-- --------------------------------------------------------------------------------------
+
+function delete_timer( ctx )
+	local id = duk.duk_get_int(ctx, 0)
+	browser.timers[id] = nil 
+	browser.timers_count = browser.timers_count - 1
+	return 0
+end 
+
+-- --------------------------------------------------------------------------------------
+
+function runTimers()
+
+	if(browser.timers_count < 1) then return end
+
+	local time = slib.stm_ms(slib.stm_now())
+	for idx, tmr in pairs(browser.timers) do 
+		if( tmr and time > tmr.time ) then 
+			browser.send_message( "main", "js_eval", {
+				cmd = [[updateTimer(]]..tmr.id..[[);]],
+			})
+		end 
+	end
+end	
 
 -- --------------------------------------------------------------------------------------
 
@@ -146,6 +192,8 @@ end
 -- --------------------------------------------------------------------------------------
 
 browser.init = function (self)
+
+	slib.stm_setup()
 
 	self.buttons = { 0,0,0 }
 	self.renderCtx = {}
@@ -181,8 +229,15 @@ browser.init = function (self)
 	duk.duk_push_c_function(browser.jsctx, native_print, 1)
 	duk.duk_put_global_string(browser.jsctx, "print"); 
 
-	duk.duk_push_c_function(browser.jsctx, shim_done, 0)
-	duk.duk_put_global_string(browser.jsctx, "shimdone"); 
+	duk.duk_push_c_function(browser.jsctx, shim_done, 1)
+	duk.duk_put_global_string(browser.jsctx, "lj_shimdone"); 
+
+	duk.duk_push_c_function(browser.jsctx, new_timer, 4)
+	duk.duk_put_global_string(browser.jsctx, "lj_newtimer"); 
+
+	duk.duk_push_c_function(browser.jsctx, delete_timer, 1)
+	duk.duk_put_global_string(browser.jsctx, "lj_deltimer"); 
+
 
 	-- Inject the DOM stub JS before jQuery
 	local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/errordebug.js")
@@ -192,26 +247,26 @@ browser.init = function (self)
 	-- local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/startmin.js")
 	-- local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/mandel.js")
 
-	browser.send_message( "main", "js.eval", {
+	browser.send_message( "main", "js_eval", {
 		cmd = [[
-			var div = document.createElement("div");
-			div.innerHTML = "Hello!";
-			div.setAttribute("id", "some_element");
-			document.body.appendChild(div);
-			print("Div added to fake DOM");
-			
-			var root = $('#some_element')[0];
-			dumpDOM(root);  
-			print($.camelCase('hello-there')); 
+var div = document.createElement("div");
+div.innerHTML = "Hello!";
+div.setAttribute("id", "some_element");
+document.body.appendChild(div);
+print("Div added to fake DOM");
+
+var root = $('#some_element')[0];
+dumpDOM(root);  
+print($.camelCase('hello-there')); 
 		]],
 	} )
 
-	browser.send_message( "main", "js.eval", {
+	browser.send_message( "main", "js_eval", {
 		cmd = [[
-			$.get('html/tests/css-simple01.html', function(err, status, xhr) {
-				print(status);
-				print(xhr.responseText);			
-			});		
+$.get('html/tests/css-simple01.html', function(err, status, xhr) {
+	print(status);
+	print(xhr.responseText);			
+});		
 		]],
 	} )
 end
@@ -238,15 +293,16 @@ browser.check_messages = function(self)
 	
 	if(browser.ready == nil or browser.jsctx == nil) then return end
 
+	-- Update timers in duktape.
+	-- native_invoke_function(browser.jsctx, "runTimers" )
+	runTimers()
+
 	for k,msg in ipairs(browser.messages) do 
-		if(msg.dst == "js.eval") then 
+		if(msg.dst == "js_eval") then 
 			local err = duk_safe_eval(browser.jsctx, msg.msg.cmd)
 		end
 	end 
 	browser.messages = {}
-
-	-- Update timers in duktape.
-	native_invoke_function(browser.jsctx, "runTimers" )
 end
 
 -- --------------------------------------------------------------------------------------

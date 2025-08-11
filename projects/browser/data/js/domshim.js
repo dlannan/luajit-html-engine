@@ -180,22 +180,41 @@ window.LuaBridge = {
         return new Date().getTime();
     }
 
-    function runTimers() {
-        var time = now();
-        for (var id in _timers) {
-            var t = _timers[id];
-            if (t && time >= t.time) {
-                try {
-                    t.fn();
-                } catch (e) {
-                    print("Timer error: " + e);
-                }
+    // function runTimers() {
+    //     var time = now();
+    //     for (var id in _timers) {
+    //         var t = _timers[id];
+    //         if (t && time >= t.time) {
+    //             try {
+    //                 t.fn();
+    //             } catch (e) {
+    //                 print("Timer error: " + e);
+    //             }
 
-                if (t.repeat) {
-                    t.time = time + t.delay;
-                } else {
-                    delete _timers[id];
-                }
+    //             if (t.repeat) {
+    //                 t.time = time + t.delay;
+    //             } else {
+    //                 delete _timers[id];
+    //             }
+    //         }
+    //     }
+    // }
+
+
+    function updateTimer(id) {
+        var t = _timers[id];
+        if (t) {
+            try {
+                t.fn();
+            } catch (e) {
+                print("Timer error: " + e);
+            }
+
+            if (t.repeat) {
+                t.time = now() + t.delay;
+            } else {
+                delete _timers[id];
+                lj_deltimer(id)
             }
         }
     }
@@ -208,6 +227,7 @@ window.LuaBridge = {
             delay: delay,
             repeat: false
         };
+        lj_newtimer(id, _timers[id].time, _timers[id].delay, _timers[id].repeat)
         return id;
     };
 
@@ -219,6 +239,7 @@ window.LuaBridge = {
             delay: delay,
             repeat: true
         };
+        lj_newtimer(id, _timers[id].time, _timers[id].delay, _timers[id].repeat)
         return id;
     };
 
@@ -227,7 +248,8 @@ window.LuaBridge = {
     };
 
     this.clearInterval = this.clearTimeout;
-    this.runTimers = runTimers;
+    // this.runTimers = runTimers;
+    this.updateTimer = updateTimer;
 })(typeof window !== 'undefined' ? window : this);
 
 // ---------------------------- XHR -------------------
@@ -301,6 +323,6 @@ window.LuaBridge = {
 // ---------------------------------------------------
 
 // Calls back to lua, to say the JS has a fake dom ready to use
-shimdone();
+lj_shimdone( new Date().getTime() );
 
 // ---------------------------------------------------
