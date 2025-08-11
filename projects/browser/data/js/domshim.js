@@ -270,8 +270,10 @@ window.LuaBridge = {
         this._method = method;
         this._url = url;
         this.readyState = 1;
-        print(method) 
-        print(url)
+
+        // Check url and load in luajit?
+        this._requestId = lj_loadurl(this._method, this._url)
+
         if (this.onreadystatechange) this.onreadystatechange();
     };
 

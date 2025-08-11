@@ -49,6 +49,7 @@ local vcolor 	= { r=1.0, b=0.0, g=0.0, a=1.0 }
 -- --------------------------------------------------------------------------------------
 
 local browser = {
+	requests 	= {},
 	messages 	= {},
 	timers 		= {},
 	timers_count = 0,
@@ -177,6 +178,34 @@ end
 
 -- --------------------------------------------------------------------------------------
 
+function load_url_cb( resp )
+
+	print(ffi.string(resp.data.ptr, resp.data.size))
+end
+
+-- --------------------------------------------------------------------------------------
+local MAX_FILE_SIZE = 1024 * 1024 * 4 -- 4MB
+
+function load_url( ctx )
+	local method = ffi.string(duk.duk_get_string(ctx, 0))
+	local url = ffi.string(duk.duk_get_string(ctx, 1))
+
+    -- start loading a file into a statically allocated buffer:
+	local req 			= ffi.new("sfetch_request_t[1]")
+	req[0].path 		= url 
+	req[0].callback 	= load_url_cb
+	req[0].buffer.ptr 	= ffi.new("char[?]", MAX_FILE_SIZE)
+	req[0].buffer.size 	= MAX_FILE_SIZE
+    slib.sfetch_send(req)
+	local newreq = { id =  #browser.requests, url = url, method = method }
+	tinsert(browser.requests, newreq)
+
+	duk.duk_push_int(ctx, newreq.id)
+	return 1
+end 
+
+-- --------------------------------------------------------------------------------------
+
 function runTimers()
 
 	if(browser.timers_count < 1) then return end
@@ -203,6 +232,12 @@ end
 browser.init = function (self)
 
 	slib.stm_setup()
+
+    -- setup sokol-fetch with default config:
+	local desc = ffi.new("sfetch_desc_t[1]")
+	desc[0].logger.func = slib.slog_func
+
+    slib.sfetch_setup(desc)
 
 	self.buttons = { 0,0,0 }
 	self.renderCtx = {}
@@ -252,6 +287,10 @@ browser.init = function (self)
 	duk.duk_push_c_function(browser.jsctx, repeat_timer, 2)
 	duk.duk_put_global_string(browser.jsctx, "lj_reptimer"); 
 
+	-- Url load and fetch commands
+	duk.duk_push_c_function(browser.jsctx, load_url, 2)
+	duk.duk_put_global_string(browser.jsctx, "lj_loadurl"); 
+
 
 	-- Inject the DOM stub JS before jQuery
 	local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/errordebug.js")
@@ -277,7 +316,7 @@ print($.camelCase('hello-there'));
 
 	browser.send_message( "main", "js_eval", {
 		cmd = [[
-$.get('html/tests/css-simple01.html', function(err, status, xhr) {
+$.get('projects/browser/data/html/tests/css-simple01.html', function(err, status, xhr) {
 	print(status);
 	print(xhr.responseText);			
 });		
@@ -317,6 +356,8 @@ browser.check_messages = function(self)
 		end
 	end 
 	browser.messages = {}
+
+	slib.sfetch_dowork()
 end
 
 -- --------------------------------------------------------------------------------------
@@ -479,6 +520,7 @@ end
 local function cleanup()
 
 	browser:final()
+	slib.sfetch_shutdown()
     sgp.sgp_shutdown()
     sg.sg_shutdown()
 end

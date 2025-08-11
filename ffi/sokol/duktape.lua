@@ -103,6 +103,7 @@ duk_int_t duk_get_type(duk_context *ctx, duk_idx_t idx);
 duk_double_t duk_random(duk_context *ctx);
 
 duk_int_t duk_get_int(duk_context *ctx, duk_idx_t idx);
+const char *duk_get_string(duk_context *ctx, duk_idx_t idx);
 duk_int_t duk_get_uint(duk_context *ctx, duk_idx_t idx);
 duk_int_t duk_to_int(duk_context *ctx, duk_int_t index);
 
@@ -124,6 +125,7 @@ const char *duk_safe_to_lstring(duk_context *ctx, duk_idx_t idx, duk_size_t *out
 const char *duk_push_string(duk_context *ctx, const char *str);
 const char *duk_push_lstring(duk_context *ctx, const char *str, duk_size_t len);
 const char *duk_require_lstring(duk_context *ctx, duk_idx_t idx, duk_size_t *out_len);
+void duk_push_int(duk_context *ctx, duk_int_t val);
 
 duk_bool_t duk_get_prop_string(duk_context *ctx, duk_idx_t obj_idx, const char *key);
 
