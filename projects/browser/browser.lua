@@ -168,6 +168,15 @@ end
 
 -- --------------------------------------------------------------------------------------
 
+function repeat_timer( ctx )
+	local id = duk.duk_get_int(ctx, 0)
+	local time = (duk.duk_get_number(ctx, 1) - browser.timeoffset)
+	browser.timers[id].time = time 
+	return 0
+end 
+
+-- --------------------------------------------------------------------------------------
+
 function runTimers()
 
 	if(browser.timers_count < 1) then return end
@@ -229,14 +238,19 @@ browser.init = function (self)
 	duk.duk_push_c_function(browser.jsctx, native_print, 1)
 	duk.duk_put_global_string(browser.jsctx, "print"); 
 
+	-- Needed to map in a DOM so the JS structures match expected hierarchies
 	duk.duk_push_c_function(browser.jsctx, shim_done, 1)
 	duk.duk_put_global_string(browser.jsctx, "lj_shimdone"); 
 
+	-- Timer related functions
 	duk.duk_push_c_function(browser.jsctx, new_timer, 4)
 	duk.duk_put_global_string(browser.jsctx, "lj_newtimer"); 
 
 	duk.duk_push_c_function(browser.jsctx, delete_timer, 1)
 	duk.duk_put_global_string(browser.jsctx, "lj_deltimer"); 
+
+	duk.duk_push_c_function(browser.jsctx, repeat_timer, 2)
+	duk.duk_put_global_string(browser.jsctx, "lj_reptimer"); 
 
 
 	-- Inject the DOM stub JS before jQuery

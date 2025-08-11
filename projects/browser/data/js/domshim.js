@@ -212,9 +212,10 @@ window.LuaBridge = {
 
             if (t.repeat) {
                 t.time = now() + t.delay;
+                lj_reptimer(id, t.time);
             } else {
                 delete _timers[id];
-                lj_deltimer(id)
+                lj_deltimer(id);
             }
         }
     }
