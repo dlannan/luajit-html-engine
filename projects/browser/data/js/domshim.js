@@ -1,6 +1,50 @@
+// Simple JS map for identity
+if (!this.__nodeCache) this.__nodeCache = {};
+
+function wrapNode(id) {
+    if (!id) return null;
+    var key = String(id);
+    var cached = __nodeCache[key];
+    if (cached) return cached;
+
+    function NodeHandle(id) { this._id = id; }
+    NodeHandle.prototype.id = function() { return this._id; };
+
+    NodeHandle.prototype.tagName = function() { return getTag(this._id); };
+    NodeHandle.prototype.firstChild = function() {
+        return wrapNode(getFirstChild(this._id));
+    };
+    NodeHandle.prototype.nextSibling = function() {
+        return wrapNode(getNextSibling(this._id));
+    };
+    NodeHandle.prototype.getAttribute = function(name) { return getAttr(this._id, name); };
+    NodeHandle.prototype.setAttribute = function(name, value) { setAttr(this._id, name, value); };
+
+    NodeHandle.prototype.appendChild = function(child) {
+        // we can call a native appendChild if registered
+        // or call Lua via a special global appendChildNative(idParent, idChild)
+        appendChildNative(this._id, child._id);
+    };
+
+    NodeHandle.prototype.removeChild = function(child) {
+        removeChildNative(this._id, child._id);
+    };
+
+    var obj = new NodeHandle(id);
+    __nodeCache[key] = obj;
+    return obj;
+}
+
 // === Globals ===
 var window = this;
-var document = {};
+var body = createElementNative("body");
+var document = {
+    createElement: function(tag) {
+        var id = createElementNative(tag);
+        return wrapNode(id);
+    },
+    body: wrapNode(body)
+};
 
 // ---------------------------- WINDOW -------------------
 
@@ -25,96 +69,93 @@ function Event(type) {
 window.Event = Event;
 
 // ----------------------- NODE/ELEMENT -------------------
-function Node() {}
+// function Node() {}
 
-function Element(tagName) {
-    this.tagName = tagName.toUpperCase();
-    this.children = [];
-    this.attributes = {};
-    this.style = {};
-    this.classList = {
-        classes: [],
-        add: function(cls) {
-            this.classes.push(cls);
-        },
-        remove: function(cls) {
-            var newClasses = [];
-            for (var i = 0; i < this.classes.length; i++) {
-                if (this.classes[i] !== cls) {
-                    newClasses.push(this.classes[i]);
-                }
-            }
-            this.classes = newClasses;
-        },
-        contains: function(cls) {
-            for (var i = 0; i < this.classes.length; i++) {
-                if (this.classes[i] === cls) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    };
-    this.addEventListener = function(type, callback) {
-        // Hook to Lua here if desired
-        if (!this._listeners) this._listeners = {};
-        if (!this._listeners[type]) this._listeners[type] = [];
-        this._listeners[type].push(callback);
-    };
-    this.removeEventListener = function(type, callback) {
-        if (this._listeners && this._listeners[type]) {
-            var newList = [];
-            for (var i = 0; i < this._listeners[type].length; i++) {
-                if (this._listeners[type][i] !== callback) {
-                    newList.push(this._listeners[type][i]);
-                }
-            }
-            this._listeners[type] = newList;
-        }
-    };
-    this.dispatchEvent = function(event) {
-        if (this._listeners && this._listeners[event.type]) {
-            var listeners = this._listeners[event.type];
-            for (var i = 0; i < listeners.length; i++) {
-                listeners[i].call(this, event);
-            }
-        }
-    };
-    this.setAttribute = function(name, value) {
-        this.attributes[name] = value;
-        // Optionally notify Lua
-    };
-    this.getAttribute = function(name) {
-        return this.attributes[name] || null;
-    };
-    this.appendChild = function(child) {
-        this.children.push(child);
-        // You could proxy this to Lua:
-        // LuaBridge.appendChild(this, child);
-    };
-    this.removeChild = function(child) {
-        var newChildren = [];
-        for (var i = 0; i < this.children.length; i++) {
-            if (this.children[i] !== child) {
-                newChildren.push(this.children[i]);
-            }
-        }
-        this.children = newChildren;
-    };
-    this.innerHTML = ""; // jQuery looks at this
-    // if (this.tagName === 'A' || this.tagName === 'LINK' || this.tagName === 'AREA') {
-        this.href = "";
-    // }
-}
-
-Element.prototype = new Node();
-window.HTMLElement = Element;
-window.Node = Node;
+// function Element(tagName) {
+//     this.tagName = tagName.toUpperCase();
+//     this.children = [];
+//     this.attributes = {};
+//     this.style = {};
+//     this.classList = {
+//         classes: [],
+//         add: function(cls) {
+//             this.classes.push(cls);
+//         },
+//         remove: function(cls) {
+//             var newClasses = [];
+//             for (var i = 0; i < this.classes.length; i++) {
+//                 if (this.classes[i] !== cls) {
+//                     newClasses.push(this.classes[i]);
+//                 }
+//             }
+//             this.classes = newClasses;
+//         },
+//         contains: function(cls) {
+//             for (var i = 0; i < this.classes.length; i++) {
+//                 if (this.classes[i] === cls) {
+//                     return true;
+//                 }
+//             }
+//             return false;
+//         }
+//     };
+//     this.addEventListener = function(type, callback) {
+//         // Hook to Lua here if desired
+//         if (!this._listeners) this._listeners = {};
+//         if (!this._listeners[type]) this._listeners[type] = [];
+//         this._listeners[type].push(callback);
+//     };
+//     this.removeEventListener = function(type, callback) {
+//         if (this._listeners && this._listeners[type]) {
+//             var newList = [];
+//             for (var i = 0; i < this._listeners[type].length; i++) {
+//                 if (this._listeners[type][i] !== callback) {
+//                     newList.push(this._listeners[type][i]);
+//                 }
+//             }
+//             this._listeners[type] = newList;
+//         }
+//     };
+//     this.dispatchEvent = function(event) {
+//         if (this._listeners && this._listeners[event.type]) {
+//             var listeners = this._listeners[event.type];
+//             for (var i = 0; i < listeners.length; i++) {
+//                 listeners[i].call(this, event);
+//             }
+//         }
+//     };
+//     this.setAttribute = function(name, value) {
+//         this.attributes[name] = value;
+//         // Optionally notify Lua
+//     };
+//     this.getAttribute = function(name) {
+//         return this.attributes[name] || null;
+//     };
+//     this.appendChild = function(child) {
+//         this.children.push(child);
+//         // You could proxy this to Lua:
+//         // LuaBridge.appendChild(this, child);
+//     };
+//     this.removeChild = function(child) {
+//         var newChildren = [];
+//         for (var i = 0; i < this.children.length; i++) {
+//             if (this.children[i] !== child) {
+//                 newChildren.push(this.children[i]);
+//             }
+//         }
+//         this.children = newChildren;
+//     };
+//     this.innerHTML = ""; // jQuery looks at this
+//     // if (this.tagName === 'A' || this.tagName === 'LINK' || this.tagName === 'AREA') {
+//         this.href = "";
+//     // }
+// }
 
 // ---------------------------- DOCUMENT -------------------
 
 document.createElement = function(tagName) {
-    return new Element(tagName);
+    var id = createElementNative(tagName);
+    return wrapNode(id);
 };
 document.getElementById = function(id) {
     // Implement using your Lua document model (optional)
@@ -139,8 +180,8 @@ document.readyState = "complete";
 document.location = window.location;
 
 // === Root Elements ===
-document.body = new Element("body");
-document.documentElement = new Element("html");
+document.body =  wrapNode(createElementNative("body"));
+document.documentElement =  wrapNode(createElementNative("html"));
 
 document.createEvent = function(type) {
     return {
@@ -155,12 +196,15 @@ document.createEvent = function(type) {
     };
 };
 
-Element.prototype.dispatchEvent = function(event) {
-    var handler = this['on' + event.type];
-    if (typeof handler === 'function') {
-        handler.call(this, event);
-    }
-};
+window.HTMLElement = wrapNode(createElementNative("html"));
+window.Node = wrapNode(createElementNative("html"));
+
+// Element.prototype.dispatchEvent = function(event) {
+//     var handler = this['on' + event.type];
+//     if (typeof handler === 'function') {
+//         handler.call(this, event);
+//     }
+// };
 
 // ---------------------------- LUA BRIDGE -------------------
 window.LuaBridge = {

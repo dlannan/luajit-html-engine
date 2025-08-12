@@ -20,6 +20,7 @@ local hutils    = require("hmm_utils")
 
 local duk 		= require("duktape")
 local events 	= require("projects.browser.events")
+local ljdom 	= require("projects.browser.lj_dom")
 
 local htmlr 	= require("engine.libs.htmlrenderer") 
 local rapi 		= require("engine.libs.htmlrender-api")
@@ -73,14 +74,20 @@ end
 
 -- --------------------------------------------------------------------------------------
 
-local function duk_eval_string( ctx )
-	local codestr = duk.duk_require_lstring(ctx, 0, nil)
-	local code = ffi.string(codestr)
-	local flags = bit.bor( duk.DUK_COMPILE_EVAL, 
-					bit.bor( duk.DUK_COMPILE_NOSOURCE, 
-						bit.bor( duk.DUK_COMPILE_STRLEN, duk.DUK_COMPILE_NOFILENAME ) ) )
-	duk.duk_eval_raw(ctx, code, ffi.sizeof(codestr), flags )
-	return 1
+local function duk_eval_string( ctx, codestr, filename )
+	local errors = 1
+
+	duk.duk_push_string(ctx, codestr)
+	duk.duk_push_string(ctx, filename)
+
+	local err = duk.duk_compile_raw(ctx, nil, 0, 2)
+	if( err ~= 0 ) then 
+		print("[Duktape] Compile failed.")
+		print(string.format("[Duktape] %s", ffi.string(duk.duk_to_string(ctx, -1))))
+	else
+		errors = 0
+	end
+	return errors
 end
 
 -- --------------------------------------------------------------------------------------
@@ -88,15 +95,19 @@ end
 local function duk_safe_eval( ctx, str, filename )
 	
 	filename = filename or "string."
-	duk.duk_push_lstring(ctx, str, #str)
-	local err = duk.duk_safe_call(ctx, duk_eval_string, nil, 0 , 0 )
+	local err = duk_eval_string(ctx, str, filename)
 	if(err ~= 0) then 
-		local slen = ffi.new("duk_size_t[1]")
-		local outstr = ffi.string(duk.duk_safe_to_lstring(ctx, -1, slen))
-		print(string.format("[Duktape] In file: %s", filename))
-		print(string.format("[Duktape] \tError %d : %s", err, outstr))
+		return err 
+	else 
+		err = duk.duk_pcall(ctx, 0)
+		if(err ~= 0) then 
+			local outstr = ffi.string(duk.duk_to_string(ctx, -1))
+			print(string.format("[Duktape] In file: %s", filename))
+			print(string.format("[Duktape] \tError %d : %s", err, outstr))
+		end
 	end
 	duk.duk_pop(ctx)
+	return err
 end
 
 -- --------------------------------------------------------------------------------------
@@ -106,8 +117,6 @@ local function duk_compile_filename( ctx, filename )
 	if(fh) then 
 		local fbuffer = fh:read("*a")
 		fh:close()
-		-- return duk.duk_compile_raw(ctx, fbuffer, #fbuffer, bit.bor(1, 
-		-- 				bit.bor( duk.DUK_COMPILE_NOSOURCE, duk.DUK_COMPILE_STRLEN) ) )
 		return duk_safe_eval( ctx, fbuffer, filename)
 	else 
 		print(string.format("[DukTape] Cannot open file: %s", filename ))
@@ -269,6 +278,7 @@ browser.init = function (self)
 
 	-- setup js interpreter
 	browser.jsctx = duk.duk_create_heap(nil,nil,nil,nil,duck_checkerr)
+	ljdom.register_bridge(browser.jsctx)
 
 	duk.duk_push_c_function(browser.jsctx, native_print, 1)
 	duk.duk_put_global_string(browser.jsctx, "print"); 

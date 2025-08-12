@@ -88,6 +88,7 @@ duk_int_t duk_eval_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_
 duk_int_t duk_compile_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
 
 void duk_call(duk_context *ctx, duk_idx_t nargs);
+duk_int_t duk_pcall(duk_context *ctx, duk_idx_t nargs);
 duk_int_t duk_safe_call(duk_context *ctx, duk_safe_call_function func, void *udata, duk_idx_t nargs, duk_idx_t nrets);
 
 void duk_pop(duk_context *ctx);
