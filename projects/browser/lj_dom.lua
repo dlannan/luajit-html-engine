@@ -2,12 +2,56 @@ local ffi       = require("ffi")
 local duk 		= require("duktape")
 
 -- --------------------------------------------------------------------------------------
-
+-- Definition of core internal objects. 
+--   All stored as indexes into an object array (for speed and org)
+--   No OO hierachy, all refs. Children, just change their parent id. Parents remove children from 
+--     their children nextSibiling chain. This is _fast_ and can be done across processes easily.
+--
 ffi.cdef[[
 typedef uint32_t u32;
-typedef struct { u32 type; u32 parent; u32 firstChild; u32 nextSibling; u32 elemIndex; } Node;
-typedef struct { u32 nodeIndex; u32 propStart; u32 propCount; } Element;
-typedef struct { u32 nameIdx; u32 valueIdx; } Property;
+typedef struct {
+    u32 elemIndex;
+    u32 type;
+    u32 parent;
+    u32 firstChild;
+    u32 nextSibling;
+} Node;
+
+typedef struct { 
+    u32 nodeIndex; 
+    u32 propFirst; 
+    u32 styleFirst; 
+    u32 classFirst; 
+    const char* tag;
+} Element;
+
+typedef struct { 
+    u32 nameIdx; 
+    u32 valueIdx; 
+    u32 nextSibling;    
+} Property;
+
+typedef struct { 
+    u32 nameIdx; 
+    u32 valueIdx; 
+    u32 nextSibling;    
+    const char* name;
+} Style;
+
+typedef struct {
+    u32 nameIdx; 
+    u32 nextSibling;    
+    const char* name;
+} Class;
+
+typedef struct {
+    u32 id;
+    float x, y, w, h;   // Common lookup
+    u32 color;          // Common lookup
+    u32 bg_color;       // Common lookup
+    u32 visible;
+    u32 render_id;
+} Renderable;
 ]]
 
 -- --------------------------------------------------------------------------------------
@@ -19,6 +63,9 @@ local CAP = 16384
 local Nodes         = ffi.new("Node[?]", CAP)
 local Elements      = ffi.new("Element[?]", CAP)
 local Properties    = ffi.new("Property[?]", CAP)
+local Styles        = ffi.new("Style[?]", CAP)
+local Classes       = ffi.new("Class[?]", CAP)
+local RenderObjs    = ffi.new("Renderable[?]", CAP)
 
 -- --------------------------------------------------------------------------------------
 -- string tables (simple Lua tables, map index -> string)
@@ -34,6 +81,10 @@ end
 local nextNode = 1
 local nextElem = 1
 local nextProp = 1
+local nextStyle = 1
+local nextClass = 1
+
+local defaultStyle = add_string("default")
 
 -- --------------------------------------------------------------------------------------
 -- helper: create element node
@@ -48,14 +99,23 @@ local function create_element(tag)
     Nodes[nid].elemIndex = eid
 
     Elements[eid].nodeIndex = nid
-    Elements[eid].propStart = nextProp
-    Elements[eid].propCount = 0
+    Elements[eid].propFirst = nextProp
+    Elements[eid].styleFirst = nextStyle
+    Elements[eid].classFirst = 9
 
     -- store tag name in strings and as property  (optional)
     local tagIdx = add_string(tag or "")
     -- for convenience keep tag name as prop 0 (you can choose a stable mapping)
-    Properties[nextProp].nameIdx = add_string("tagName"); Properties[nextProp].valueIdx = tagIdx; nextProp = nextProp + 1
-    Elements[eid].propCount = Elements[eid].propCount + 1
+    Properties[nextProp].nameIdx = add_string("tagName")
+    Properties[nextProp].valueIdx = tagIdx
+    Properties[nextProp].nextSibling = 0  -- Always set to 0 for end of "chain"
+    nextProp = nextProp + 1
+
+    -- Todo styles should map into my rendererable styles
+    Styles[nextStyle].nameIdx = defaultStyle
+    Styles[nextStyle].valueIdx = add_string("") -- Populate with a default style object if needed
+    Styles[nextStyle].nextSibling = 0
+    nextStyle = nextStyle + 1
 
     return nid
 end
@@ -112,15 +172,47 @@ local function get_next_sibling(nodeId) return Nodes[nodeId].nextSibling end
 local function get_tag(nodeId)
     local eid = Nodes[nodeId].elemIndex
     if eid == 0 then return nil end
-    local ps = Elements[eid].propStart
-    local pc = Elements[eid].propCount
-    for i = 0, pc-1 do
-        local prop = Properties[ps + i]
+    local ps = Elements[eid].propFirst
+    repeat
+        local prop = Properties[ps]
         if strings[prop.nameIdx] == "tagName" then
-        return strings[prop.valueIdx]
+            return strings[prop.valueIdx]
         end
-    end
+        ps = Properties[ps].nextSibling
+    until ps == 0
     return nil
+end
+
+-- --------------------------------------------------------------------------------------
+-- add style
+local function add_style(element_id, name, value)
+    local sid = nextStyle
+    Styles[sid].nameIdx = add_string(name)
+    Styles[sid].value = add_string(value)
+    Styles[sid].name = ffi.cast("const char*", name) -- Keep for fast lookup.
+    nextStyle = nextStyle + 1
+end
+
+-- --------------------------------------------------------------------------------------
+-- add class
+local function add_class(element_id, class_name)
+    local cs = Elements[element_id].classFirst
+    local lc = cs   -- Save the last used class
+    repeat 
+        -- If already added then return where it is.
+        if( class_name == Classes[cs].name ) then 
+            return cs 
+        end 
+        lc = cs
+        cs = Classes[cs].nextSibling
+    until cs == 0
+
+    Classes[nextClass].nameIdx = add_string(class_name)
+    Classes[nextClass].name = ffi.cast("const char*", class_name)
+    Classes[nextClass].nextSibling = ffi.cast("const char*", class_name)
+    Classes[lc].nextSibling = nextClass
+
+    nextClass = nextClass + 1
 end
 
 -- --------------------------------------------------------------------------------------
@@ -128,14 +220,14 @@ end
 local function get_attribute(nodeId, name)
     local eid = Nodes[nodeId].elemIndex
     if eid == 0 then return nil end
-    local ps = Elements[eid].propStart
-    local pc = Elements[eid].propCount
-    for i = 0, pc-1 do
-        local prop = Properties[ps + i]
+    local ps = Elements[eid].propFirst
+    repeat 
+        local prop = Properties[ps]
         if strings[prop.nameIdx] == name then
-        return strings[prop.valueIdx]
+            return strings[prop.valueIdx]
         end
-    end
+        ps = Properties[ps].nextSibling
+    until ps == 0
     return nil
 end
 
@@ -143,19 +235,23 @@ end
 local function set_attribute(nodeId, name, value)
     local eid = Nodes[nodeId].elemIndex
     if eid == 0 then return end
-    local ps = Elements[eid].propStart
-    local pc = Elements[eid].propCount
-    for i = 0, pc-1 do
-        local prop = Properties[ps + i]
+    local ps = Elements[eid].propFirst
+    local lp = ps
+    repeat 
+        local prop = Properties[ps]
         if strings[prop.nameIdx] == name then
-        Properties[ps + i].valueIdx = add_string(value)
-        return
+            Properties[ps].valueIdx = add_string(value)
+            return
         end
-    end
+        lp = ps
+        ps = Properties[ps].nextSibling
+    until ps == 0
+
     -- add new property at end (naive, no packing)
     Properties[nextProp].nameIdx = add_string(name)
     Properties[nextProp].valueIdx = add_string(value)
-    Elements[eid].propCount = Elements[eid].propCount + 1
+    Properties[nextProp].nextSibling = 0
+    Properties[lp].nextSibling = nextProp
     nextProp = nextProp + 1
 end
 
