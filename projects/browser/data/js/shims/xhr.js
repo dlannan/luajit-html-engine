@@ -16,9 +16,6 @@
         this._url = url;
         this.readyState = 1;
 
-        // Check url and load in luajit?
-        this._requestId = lj_loadurl(this._method, this._url)
-
         if (this.onreadystatechange) this.onreadystatechange();
     };
 
@@ -42,25 +39,22 @@
 
     FakeXHR.prototype.send = function(data) {
         var self = this;
-
-        // Simulate an async HTTP GET request (or POST)
-        // Replace this with native calls or your own loader if needed
-
-        // For demo, respond with static HTML after a tiny delay
+        
+        // The readystate listener shall be called when the file load is complete?!
         self.readyState = 2;
         self.status = 0;
-        // if (self.onreadystatechange) self.onreadystatechange();
-
-        // simulate response headers
+        if (self.onreadystatechange) self.onreadystatechange();
+        // simulate response headers -- need to generate this from mime types
         self._headers["content-type"] = "text/html";
 
-        // simulate delay with setTimeout (must be polyfilled or native)
-        setTimeout(function() {
+        // Check url and load in luajit?
+        self._requestId = lj_loadurl(self, function(respText) {
             self.readyState = 4;
             self.status = 200;
-            self.responseText = "<html><body><h1>Fake Response</h1></body></html>";
+            self.responseText = respText;
             if (self.onreadystatechange) self.onreadystatechange();
-        }, 1000);
+        });
+
     };
 
     // Expose FakeXHR globally as XMLHttpRequest

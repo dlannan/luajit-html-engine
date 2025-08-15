@@ -59,34 +59,6 @@ local browser = {
 
 -- --------------------------------------------------------------------------------------
 
-function load_url_cb( resp )
-
-	print(ffi.string(resp.data.ptr, resp.data.size))
-end
-
--- --------------------------------------------------------------------------------------
-local MAX_FILE_SIZE = 1024 * 1024 * 4 -- 4MB
-
-function load_url( ctx )
-	local method = ffi.string(duk.duk_get_string(ctx, 0))
-	local url = ffi.string(duk.duk_get_string(ctx, 1))
-
-    -- start loading a file into a statically allocated buffer:
-	local req 			= ffi.new("sfetch_request_t[1]")
-	req[0].path 		= url 
-	req[0].callback 	= load_url_cb
-	req[0].buffer.ptr 	= ffi.new("char[?]", MAX_FILE_SIZE)
-	req[0].buffer.size 	= MAX_FILE_SIZE
-    slib.sfetch_send(req)
-	local newreq = { id =  #browser.requests, url = url, method = method }
-	tinsert(browser.requests, newreq)
-
-	duk.duk_push_int(ctx, newreq.id)
-	return 1
-end 
-
--- --------------------------------------------------------------------------------------
-
 function runTimers()
 
 	if(browser.timers_count < 1) then return end
@@ -186,7 +158,7 @@ print($.camelCase('hello-there'));
 		cmd = [[
 $.get('projects/browser/data/html/tests/css-simple01.html', function(err, status, xhr) {
 	print(status);
-	print(xhr.responseText);
+	//print(xhr.responseText);
 
 	// print(JSON.stringify(document));
     lj_loaddom(CBOR.encode(document.documentElement));
@@ -327,24 +299,19 @@ local function input(event)
 end
 
 -- --------------------------------------------------------------------------------------
-local tick =0
+
 local function frame()
 
     -- Get current window size.
     local w         = sapp.sapp_widthf()
     local h         = sapp.sapp_heightf()
     local t         = (sapp.sapp_frame_duration() * 60.0)
-    local ratio = w/h
-	tick = tick + 1
-
-	-- if(tick % 60 == 0) then print(t) end
 
     -- Begin recording draw commands for a frame buffer of size (width, height).
     sgp.sgp_begin(w, h)
     -- Set frame buffer drawing region to (0,0,width,height).
     sgp.sgp_viewport(0, 0, w, h)
     -- Set drawing coordinate space to (left=-ratio, right=ratio, top=1, bottom=-1).
-    --sgp.sgp_project(-ratio, ratio, 1.0, -1.0)
     sgl.sgl_defaults()
     sgl.sgl_matrix_mode_projection()
     sgl.sgl_ortho(0.0, w, h, 0.0, -1.0, 1.0)
@@ -352,14 +319,6 @@ local function frame()
     -- Clear the frame buffer.
     sgp.sgp_set_color(0.1, 0.1, 0.1, 1.0)
     sgp.sgp_clear()
-
-    -- -- Draw an animated rectangle that rotates and changes its colors.
-    -- local time = tonumber(sapp.sapp_frame_count()) * sapp.sapp_frame_duration()
-    -- local r = math.sin(time)*0.5+0.5
-    -- local g = math.cos(time)*0.5+0.5
-    -- sgp.sgp_set_color(r, g, 0.3, 1.0)
-    -- sgp.sgp_rotate_at(time, 0.0, 0.0)
-    -- sgp.sgp_draw_filled_rect(-0.5, -0.5, 1.0, 1.0)
 
 	-- Must go here because the sokol 2d drawing happens within the rapi
 	--  NOTE: This might be separated later with procs so we can have multiple render 
