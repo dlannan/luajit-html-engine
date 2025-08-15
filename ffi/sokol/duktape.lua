@@ -86,6 +86,7 @@ duk_bool_t duk_get_global_string(duk_context *ctx, const char *key);
 
 duk_int_t duk_eval_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
 duk_int_t duk_compile_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
+void duk_compile_string(duk_context *ctx, duk_uint_t flags, const char *src);
 
 void duk_call(duk_context *ctx, duk_idx_t nargs);
 duk_int_t duk_pcall(duk_context *ctx, duk_idx_t nargs);
@@ -93,6 +94,7 @@ duk_int_t duk_safe_call(duk_context *ctx, duk_safe_call_function func, void *uda
 
 void duk_pop(duk_context *ctx);
 void duk_pop_2(duk_context *ctx);
+void duk_pop_3(duk_context *ctx);
 
 duk_idx_t duk_get_top(duk_context *ctx);
 duk_idx_t duk_get_top_index(duk_context *ctx);
@@ -116,10 +118,14 @@ duk_int_t duk_to_int(duk_context *ctx, duk_idx_t idx);
 duk_bool_t duk_to_boolean(duk_context *ctx, duk_idx_t idx);
 duk_uint_t duk_to_uint(duk_context *ctx, duk_idx_t idx);
 
+void duk_require_object(duk_context *ctx, duk_idx_t idx);
 duk_double_t duk_require_number(duk_context *ctx, duk_idx_t idx);
 duk_int_t duk_require_int(duk_context *ctx, duk_idx_t idx);
 duk_uint_t duk_require_uint(duk_context *ctx, duk_idx_t idx);
 duk_bool_t duk_require_boolean(duk_context *ctx, duk_idx_t idx);
+
+void *duk_get_buffer(duk_context *ctx, duk_idx_t idx, duk_size_t *out_size);
+void *duk_get_buffer_data(duk_context *ctx, duk_idx_t idx, duk_size_t *out_size);
 
 const char *duk_to_string(duk_context *ctx, duk_idx_t idx);
 const char *duk_safe_to_lstring(duk_context *ctx, duk_idx_t idx, duk_size_t *out_len);
@@ -141,6 +147,9 @@ const char *duk_json_encode(duk_context *ctx, duk_idx_t idx);
 
 void duk_base64_decode(duk_context *ctx, duk_idx_t idx);
 const char *duk_base64_encode(duk_context *ctx, duk_idx_t idx);
+
+duk_size_t duk_get_length(duk_context *ctx, duk_idx_t idx);
+void duk_set_length(duk_context *ctx, duk_idx_t idx, duk_size_t len);
 
 enum {
    DUK_COMPILE_EVAL = 8,

@@ -20,7 +20,8 @@ local hutils    = require("hmm_utils")
 
 local duk 		= require("duktape")
 local events 	= require("projects.browser.events")
-local ljdom 	= require("projects.browser.lj_dom")
+local ljdom 	= require("projects.browser.jsapi.lj_dom")
+local jsapi 	= require("projects.browser.jsapi.lj_jsapi")
 
 local htmlr 	= require("engine.libs.htmlrenderer") 
 local rapi 		= require("engine.libs.htmlrender-api")
@@ -55,135 +56,6 @@ local browser = {
 	timers 		= {},
 	timers_count = 0,
 }
-
--- --------------------------------------------------------------------------------------
-
-function duck_checkerr(jsctx, err)
-
-	local msg = duk.duk_to_string(jsctx, -1)
-	print(string.format("[DukTape] Fatal Error: %s", ffi.string(msg) ))
-end
-
--- --------------------------------------------------------------------------------------
-
-function core_eval_func(ctx) 
-    local code = ffi.string(duk.duk_get_pointer(ctx, -1))
-    duk.duk_eval_raw(ctx, code, #code, 0)
-    return 1
-end
-
--- --------------------------------------------------------------------------------------
-
-local function duk_eval_string( ctx, codestr, filename )
-	local errors = 1
-
-	duk.duk_push_string(ctx, codestr)
-	duk.duk_push_string(ctx, filename)
-
-	local err = duk.duk_compile_raw(ctx, nil, 0, 2)
-	if( err ~= 0 ) then 
-		print("[Duktape] Compile failed.")
-		print(string.format("[Duktape] %s", ffi.string(duk.duk_to_string(ctx, -1))))
-	else
-		errors = 0
-	end
-	return errors
-end
-
--- --------------------------------------------------------------------------------------
-
-local function duk_safe_eval( ctx, str, filename )
-	
-	filename = filename or "string."
-	local err = duk_eval_string(ctx, str, filename)
-	if(err ~= 0) then 
-		return err 
-	else 
-		err = duk.duk_pcall(ctx, 0)
-		if(err ~= 0) then 
-			local outstr = ffi.string(duk.duk_to_string(ctx, -1))
-			print(string.format("[Duktape] In file: %s", filename))
-			print(string.format("[Duktape] \tError %d : %s", err, outstr))
-		end
-	end
-	duk.duk_pop(ctx)
-	return err
-end
-
--- --------------------------------------------------------------------------------------
-
-local function duk_compile_filename( ctx, filename )
-	local fh = io.open(filename, "rb")
-	if(fh) then 
-		local fbuffer = fh:read("*a")
-		fh:close()
-		return duk_safe_eval( ctx, fbuffer, filename)
-	else 
-		print(string.format("[DukTape] Cannot open file: %s", filename ))
-		return nil
-	end
-end
-
--- --------------------------------------------------------------------------------------
-
-local function native_invoke_function(ctx, funcname) 
-    duk.duk_get_global_string(ctx, funcname)
-	duk.duk_push_null(ctx);
-	duk.duk_put_global_string(ctx, funcname)
-    duk.duk_call(ctx, 0)
-	duk.duk_pop(ctx)
-    return 0
-end
-
--- --------------------------------------------------------------------------------------
-
-function native_print(ctx) 
-	local outstr = ffi.string(duk.duk_to_string(ctx, -1))
-	print(string.format("[JS] %s", outstr))
-	return 0 
-end
-
--- --------------------------------------------------------------------------------------
-
-function shim_done(ctx) 
-
-	local time = duk.duk_get_number(ctx, 0)
-	browser.timeoffset = time - slib.stm_ms(slib.stm_now())
-	browser.ready = true
-	return 0 
-end
-
--- --------------------------------------------------------------------------------------
-
-function new_timer( ctx )
-
-	local id = duk.duk_get_int(ctx, 0)
-	local time = (duk.duk_get_number(ctx, 1) - browser.timeoffset)
-	local delay = duk.duk_get_uint(ctx, 2)
-	local rep = duk.duk_get_boolean(ctx, 3)
-	-- print(id, time, delay, rep)
-	browser.timers[id] = { id = id, time = time, delay = delay, rep = rep } 
-	browser.timers_count = browser.timers_count + 1
-	return 0
-end
-
--- --------------------------------------------------------------------------------------
-
-function delete_timer( ctx )
-	local id = duk.duk_get_int(ctx, 0)
-	browser.timers[id] = nil 
-	browser.timers_count = browser.timers_count - 1
-	return 0
-end 
-
--- --------------------------------------------------------------------------------------
-
-function repeat_timer( ctx )
-	local id = duk.duk_get_int(ctx, 0)
-	local time = (duk.duk_get_number(ctx, 1) - browser.timeoffset)
-	browser.timers[id].time = time 
-	return 0
-end 
 
 -- --------------------------------------------------------------------------------------
 
@@ -279,36 +151,22 @@ browser.init = function (self)
 	-- setup js interpreter
 	browser.jsctx = duk.duk_create_heap(nil,nil,nil,nil,duck_checkerr)
 	ljdom.register_bridge(browser.jsctx)
-
-	duk.duk_push_c_function(browser.jsctx, native_print, 1)
-	duk.duk_put_global_string(browser.jsctx, "print"); 
-
-	-- Needed to map in a DOM so the JS structures match expected hierarchies
-	duk.duk_push_c_function(browser.jsctx, shim_done, 1)
-	duk.duk_put_global_string(browser.jsctx, "lj_shimdone"); 
-
-	-- Timer related functions
-	duk.duk_push_c_function(browser.jsctx, new_timer, 4)
-	duk.duk_put_global_string(browser.jsctx, "lj_newtimer"); 
-
-	duk.duk_push_c_function(browser.jsctx, delete_timer, 1)
-	duk.duk_put_global_string(browser.jsctx, "lj_deltimer"); 
-
-	duk.duk_push_c_function(browser.jsctx, repeat_timer, 2)
-	duk.duk_put_global_string(browser.jsctx, "lj_reptimer"); 
-
-	-- Url load and fetch commands
-	duk.duk_push_c_function(browser.jsctx, load_url, 2)
-	duk.duk_put_global_string(browser.jsctx, "lj_loadurl"); 
-
+	jsapi.register(browser.jsctx, browser)
 
 	-- Inject the DOM stub JS before jQuery
-	local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/errordebug.js")
-	local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/domshim.js")
-	local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/zepto.js")
-	-- local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/jquery.min.js")
-	-- local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/startmin.js")
-	-- local err = duk_compile_filename(browser.jsctx, "projects/browser/data/js/mandel.js")
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/cbor.min.js")
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/shims/luajit.js")
+	
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/errordebug.js")
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/shims/dom.js")
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/shims/timers.js")
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/shims/xhr.js")
+	
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/zepto.js")
+
+	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/jquery.min.js")
+	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/startmin.js")
+	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/mandel.js")
 
 	browser.send_message( "main", "js_eval", {
 		cmd = [[
@@ -321,17 +179,25 @@ print("Div added to fake DOM");
 var root = $('#some_element')[0];
 dumpDOM(root);  
 print($.camelCase('hello-there')); 
-		]],
+]],
 	} )
 
 	browser.send_message( "main", "js_eval", {
 		cmd = [[
 $.get('projects/browser/data/html/tests/css-simple01.html', function(err, status, xhr) {
 	print(status);
-	print(xhr.responseText);			
+	print(xhr.responseText);
+
+	// print(JSON.stringify(document));
+    lj_loaddom(CBOR.encode(document.documentElement));
 });		
-		]],
+]],
 	} )
+
+	-- browser.send_message( "main", "duk_exec", {
+	-- 	cmd = jsapi.loaddom,
+	-- } )
+
 end
 
 -- --------------------------------------------------------------------------------------
@@ -362,7 +228,10 @@ browser.check_messages = function(self)
 
 	for k,msg in ipairs(browser.messages) do 
 		if(msg.dst == "js_eval") then 
-			local err = duk_safe_eval(browser.jsctx, msg.msg.cmd)
+			-- print(msg.msg.cmd)
+			local err = jsapi.duk_safe_eval(browser.jsctx, msg.msg.cmd)
+		elseif(msg.dst == "duk_exec") then 
+			local err = msg.msg.cmd(browser.jsctx)
 		end
 	end 
 	browser.messages = {}

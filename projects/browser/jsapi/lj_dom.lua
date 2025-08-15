@@ -336,9 +336,22 @@ local function js_create_element(ctx)
     return 1
 end
   
+
+-- --------------------------------------------------------------------------------------
+
+function native_print(ctx) 
+	local outstr = ffi.string(duk.duk_to_string(ctx, -1))
+	print(string.format("[JS] %s", outstr))
+	return 0 
+end
+
 -- --------------------------------------------------------------------------------------
 -- register these in duktape
 local function register_bridge(jsctx)
+
+	duk.duk_push_c_function(jsctx, native_print, 1)
+	duk.duk_put_global_string(jsctx, "print"); 
+
     -- remember to keep casted functions in Lua globals to avoid GC
     cb_get_first_child = ffi.cast("duk_c_function", js_get_first_child)
     cb_get_next_sibling = ffi.cast("duk_c_function", js_get_next_sibling)
