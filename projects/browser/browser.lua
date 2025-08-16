@@ -122,7 +122,7 @@ browser.init = function (self)
 
 	-- setup js interpreter
 	browser.jsctx = duk.duk_create_heap(nil,nil,nil,nil,duck_checkerr)
-	ljdom.register_bridge(browser.jsctx)
+	ljdom.register_bridge(browser.jsctx, browser)
 	jsapi.register(browser.jsctx, browser)
 
 	-- Inject the DOM stub JS before jQuery
@@ -169,9 +169,6 @@ $.get('projects/browser/data/html/tests/css-simple01.html', function(err, status
 	-- browser.send_message( "main", "duk_exec", {
 	-- 	cmd = jsapi.loaddom,
 	-- } )
-
-	-- Allow some setup time
-	ffi.C.Sleep(200)
 end
 
 -- --------------------------------------------------------------------------------------

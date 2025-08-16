@@ -41,8 +41,8 @@
         var self = this;
         
         // The readystate listener shall be called when the file load is complete?!
-        self.readyState = 2;
-        self.status = 0;
+        self.readyState     = 2;
+        self.status         = 0;
         if (self.onreadystatechange) self.onreadystatechange();
         // simulate response headers -- need to generate this from mime types
         self._headers["content-type"] = "text/html";
