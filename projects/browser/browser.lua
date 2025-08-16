@@ -27,6 +27,7 @@ local htmlr 	= require("engine.libs.htmlrenderer")
 local rapi 		= require("engine.libs.htmlrender-api")
 
 local utils     = require("utils")
+local cron 		= require("cron")
 local ffi       = require("ffi")
 
 local pprint 	= require("pprint")
@@ -82,15 +83,18 @@ end
 
 -- --------------------------------------------------------------------------------------
 
+local fetch_desc = ffi.new("sfetch_desc_t[1]")
+
 browser.init = function (self)
 
 	slib.stm_setup()
 
     -- setup sokol-fetch with default config:
-	local desc = ffi.new("sfetch_desc_t[1]")
-	desc[0].logger.func = slib.slog_func
+	fetch_desc[0].max_requests = 32
+	fetch_desc[0].num_channels = 1
+	fetch_desc[0].num_lanes = 1
 
-    slib.sfetch_setup(desc)
+    slib.sfetch_setup(fetch_desc)
 
 	self.buttons = { 0,0,0 }
 	self.renderCtx = {}
@@ -189,9 +193,29 @@ end
 
 -- --------------------------------------------------------------------------------------
 
+local MAX_FILE_SIZE = 1024 * 1024 * 4 -- 4MB
+
+browser.check_requests = function(self)
+
+	for k,v in pairs(self.requests) do 
+		if(v.sent == false) then 
+			-- start loading a file into a statically allocated buffer:
+			local req 			= ffi.new("sfetch_request_t[1]")
+			req[0].path 		= v.url 
+			req[0].callback 	= ljdom.load_url_cb
+			req[0].buffer.ptr 	= ffi.new("char[?]", MAX_FILE_SIZE)
+			req[0].buffer.size 	= MAX_FILE_SIZE
+
+			slib.sfetch_send(req)
+			v.req 	= req 
+			v.sent 	= true 
+		end
+	end
+end
+
+-- --------------------------------------------------------------------------------------
+
 browser.check_messages = function(self)
-	
-	if(browser.ready == nil or browser.jsctx == nil) then return end
 
 	-- Update timers in duktape.
 	-- native_invoke_function(browser.jsctx, "runTimers" )
@@ -206,8 +230,6 @@ browser.check_messages = function(self)
 		end
 	end 
 	browser.messages = {}
-
-	slib.sfetch_dowork()
 end
 
 -- --------------------------------------------------------------------------------------
@@ -215,6 +237,7 @@ end
 
 browser.on_input = function(self, event)
 
+	print(event)
 	events.add_event(event)
     -- const float dpi_scale = _snuklear.desc.dpi_scale;
 
@@ -269,6 +292,15 @@ end
 
 -- --------------------------------------------------------------------------------------
 
+local function update_fetch()
+	if(browser.ready == nil or browser.jsctx == nil) then return end
+
+	browser:check_messages()
+	browser:check_requests()
+end
+
+-- --------------------------------------------------------------------------------------
+
 local function init()
 
     local desc = ffi.new("sg_desc[1]")
@@ -288,6 +320,7 @@ local function init()
 	sgl.sgl_setup(sgldesc)
 
 	browser:init()
+	browser.tick_fetch = cron.every(0.2, update_fetch)
 end
 
 -- --------------------------------------------------------------------------------------
@@ -298,13 +331,16 @@ local function input(event)
 end
 
 -- --------------------------------------------------------------------------------------
+local SixtyHz = 1.0/60.0
 
 local function frame()
 
     -- Get current window size.
     local w         = sapp.sapp_widthf()
     local h         = sapp.sapp_heightf()
-    local t         = (sapp.sapp_frame_duration() * 60.0)
+    local t         = sapp.sapp_frame_duration()
+
+	slib.sfetch_dowork() 
 
     -- Begin recording draw commands for a frame buffer of size (width, height).
     sgp.sgp_begin(w, h)
@@ -322,6 +358,7 @@ local function frame()
 	-- Must go here because the sokol 2d drawing happens within the rapi
 	--  NOTE: This might be separated later with procs so we can have multiple render 
 	--        processes running (making best use of cores and mp)
+
 	browser:update(t)
 
     -- Begin a render pass.
@@ -346,7 +383,7 @@ local function frame()
     -- Commit Sokol render.
     sg.sg_commit()
 
-	browser:check_messages()
+	browser.tick_fetch:update(t)
 
 	-- Give up some idle time - TODO: this is shitty. will remove
 	ffi.C.Sleep(1)

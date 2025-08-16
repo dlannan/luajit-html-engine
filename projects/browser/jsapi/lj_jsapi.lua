@@ -61,7 +61,7 @@ local function duk_safe_eval( ctx, str, filename )
 		end
 	end
 	duk.duk_pop(ctx)
-    print(debug.traceback())
+    -- print(debug.traceback())
 	return err
 end
 

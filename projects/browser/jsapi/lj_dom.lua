@@ -92,19 +92,33 @@ local function loadDomFromDuktape(ctx)
 end
 
 -- --------------------------------------------------------------------------------------
+local fetch_errors = {
+    "SFETCH_ERROR_FILE_NOT_FOUND",
+    "SFETCH_ERROR_NO_BUFFER",
+    "SFETCH_ERROR_BUFFER_TOO_SMALL",
+    "SFETCH_ERROR_UNEXPECTED_EOF",
+    "SFETCH_ERROR_INVALID_HTTP_STATUS",
+    "SFETCH_ERROR_CANCELLED",
+}
 
-function load_url_cb( resp )
+local function load_url_cb( resp )
 
     local url = ffi.string(resp.path)
+    if(url == nil) then return end
+   
+    if(resp.error_code ~= 0) then 
+        print(string.format("[Duktape] Error fetching file: %s", fetch_errors[tonumber(resp.error_code)]))
+        return
+    end 
+
     local req = browser.requests[url]
     if(req) then 
-        local ctx = req.ctx 
+        local ctx   = browser.jsctx 
+        local reqid = req.id
 
-        duk.duk_get_global_string(ctx, "_lj_xhr_object")
-        duk.duk_get_prop_string(ctx, 0, "_requestId")
-        local reqid = tonumber(duk.duk_to_int(ctx, -1))
+        local str = ffi.cast("const char *", resp[0].data.ptr)
+        local urldata = ffi.string(resp[0].data.ptr, resp[0].data.size)
 
-        local urldata = ffi.string(resp.buffer.ptr, resp.buffer.size)
         -- print("REQUEST ID: ", reqid)
         -- print("LOAD URL: ", urldata)
 
@@ -118,16 +132,15 @@ function load_url_cb( resp )
             print(string.format("[Duktape] Error: %d %s", err, errorstr))
         end
         duk.duk_pop(ctx)
+        browser.requests[url] = nil
     end
 end   
 
 -- --------------------------------------------------------------------------------------
 
-local MAX_FILE_SIZE = 1024 * 1024 * 4 -- 4MB
-
 function load_url( ctx )
 
-    local reqid         = #browser.requests
+    local reqid         = utils.tcount(browser.requests)
 
     duk.duk_require_object(ctx, -2)
     duk.duk_require_function(ctx, -1)
@@ -136,9 +149,6 @@ function load_url( ctx )
     duk.duk_dup(ctx, -1)
     local callfuncstr = string.format("_lj_xhr_callback_%d", reqid)
     duk.duk_put_global_string(ctx, callfuncstr)
-    -- Store the xhr obj!
-    duk.duk_dup(ctx, -2)
-    duk.duk_put_global_string(ctx, "_lj_xhr_object")
 
     duk.duk_get_prop_string(ctx, -2, "_method")
 	local method = ffi.string(duk.duk_to_string(ctx, -1)) -- gets from prop
@@ -146,16 +156,7 @@ function load_url( ctx )
 	local url = ffi.string(duk.duk_to_string(ctx, -1))
     -- print(method, url)
 
-    -- start loading a file into a statically allocated buffer:
-	local req 			= ffi.new("sfetch_request_t[1]")
-	req[0].path 		= url 
-	req[0].callback 	= load_url_cb
-	req[0].buffer.ptr 	= ffi.new("char[?]", MAX_FILE_SIZE)
-	req[0].buffer.size 	= MAX_FILE_SIZE
-
-    slib.sfetch_send(req)
-
-	local newreq = { id =  reqid, url = url, method = method, ctx = ctx }
+	local newreq = { id =  reqid, url = url, method = method, sent = false }
 	browser.requests[url] = newreq
 
 	duk.duk_push_int(ctx, reqid)
@@ -197,6 +198,7 @@ end
 
 return {
     register_bridge     = register_bridge,
+    load_url_cb         = load_url_cb,
 }
 
 -- --------------------------------------------------------------------------------------
