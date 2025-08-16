@@ -170,6 +170,8 @@ $.get('projects/browser/data/html/tests/css-simple01.html', function(err, status
 	-- 	cmd = jsapi.loaddom,
 	-- } )
 
+	-- Allow some setup time
+	ffi.C.Sleep(200)
 end
 
 -- --------------------------------------------------------------------------------------
