@@ -92,32 +92,20 @@ local function loadDomFromDuktape(ctx)
 end
 
 -- --------------------------------------------------------------------------------------
-local fetch_errors = {
-    "SFETCH_ERROR_FILE_NOT_FOUND",
-    "SFETCH_ERROR_NO_BUFFER",
-    "SFETCH_ERROR_BUFFER_TOO_SMALL",
-    "SFETCH_ERROR_UNEXPECTED_EOF",
-    "SFETCH_ERROR_INVALID_HTTP_STATUS",
-    "SFETCH_ERROR_CANCELLED",
-}
 
-local function load_url_cb( resp )
-
-    local url = ffi.string(resp.path)
-    if(url == nil) then return end
-   
-    if(resp.error_code ~= 0) then 
-        print(string.format("[Duktape] Error fetching file: %s", fetch_errors[tonumber(resp.error_code)]))
-        return
-    end 
+local function load_url_cb( url )
 
     local req = browser.requests[url]
     if(req) then 
         local ctx   = browser.jsctx 
         local reqid = req.id
 
-        local str = ffi.cast("const char *", resp[0].data.ptr)
-        local urldata = ffi.string(resp[0].data.ptr, resp[0].data.size)
+        local urldata = ""
+        local fh = io.open(url, "rb")
+        if(fh) then 
+            urldata = fh:read("*a")
+            fh:close()
+        end
 
         -- print("REQUEST ID: ", reqid)
         -- print("LOAD URL: ", urldata)
@@ -199,6 +187,10 @@ end
 return {
     register_bridge     = register_bridge,
     load_url_cb         = load_url_cb,
+
+    get_slot            = get_slot,
+    slot_count          = slot_count, 
+    slot_available      = slot_available,
 }
 
 -- --------------------------------------------------------------------------------------
