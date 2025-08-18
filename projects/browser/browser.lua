@@ -110,7 +110,7 @@ browser.init = function (self)
 	-- local filename = "projects/browser/data/html/tests/css-selectors-id.html"
 	-- local filename = "projects/browser/data/html/tests/css-selectors-class.html"
 	-- local filename = "projects/browser/data/html/tests/css-selectors-multi.html"
-	htmlr.load(self, filename)
+	htmlr.loadcbor(self, filename)
 
 	-- Toggle the visual profiler on hot reload.
 	self.profile = true

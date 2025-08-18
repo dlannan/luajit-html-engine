@@ -7,6 +7,8 @@ local utils     = require("lua.utils")
 
 local tinsert 	= table.insert
 
+local htmlr 	= require("engine.libs.htmlrenderer") 
+
 -- This should be set on register
 local browser   = nil 
 
@@ -70,7 +72,7 @@ local function loadDomFromDuktape_cb(ctx)
         local data = ffi.string(ptr, len)
         local luaDom = cbor.decode(data)
         -- dumpCBOR(data, luaDom)
-        -- dom.loadxml(luaDom) -- reuse your existing loader
+        htmlr.loadcbor(self, luaDom)
     end
     return 0
 end

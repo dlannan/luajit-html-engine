@@ -132,7 +132,7 @@ end
 ---   - funcs.post - execute after the exit of an element (like a close tag)
 dom.traversenodes = function( ctx, node, funcs )
 
-    if(node) then 
+    if(node and type(node) == "table") then 
         funcs.pre(ctx, node)
         for k,v in pairs(node) do 
             -- Might be a string index
@@ -315,6 +315,53 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
     dom.loadxml(xmldata)
 
     layout.ltreeprint()
+end
+
+
+----------------------------------------------------------------------------------
+
+dom.loadcborfile = function( self, cbordata, frame, cursor )
+
+    dom.ctx = {
+        frame       = frame,
+        cursor      = cursor,
+    }
+
+    dom.renderCtx = self.renderCtx 
+    curr_node = dom.reset(htmlelements)
+
+    dom.loadcbor(cbordata)
+
+    layout.ltreeprint()
+end
+
+----------------------------------------------------------------------------------
+-- A variant of loadxml that uses cbor table structure instead
+dom.loadcbor = function( xmldata )
+
+    -- TODO: Put validation here later
+    dom.xmldoc = xmldata
+
+    -- Pre process all style and css - this allows lookups when xml is processed and layout
+    dom.traversenodes( dom.renderCtx, dom.xmldoc, stylefuncs) 
+
+    dom.processstyles() 
+    dom.processscripts()
+
+    -- Process the xml into our elements and dom tree items
+    dom.traversenodes( dom.renderCtx, dom.xmldoc, nodefuncs ) 
+    -- xmlp.dumpxml(dom.xmldoc)
+
+    -- remove parent style hierarchies from nodes
+    dom.traversenodes( dom.renderCtx, dom.xmldoc, {
+        pre = function(ctx, xml)
+            if(xml.style and xml.style.pstyle) then xml.style.pstyle = nil end
+        end,
+        post = function(ctx, xml)
+        end,
+    })
+
+    -- print("----> ", utils.tdump(dom.xmldoc))
 end
 
 ----------------------------------------------------------------------------------

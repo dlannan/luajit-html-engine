@@ -18,6 +18,15 @@ local cursor 		= { top = 0.0, left = 0.0 }
 local frame 		= { focussed = nil, top = 0.0, left = 0.0, width = 0.0, height = 0.0 }
 
 ----------------------------------------------------------------------------------
+-- Load the cbor data and process it
+
+local function loadcbor( ctx, cbordata )
+
+	htmldom.loadcborfile( ctx, cbordata, frame, cursor)
+end
+
+
+----------------------------------------------------------------------------------
 -- Load the xml file and process it
 
 local function load( ctx, filename )
@@ -57,6 +66,7 @@ end
 
 return { 
 	load 		= load,
+	loadcbor	= loadcbor,
 	render 		= render,
 	rendersize 	= rendersize,
 }
