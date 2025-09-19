@@ -62,15 +62,19 @@ local browser = {
 
 function runTimers()
 
-	if(browser.timers_count < 1) then return end
-
 	local time = slib.stm_ms(slib.stm_now())
+	local remove_timers = {}
 	for idx, tmr in pairs(browser.timers) do 
 		if( tmr and time > tmr.time ) then 
-			browser.send_message( "main", "js_eval", {
-				cmd = [[updateTimer(]]..tmr.id..[[);]],
-			})
+			if(tmr.cb) then 
+				tmr.cb( time )
+				tinsert(remove_timers, idx)
+			end
 		end 
+	end
+
+	for idx, tmrid in ipairs(remove_timers) do 
+		browser.timers[tmrid] = nil 
 	end
 end	
 
@@ -156,11 +160,9 @@ browser.init = function (self)
 $.get('projects/browser/data/html/sample01.html', function(err, status, xhr) {
 	print(status);
 	//print(xhr.responseText);
-	//const parser = new DOMParser();
 	var doc = HTMLtoDOM(xhr.responseText, document);
 	doc = DOMClean(doc);
-	//var doc = HtmlToDom(xhr.responseText);
-	print(JSON.stringify(doc));
+	//print(JSON.stringify(doc));
 	lj_loaddom(CBOR.encode(doc));
 });		
 ]],
@@ -169,6 +171,8 @@ $.get('projects/browser/data/html/sample01.html', function(err, status, xhr) {
 	-- browser.send_message( "main", "duk_exec", {
 	-- 	cmd = jsapi.loaddom,
 	-- } )
+
+	browser.timers["dumpTree"] = { time = 1300, cb = function(tm) ljdom.dump_tree(1) end }
 end
 
 -- --------------------------------------------------------------------------------------
@@ -206,7 +210,7 @@ browser.check_messages = function(self)
 
 	for k,msg in ipairs(browser.messages) do 
 		if(msg.dst == "js_eval") then 
-			-- print(msg.msg.cmd)
+			print(msg.msg.cmd)
 			local err = jsapi.duk_safe_eval(browser.jsctx, msg.msg.cmd)
 		elseif(msg.dst == "duk_exec") then 
 			local err = msg.msg.cmd(browser.jsctx)
