@@ -72,7 +72,7 @@ local function loadDomFromDuktape_cb(ctx)
         local data = ffi.string(ptr, len)
         local luaDom = cbor.decode(data)
         -- dumpCBOR(data, luaDom)
-        htmlr.loadcbor(self, luaDom)
+        htmlr.loadcbor(browser, luaDom)
     end
     return 0
 end

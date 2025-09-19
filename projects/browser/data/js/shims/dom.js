@@ -1,7 +1,12 @@
 
+// ----------------------- Cache -------------------
+
+var _cache     = [];
+
 // ----------------------- NODE/ELEMENT -------------------
 function Node() {
     this.children = [];
+    this.nodeName = "";
     this.appendChild = function(child) {
         this.children.push(child);
         // You could proxy this to Lua:
@@ -19,6 +24,7 @@ function Node() {
 }
 
 function Element(tagName) {
+    if(!tagName) tagName="unknown";
     this.tagName = tagName.toUpperCase();
     this.children = [];
     this.attributes = {};
@@ -93,9 +99,10 @@ function Element(tagName) {
         this.children = newChildren;
     };
     this.innerHTML = ""; // jQuery looks at this
-    // if (this.tagName === 'A' || this.tagName === 'LINK' || this.tagName === 'AREA') {
+    if (this.tagName === 'A' || this.tagName === 'LINK' || this.tagName === 'AREA') {
         this.href = "";
-    // }
+    }
+    _cache.push(this);
 }
 
 // ---------------------------- DOCUMENT -------------------
@@ -127,21 +134,42 @@ var document = new Document();
 var window = this;
 window.location = { href: "" };
 
+// === Root Elements ===
+// Create the <html> root and <body>
+document.documentElement = new Element("html");
+document.body = new Element("body");
+document.documentElement.appendChild(document.body);
+document.appendChild(document.documentElement);
+
+
 document.createElement = function(tagName) {
     return new Element(tagName);
 };
+
+document.createTextNode = function(text) {
+    var textnode = new Element("text");
+    textnode.innerHTML = text;
+    return textnode;
+}
+
 document.getElementById = function(id) {
-    // Implement using your Lua document model (optional)
-    return null;
+    return $('#' + id)[0];
 };
 document.getElementsByTagName = function(tag) {
-    return []; // stub
+    var results = [];
+    for (var i = 0; i < _cache.length; i++) {
+        if (_cache[i].tagName == tag.toUpperCase()) {
+            results.push(_cache[i]);
+        }
+    }
+    print(tag + "   " + results.length);
+    return results;
 };
 document.querySelector = function(sel) {
-    return null; // stub
+    return $(sel)[0]; 
 };
 document.querySelectorAll = function(sel) {
-    return []; // stub
+    return []; 
 };
 document.addEventListener = function(type, cb) {
     // Handle DOMContentLoaded etc.
@@ -153,12 +181,6 @@ document.addEventListener = function(type, cb) {
 document.readyState = "complete";
 document.location = window.location;
 
-// === Root Elements ===
-// Create the <html> root and <body>
-document.documentElement = new Element("html");
-document.body = new Element("body");
-document.documentElement.appendChild(document.body);
-document.appendChild(document.documentElement);
 
 document.createEvent = function(type) {
     return {
@@ -186,8 +208,8 @@ window.getComputedStyle = function(elem) {
     };
 };
 
-window.HTMLElement = new Element("html");
-window.Node = new Node();
+// window.HTMLElement = new Element("html");
+// window.Node = new Node();
 
 Element.prototype.dispatchEvent = function(event) {
     var handler = this['on' + event.type];

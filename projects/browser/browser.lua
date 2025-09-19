@@ -110,7 +110,7 @@ browser.init = function (self)
 	-- local filename = "projects/browser/data/html/tests/css-selectors-id.html"
 	-- local filename = "projects/browser/data/html/tests/css-selectors-class.html"
 	-- local filename = "projects/browser/data/html/tests/css-selectors-multi.html"
-	htmlr.loadcbor(self, filename)
+	htmlr.load(self, filename)
 
 	-- Toggle the visual profiler on hot reload.
 	self.profile = true
@@ -130,33 +130,38 @@ browser.init = function (self)
 	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/shims/xhr.js")
 	
 	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/zepto.js")
+	
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/htmlparser.js")
 
 	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/jquery.min.js")
 	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/startmin.js")
 	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/mandel.js")
 
+-- 	browser.send_message( "main", "js_eval", {
+-- 		cmd = [[
+-- var div = document.createElement("div");
+-- div.innerHTML = "Hello!";
+-- div.setAttribute("id", "some_element");
+-- document.body.appendChild(div);
+-- print("Div added to fake DOM");
+
+-- var root = $('#some_element')[0];
+-- dumpDOM(root);  
+-- print($.camelCase('hello-there')); 
+-- ]],
+-- 	} )
+
 	browser.send_message( "main", "js_eval", {
 		cmd = [[
-var div = document.createElement("div");
-div.innerHTML = "Hello!";
-div.setAttribute("id", "some_element");
-document.body.appendChild(div);
-print("Div added to fake DOM");
-
-var root = $('#some_element')[0];
-dumpDOM(root);  
-print($.camelCase('hello-there')); 
-]],
-	} )
-
-	browser.send_message( "main", "js_eval", {
-		cmd = [[
-$.get('projects/browser/data/html/tests/css-simple01.html', function(err, status, xhr) {
+$.get('projects/browser/data/html/sample01.html', function(err, status, xhr) {
 	print(status);
 	//print(xhr.responseText);
-
-	// print(JSON.stringify(document));
-    lj_loaddom(CBOR.encode(document.documentElement));
+	//const parser = new DOMParser();
+	var doc = HTMLtoDOM(xhr.responseText, document);
+	doc = DOMClean(doc);
+	//var doc = HtmlToDom(xhr.responseText);
+	print(JSON.stringify(doc));
+	lj_loaddom(CBOR.encode(doc));
 });		
 ]],
 	} )

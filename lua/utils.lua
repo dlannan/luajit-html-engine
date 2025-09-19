@@ -203,6 +203,19 @@ local function loaddata(filepath)
 	return data 
 end
 
+-- ---------------------------------------------------------------------------
+
+local function savedata(filepath, data)
+	local fh = io.open(filepath, "wb")
+	print(filepath)
+	if(fh) then 
+		data = fh:write(data)
+		fh:close()
+	else 
+		print("[Error] utils.savedata: Unable to save - "..filepath)
+	end
+end
+
 ------------------------------------------------------------------------------------------------------------
 
 local function csplit(str,sep)
@@ -326,6 +339,7 @@ return {
 	tickround		= tickround,
 
 	loaddata		= loaddata,
+	savedata		= savedata,
 
 	urldecode		= urldecode,
 	parseurl 		= parseurl,

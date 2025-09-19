@@ -312,6 +312,9 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
 	--local filename = "/data/html/sample02-forms.html"
 	local xml = utils.loaddata(filename)
 	local xmldata = xmlp.parse(xml)
+
+    print(xmldata)
+    utils.savedata("temp_xml.lua", utils.tdump(xmldata))
     dom.loadxml(xmldata)
 
     layout.ltreeprint()
@@ -329,8 +332,8 @@ dom.loadcborfile = function( self, cbordata, frame, cursor )
 
     dom.renderCtx = self.renderCtx 
     curr_node = dom.reset(htmlelements)
-
-    dom.loadcbor(cbordata)
+    utils.savedata("temp_cbor.lua", utils.tdump(cbordata))
+    --dom.loadcbor(cbordata)
 
     layout.ltreeprint()
 end
