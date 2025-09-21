@@ -66,9 +66,9 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
           }
         }
         [3] = ing 3
+        ["label"] = h3
         ["xarg"] =  {
         }
-        ["label"] = h3
       }
       [6] =  {
         [1] = H
@@ -79,9 +79,9 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
           }
         }
         [3] = ing 4
+        ["label"] = h4
         ["xarg"] =  {
         }
-        ["label"] = h4
       }
       [7] =  {
         [1] = Heading 5
@@ -110,15 +110,15 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
       [10] =  {
         [1] = My first paragraph
         [2] =  {
-          ["label"] = br
-          ["empty"] = 1
           ["xarg"] =  {
           }
+          ["label"] = br
+          ["empty"] = 1
         }
         [3] = with a break in it.
+        ["label"] = p
         ["xarg"] =  {
         }
-        ["label"] = p
       }
       [11] =  {
         [1] =  {
@@ -146,9 +146,9 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
             ["xarg"] =  {
             }
           }
+          ["label"] = tr
           ["xarg"] =  {
           }
-          ["label"] = tr
         }
         [2] =  {
           [1] =  {
@@ -175,9 +175,9 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
             ["xarg"] =  {
             }
           }
+          ["label"] = tr
           ["xarg"] =  {
           }
-          ["label"] = tr
         }
         [3] =  {
           [1] =  {
@@ -204,9 +204,9 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
             ["xarg"] =  {
             }
           }
+          ["label"] = tr
           ["xarg"] =  {
           }
-          ["label"] = tr
         }
         [4] =  {
           [1] =  {
@@ -233,13 +233,13 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
             ["xarg"] =  {
             }
           }
+          ["label"] = tr
           ["xarg"] =  {
           }
-          ["label"] = tr
-        }
-        ["xarg"] =  {
         }
         ["label"] = table
+        ["xarg"] =  {
+        }
       }
       [12] =  {
         [1] =  A button 
@@ -284,45 +284,45 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
         }
       }
       [19] =  {
-        ["label"] = br
-        ["empty"] = 1
         ["xarg"] =  {
         }
+        ["label"] = br
+        ["empty"] = 1
       }
       [20] =  {
         [1] =  {
+          ["label"] = img
           ["xarg"] =  {
             ["src"] = projects/browser/data/images/image-button1.png
             ["height"] = 60
-            ["alt"] = imageButton
             ["width"] = 104
+            ["alt"] = imageButton
           }
-          ["label"] = img
         }
         ["label"] = button
         ["xarg"] =  {
         }
       }
       [21] =  {
-        ["label"] = br
-        ["empty"] = 1
         ["xarg"] =  {
         }
+        ["label"] = br
+        ["empty"] = 1
       }
       [22] =  {
-        ["label"] = br
-        ["empty"] = 1
         ["xarg"] =  {
         }
+        ["label"] = br
+        ["empty"] = 1
       }
       [23] =  {
+        ["label"] = img
         ["xarg"] =  {
           ["src"] = projects/browser/data/images/sample1.png
           ["height"] = 142
-          ["alt"] = imageCar
           ["width"] = 164
+          ["alt"] = imageCar
         }
-        ["label"] = img
       }
       [24] =  {
         [1] = Your browser does not support the canvas tag.

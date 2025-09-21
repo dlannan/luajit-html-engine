@@ -15,7 +15,11 @@ DOM.dumpTree = function(nodeId, indent)
         print(indent .. "[nil node]")
         return
     end
-    print(indent .. "<" .. tostring(node.nodeName) .. "> id=" .. tostring(node.id))
+    if(node.tagName) then 
+        print(indent .. "<" .. tostring(node.tagName) .. "> id=" .. tostring(node.id))
+    else 
+        print(indent .. "<" .. tostring(node.nodeName) .. "> id=" .. tostring(node.id))
+    end
     for _, child in ipairs(node.children or {}) do
         DOM.dumpTree(child.id, indent .. "  ")
     end

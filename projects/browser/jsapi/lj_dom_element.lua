@@ -8,7 +8,8 @@ init_dom    = function(DOM)
 ----------------------------------------------------------------------------------
 
 DOM.createElement = function(ctx)
-    local tagName = ffi.string(duk.duk_to_string(ctx, 0))
+    local tagStr = duk.duk_to_string(ctx, 0)
+    local tagName = ffi.string(tagStr) or "unknown"
     local el = {
         tagName = string.upper(tagName),
         attributes = {},

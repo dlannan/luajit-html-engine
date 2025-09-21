@@ -163,27 +163,15 @@ Element.prototype.removeChild = function(child) {
 
 function Document() {
 
-    var id = dt_createNode("#document"); // this tells LuaJIT to create the node
-    this.luaNodeId = id;
-    print(id);
+    var node = createNode("#document"); // this tells LuaJIT to create the node
+    this.luaNodeId = node.luaNodeId;
     this.nodeType = 9; // DOCUMENT_NODE
     this.nodeName = "#document";
-    this.children = [];
+    this.children = node.children;
 
-    this.appendChild = function(child) {
-        this.children.push(child);
-        // Optionally proxy to Lua
-    };
+    this.appendChild = node.appendChild;
 
-    this.removeChild = function(child) {
-        var newChildren = [];
-        for (var i = 0; i < this.children.length; i++) {
-            if (this.children[i] !== child) {
-                newChildren.push(this.children[i]);
-            }
-        }
-        this.children = newChildren;
-    };
+    this.removeChild = node.removeChild;
 
     this.createElement = function(tagName) {
         return new Element(tagName); // This will proxy to Lua inside Element constructor
