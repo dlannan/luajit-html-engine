@@ -110,10 +110,10 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
       [10] =  {
         [1] = My first paragraph
         [2] =  {
-          ["empty"] = 1
-          ["label"] = br
           ["xarg"] =  {
           }
+          ["label"] = br
+          ["empty"] = 1
         }
         [3] = with a break in it.
         ["label"] = p
@@ -284,18 +284,18 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
         }
       }
       [19] =  {
-        ["empty"] = 1
-        ["label"] = br
         ["xarg"] =  {
         }
+        ["label"] = br
+        ["empty"] = 1
       }
       [20] =  {
         [1] =  {
           ["label"] = img
           ["xarg"] =  {
-            ["src"] = projects/browser/data/images/image-button1.png
-            ["width"] = 104
             ["alt"] = imageButton
+            ["width"] = 104
+            ["src"] = projects/browser/data/images/image-button1.png
             ["height"] = 60
           }
         }
@@ -304,23 +304,23 @@ For 50 years, WWF has been protecting the future of nature. The world's leading 
         }
       }
       [21] =  {
-        ["empty"] = 1
-        ["label"] = br
         ["xarg"] =  {
         }
+        ["label"] = br
+        ["empty"] = 1
       }
       [22] =  {
-        ["empty"] = 1
-        ["label"] = br
         ["xarg"] =  {
         }
+        ["label"] = br
+        ["empty"] = 1
       }
       [23] =  {
         ["label"] = img
         ["xarg"] =  {
-          ["src"] = projects/browser/data/images/sample1.png
-          ["width"] = 164
           ["alt"] = imageCar
+          ["width"] = 164
+          ["src"] = projects/browser/data/images/sample1.png
           ["height"] = 142
         }
       }

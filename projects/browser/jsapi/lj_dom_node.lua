@@ -35,7 +35,12 @@ dom.appendChild = function( ctx )
     local child = dom.getNodeById(childId)
 
     -- update Lua DOM structure
-    table.insert(parent, #parent+1, child)
+
+    if child.label == "text" then 
+        table.insert(parent, #parent+1, child[1])
+    else 
+        table.insert(parent, #parent+1, child)
+    end
     -- print("Adding Child: "..parent.label.."  "..parent.id.." -> "..child.label.."  "..child.id)
 
     -- mark render nodes dirty, update scenegraph etc

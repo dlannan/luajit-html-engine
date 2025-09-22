@@ -159,6 +159,7 @@ Element.prototype.getAttribute = function(name) {
 };
 
 Element.prototype.appendChild = function(child) {
+
     this.children.push(child);
     dt_appendChild(this.luaNodeId, child.luaNodeId);
 };

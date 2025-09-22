@@ -349,7 +349,9 @@
 				curParentNode = elems[elems.length - 1];
 			},
 			chars: function (text) {
-				curParentNode.appendChild(doc.createTextNode(text));
+				var cleaned = text.replace(/[\r\n]/g, "").trim();
+				if(cleaned.length == 0) return;
+				curParentNode.appendChild(doc.createTextNode(cleaned));
 			},
 			comment: function (text) {
 				// create comment node
