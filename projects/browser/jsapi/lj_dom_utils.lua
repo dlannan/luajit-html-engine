@@ -2,33 +2,27 @@
 local ffi       = require("ffi")
 local duk 		= require("duktape")
 
-----------------------------------------------------------------------------------
-
-init_dom    = function(DOM) 
+local dom       = require("engine.libs.htmldom")
     
 ----------------------------------------------------------------------------------
 
-DOM.dumpTree = function(nodeId, indent)
+dom.dumpTree = function(nodeId, indent)
     indent = indent or ""
-    local node = DOM.getNodeById(nodeId)
+    local node = dom.getNodeById(nodeId)
     if not node then
         print(indent .. "[nil node]")
         return
     end
-    if(node.tagName) then 
-        print(indent .. "<" .. tostring(node.tagName) .. "> id=" .. tostring(node.id))
-    else 
-        print(indent .. "<" .. tostring(node.nodeName) .. "> id=" .. tostring(node.id))
+    if(node) then 
+        print(indent .. "<" .. tostring(node.label) .. "> id=" .. tostring(node.id))
     end
-    for _, child in ipairs(node.children or {}) do
-        DOM.dumpTree(child.id, indent .. "  ")
+    for _, child in ipairs(node or {}) do
+        dom.dumpTree(child.id, indent .. "  ")
     end
 end
 
 ----------------------------------------------------------------------------------
 
-end 
-
-return init_dom
+return dom
 
 ----------------------------------------------------------------------------------

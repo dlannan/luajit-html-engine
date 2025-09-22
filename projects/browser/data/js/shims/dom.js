@@ -57,10 +57,26 @@ function Element(tagName) {
 
     this.tagName = tagName.toUpperCase();
     this.children = [];
-    this.attributes = {}; // Cache for JS side
-    this.style = {}; // Optional; could proxy to Lua
+    //this.attributes = {}; // Cache for JS side
+    // this.style = {}; // Optional; could proxy to Lua
+    this._innerHTML = "";
 
     var self = this;
+
+    Object.defineProperty(this, 'innerHTML', {
+        get: function () {
+            this._innerHTML = dt_getTextContent(this.luaNodeId);
+            return this._textContent;
+        },
+        set: function (value) {
+            print("textContent set called with" + value);
+            this._innerHTML = value;
+            dt_setTextContent(this.luaNodeId, value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+      
 
     // classList implementation (ES5-safe)
     this.classList = {
@@ -121,7 +137,6 @@ function Element(tagName) {
         }
     };        
 
-    this.innerHTML = ""; // jQuery looks at this
     if (this.tagName === 'A' || this.tagName === 'LINK' || this.tagName === 'AREA') {
         this.href = "";
     }
@@ -131,15 +146,15 @@ function Element(tagName) {
 
 // Prototype methods
 Element.prototype.setAttribute = function(name, value) {
-    this.attributes[name] = value;
+    // this.attributes[name] = value;
     dt_setAttribute(this.luaNodeId, name, value);
 };
 
 Element.prototype.getAttribute = function(name) {
     // Note: if you want to force always asking Lua, remove the cache
-    if (this.attributes.hasOwnProperty(name)) {
-        return this.attributes[name];
-    }
+    // if (this.attributes.hasOwnProperty(name)) {
+        // return this.attributes[name];
+    // }
     return dt_getAttribute(this.luaNodeId, name);
 };
 
@@ -313,7 +328,6 @@ Element.prototype.dispatchEvent = function(event) {
     // You could also support listeners array like:
     // if (this._listeners && this._listeners[event.type]) { ... }
 };
-
 
 // ---------------------------------------------------
 

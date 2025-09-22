@@ -114,7 +114,7 @@ browser.init = function (self)
 	-- local filename = "projects/browser/data/html/tests/css-selectors-id.html"
 	-- local filename = "projects/browser/data/html/tests/css-selectors-class.html"
 	-- local filename = "projects/browser/data/html/tests/css-selectors-multi.html"
-	htmlr.load(self, filename)
+	-- htmlr.load(self, filename)
 
 	-- Toggle the visual profiler on hot reload.
 	self.profile = true
@@ -163,7 +163,7 @@ $.get('projects/browser/data/html/sample01.html', function(err, status, xhr) {
 	var doc = HTMLtoDOM(xhr.responseText, document);
 	doc = DOMClean(doc);
 	//print(JSON.stringify(doc));
-	lj_loaddom(CBOR.encode(doc));
+	//lj_loaddom(CBOR.encode(doc));
 });		
 ]],
 	} )
@@ -172,7 +172,12 @@ $.get('projects/browser/data/html/sample01.html', function(err, status, xhr) {
 	-- 	cmd = jsapi.loaddom,
 	-- } )
 
-	browser.timers["dumpTree"] = { time = 1300, cb = function(tm) ljdom.dump_tree(1) end }
+	browser.timers["dumpTree"] = { time = 1300, cb = function(tm)
+		local dom = require("engine.libs.htmldom")
+		-- dom.root = dom.elookup[1]
+		utils.savedata("temp_dom.lua", utils.tdump(dom.elookup[1])) 
+		htmlr.loaddata(self, dom.elookup[1])
+	end }
 end
 
 -- --------------------------------------------------------------------------------------

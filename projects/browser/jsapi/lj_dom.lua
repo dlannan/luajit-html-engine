@@ -13,36 +13,34 @@ local htmlr 	= require("engine.libs.htmlrenderer")
 local browser   = nil 
 
 ----------------------------------------------------------------------------------
--- DOM is maintained in Luajit 
+-- dom is maintained in Luajit 
 --   TODO: This will become more complex, and allow for partial updates and such.
-local DOM       = {
-    nodeid  = 0,
-    nodes   = {},
-}
+
+local dom       = require("engine.libs.htmldom")
 
 ----------------------------------------------------------------------------------
 -- Id generator - TODO: will improve with a hash or something
-DOM.generateNodeId = function() 
-    DOM.nodeid = DOM.nodeid + 1
-    return DOM.nodeid 
+dom.generateNodeId = function() 
+    dom.nodeid = dom.nodeid + 1
+    return dom.nodeid 
 end
 
 ----------------------------------------------------------------------------------
 
-DOM.markDirty = function(parent)
+dom.markDirty = function(parent)
     if(parent) then 
         parent.dirty = true 
     end 
 end
 
 ----------------------------------------------------------------------------------
--- Utils for DOM 
-require("projects.browser.jsapi.lj_dom_utils")(DOM)
+-- Utils for dom 
+dom = require("projects.browser.jsapi.lj_dom_utils")
 
 -- Init the Node interface
-require("projects.browser.jsapi.lj_dom_node")(DOM)
+dom = require("projects.browser.jsapi.lj_dom_node")
 -- Init the Element interface
-require("projects.browser.jsapi.lj_dom_element")(DOM)
+dom = require("projects.browser.jsapi.lj_dom_element")
 
 ----------------------------------------------------------------------------------
 -- Called from JS via FFI/C binding
@@ -215,30 +213,36 @@ local function register_bridge(ctx, _browser)
 	duk.duk_push_c_function(ctx, loadDomFromDuktape_cb, 1)
 	duk.duk_put_global_string(ctx, "lj_loaddom"); 
 
-    -- DOM Node Specific interface
-    duk.duk_push_c_function(ctx, DOM.createNode, 1 )
+    -- dom Node Specific interface
+    duk.duk_push_c_function(ctx, dom.createNode, 1 )
     duk.duk_put_global_string(ctx, "dt_createNode"); 
 
-    duk.duk_push_c_function(ctx, DOM.appendChild, 2 )
+    duk.duk_push_c_function(ctx, dom.appendChild, 2 )
     duk.duk_put_global_string(ctx, "dt_appendChild"); 
 
-    duk.duk_push_c_function(ctx, DOM.removeChild, 2 )
+    duk.duk_push_c_function(ctx, dom.removeChild, 2 )
     duk.duk_put_global_string(ctx, "dt_removeChild"); 
     
-    --DOM Element Specific Interface
-    duk.duk_push_c_function(ctx, DOM.createElement, 1)
+    --dom Element Specific Interface
+    duk.duk_push_c_function(ctx, dom.createElement, 1)
     duk.duk_put_global_string(ctx, "dt_createElement")
+
+    duk.duk_push_c_function(ctx, dom.setTextContent, 2)
+    duk.duk_put_global_string(ctx, "dt_setTextContent")
     
-    duk.duk_push_c_function(ctx, DOM.setAttribute, 3)
+    duk.duk_push_c_function(ctx, dom.getTextContent, 1)
+    duk.duk_put_global_string(ctx, "dt_getTextContent")
+
+    duk.duk_push_c_function(ctx, dom.setAttribute, 3)
     duk.duk_put_global_string(ctx, "dt_setAttribute")
     
-    duk.duk_push_c_function(ctx, DOM.getAttribute, 2)
+    duk.duk_push_c_function(ctx, dom.getAttribute, 2)
     duk.duk_put_global_string(ctx, "dt_getAttribute")
     
-    duk.duk_push_c_function(ctx, DOM.classListAdd, 2)
+    duk.duk_push_c_function(ctx, dom.classListAdd, 2)
     duk.duk_put_global_string(ctx, "dt_classListAdd")
     
-    duk.duk_push_c_function(ctx, DOM.classListRemove, 2)
+    duk.duk_push_c_function(ctx, dom.classListRemove, 2)
     duk.duk_put_global_string(ctx, "dt_classListRemove")    
     
 end
@@ -249,7 +253,7 @@ return {
     register_bridge     = register_bridge,
     load_url_cb         = load_url_cb,
 
-    dump_tree           = DOM.dumpTree,
+    dump_tree           = dom.dumpTree,
 
     get_slot            = get_slot,
     slot_count          = slot_count, 

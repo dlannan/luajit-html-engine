@@ -240,6 +240,8 @@ end
 
 local function doraster( )
 
+	if(utils.tcount(elements) == 0) then return end
+
 	-- Process backgrounds first - this will need to be z-index ordered at some stage
 	local g = { ctx = elements[1].ctx, cursor=elements[1].cursor, frame = elements[1].frame }
 	for k, v in ipairs( render ) do 

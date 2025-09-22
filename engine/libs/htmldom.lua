@@ -48,7 +48,7 @@ stylestack[1] = deepcopy(styleempty)
 -- Root node always has nil parent.
 local dom_node = {
     parent      = nil,   -- parent node, used mainly in traversal
-    children    = {},    -- list of child nodes which can contain mode child nodes.
+    children    = {},    -- list of child nodes which can contain more child nodes.
     eid         = nil,
 }
 
@@ -56,6 +56,7 @@ local dom_node = {
 
 local dom = {
     root        = dom_node,
+    nodeid      = 0,
     elookup     = {},    -- As elements are added, they are mapped here for fast eid->node fetch
     styles      = {},    -- A collection of styles loaded in from css and style tags
     selectors   = {},    -- From the styles a selectors table is build. To be used in xml parsing
@@ -101,7 +102,7 @@ end
 ----------------------------------------------------------------------------------
 
 dom.delelement = function( eid )
-    local node = elookup[eid]
+    local node = dom.elookup[eid]
     return dom.delnode( node )
 end
 
@@ -317,9 +318,26 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
     utils.savedata("temp_xml.lua", utils.tdump(xmldata))
     dom.loadxml(xmldata)
 
-    layout.ltreeprint()
+    --layout.ltreeprint()
 end
 
+----------------------------------------------------------------------------------
+
+dom.loadxmldata = function( self, data, frame, cursor )
+
+    dom.ctx = {
+        frame       = frame,
+        cursor      = cursor,
+    }
+
+    dom.renderCtx = self.renderCtx 
+    curr_node = dom.reset(htmlelements)
+
+    print(data)
+    dom.loadxml(data)
+
+    --layout.ltreeprint()
+end
 
 ----------------------------------------------------------------------------------
 

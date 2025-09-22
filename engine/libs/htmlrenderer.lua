@@ -35,6 +35,14 @@ local function load( ctx, filename )
 end
 
 ----------------------------------------------------------------------------------
+-- Load the xml data and process it
+
+local function loaddata( ctx, data )
+
+	htmldom.loadxmldata( ctx, data, frame, cursor)
+end
+
+----------------------------------------------------------------------------------
 -- Render should render the dom. 
 --     Xml render should only occur once on load of xml objects.
 
@@ -66,6 +74,7 @@ end
 
 return { 
 	load 		= load,
+	loaddata 	= loaddata,
 	loadcbor	= loadcbor,
 	render 		= render,
 	rendersize 	= rendersize,

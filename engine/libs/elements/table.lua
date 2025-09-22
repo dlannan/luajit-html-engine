@@ -96,7 +96,7 @@ return {
 				for kc, vc in pairs(v) do 
 					if(type(kc) == "number" and type(vc) == "table") then
 						local width = doelement( g.cursor, vc, idx)
-						if(vc[1].label == "text") then 
+						if(vc[1] and vc[1].label == "text") then 
 							dotext( g.cursor, vc[1], vc, idx ) 
 						end
 						idx = idx + 1
