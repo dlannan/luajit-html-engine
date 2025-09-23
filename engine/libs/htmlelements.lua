@@ -30,6 +30,8 @@ htmlelements["h6"]  		= require("engine.libs.elements.headings")
 
 ----------------------------------------------------------------------------------
 -- Text elements 
+htmlelements["a"]  			= require("engine.libs.elements.anchor")
+
 htmlelements["text"]  		= require("engine.libs.elements.text")
 htmlelements["p"]  			= require("engine.libs.elements.text_paragraph")
 htmlelements["i"]  			= require("engine.libs.elements.text_italics")
@@ -45,7 +47,7 @@ htmlelements["tr"] 			= require("engine.libs.elements.table_tr")
 htmlelements["td"] 			= require("engine.libs.elements.table_td")
 
 ----------------------------------------------------------------------------------
--- Complexg elements 
+-- Complex elements 
 htmlelements["img"]  		= require("engine.libs.elements.img")
 htmlelements["button"]  	= require("engine.libs.elements.button")
 htmlelements["form"] 		= require("engine.libs.elements.form")

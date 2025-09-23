@@ -2,86 +2,86 @@
   [1] =  {
     [1] =  {
       [1] =  {
+        ["id"] = 4
+        ["label"] = title
         ["xarg"] =  {
         }
-        ["label"] = title
-        ["id"] = 4
-      }
-      ["xarg"] =  {
       }
       ["id"] = 3
-      ["label"] = head
+      ["xarg"] =  {
+      }
       ["dirty"] = true
+      ["label"] = head
     }
     [2] =  {
       [1] =  {
         [1] = This is 
         [2] =  {
           [1] = bold
+          ["id"] = 8
           ["xarg"] =  {
           }
-          ["id"] = 8
-          ["label"] = b
           ["dirty"] = true
+          ["label"] = b
         }
         [3] = , 
         [4] =  {
           [1] = strong
+          ["id"] = 11
           ["xarg"] =  {
           }
-          ["id"] = 11
-          ["label"] = strong
           ["dirty"] = true
+          ["label"] = strong
         }
         [5] = , 
         [6] =  {
           [1] = italic
+          ["id"] = 14
           ["xarg"] =  {
           }
-          ["id"] = 14
-          ["label"] = i
           ["dirty"] = true
+          ["label"] = i
         }
         [7] = , 
         [8] =  {
           [1] = emphasis
+          ["id"] = 17
           ["xarg"] =  {
           }
-          ["id"] = 17
-          ["label"] = em
           ["dirty"] = true
+          ["label"] = em
         }
         [9] = , 
         [10] =  {
           [1] = underline
+          ["id"] = 20
           ["xarg"] =  {
           }
-          ["id"] = 20
-          ["label"] = u
           ["dirty"] = true
+          ["label"] = u
         }
         [11] = .
+        ["id"] = 6
+        ["label"] = p
+        ["dirty"] = true
         ["xarg"] =  {
         }
-        ["label"] = p
-        ["id"] = 6
-        ["dirty"] = true
-      }
-      ["xarg"] =  {
       }
       ["id"] = 5
-      ["label"] = body
+      ["xarg"] =  {
+      }
       ["dirty"] = true
-    }
-    ["xarg"] =  {
+      ["label"] = body
     }
     ["id"] = 2
-    ["label"] = html
+    ["xarg"] =  {
+    }
     ["dirty"] = true
-  }
-  ["xarg"] =  {
+    ["label"] = html
   }
   ["id"] = 1
-  ["label"] = #document
+  ["xarg"] =  {
+  }
   ["dirty"] = true
+  ["label"] = #document
 }
