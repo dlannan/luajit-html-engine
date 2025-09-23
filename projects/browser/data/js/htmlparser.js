@@ -117,8 +117,18 @@
 			// Make sure we're not in a script or style element
 			if (!stack.last() || !special[stack.last()]) {
 
-				// Comment
-				if (html.indexOf("<!--") == 0) {
+				if (html.indexOf("<!DOCTYPE") == 0) {
+					index = html.indexOf(">");
+
+					if (index >= 0) {
+						if (handler.comment)
+							handler.comment(html.substring(4, index));
+						html = html.substring(index + 3);
+						chars = false;
+					}
+
+					// end tag
+				} else if (html.indexOf("<!--") == 0) {
 					index = html.indexOf("-->");
 
 					if (index >= 0) {
@@ -296,14 +306,14 @@
 
 		// If we're dealing with an empty document then we
 		// need to pre-populate it with the HTML document structure
-		if (!documentElement && doc.createElement) (function () {
-			var html = doc.createElement("html");
-			var head = doc.createElement("head");
-			head.appendChild(doc.createElement("title"));
-			html.appendChild(head);
-			html.appendChild(doc.createElement("body"));
-			doc.appendChild(html);
-		})();
+		// if (!documentElement && doc.createElement) (function () {
+		// 	var html = doc.createElement("html");
+		// 	var head = doc.createElement("head");
+		// 	head.appendChild(doc.createElement("title"));
+		// 	html.appendChild(head);
+		// 	html.appendChild(doc.createElement("body"));
+		// 	doc.appendChild(html);
+		// })();
 
 		// Find all the unique elements
 		if (doc.getElementsByTagName)
@@ -331,9 +341,11 @@
 				for (var attr in attrs)
 					elem.setAttribute(attrs[attr].name, attrs[attr].value);
 
-				if (structure[tagName] && typeof one[structure[tagName]] != "boolean")
+				if (structure[tagName] && typeof one[structure[tagName]] != "boolean") {
+					// print("--->" + elem.tagName);
+					// print(one[structure[tagName]]);
 					one[structure[tagName]].appendChild(elem);
-
+				}
 				else if (curParentNode && curParentNode.appendChild)
 					curParentNode.appendChild(elem);
 

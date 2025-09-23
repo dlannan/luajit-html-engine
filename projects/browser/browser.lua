@@ -157,7 +157,7 @@ browser.init = function (self)
 
 	browser.send_message( "main", "js_eval", {
 		cmd = [[
-$.get('projects/browser/data/html/sample01.html', function(err, status, xhr) {
+$.get('projects/browser/data/html/tests/sample01.html', function(err, status, xhr) {
 	print(status);
 	//print(xhr.responseText);
 	var doc = HTMLtoDOM(xhr.responseText, document);
