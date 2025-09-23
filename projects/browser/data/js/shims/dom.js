@@ -69,7 +69,6 @@ function Element(tagName) {
             return this._textContent;
         },
         set: function (value) {
-            print("textContent set called with" + value);
             this._innerHTML = value;
             dt_setTextContent(this.luaNodeId, value);
         },
@@ -146,15 +145,10 @@ function Element(tagName) {
 
 // Prototype methods
 Element.prototype.setAttribute = function(name, value) {
-    // this.attributes[name] = value;
     dt_setAttribute(this.luaNodeId, name, value);
 };
 
 Element.prototype.getAttribute = function(name) {
-    // Note: if you want to force always asking Lua, remove the cache
-    // if (this.attributes.hasOwnProperty(name)) {
-        // return this.attributes[name];
-    // }
     return dt_getAttribute(this.luaNodeId, name);
 };
 
@@ -276,10 +270,13 @@ window.location = { href: "" };
 
 // === Root Elements ===
 // Create the <html> root and <body>
-document.documentElement = new Element("html");
-document.body = new Element("body");
-document.documentElement.appendChild(document.body);
-document.appendChild(document.documentElement);
+var html = document.createElement("html");
+var head = document.createElement("head");
+head.appendChild(document.createElement("title"));
+html.appendChild(head);
+html.appendChild(document.createElement("body"));
+document.appendChild(html);
+document.documentElement = html;
 
 // Basic getComputedStyle stub
 window.getComputedStyle = function(elem) {

@@ -139,7 +139,9 @@ browser.init = function (self)
 
 	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/jquery.min.js")
 	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/startmin.js")
-	-- local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/mandel.js")
+	
+	local err = jsapi.duk_compile_filename(browser.jsctx, "projects/browser/data/js/main_entry.js")
+
 
 -- 	browser.send_message( "main", "js_eval", {
 -- 		cmd = [[
@@ -155,18 +157,18 @@ browser.init = function (self)
 -- ]],
 -- 	} )
 
-	browser.send_message( "main", "js_eval", {
-		cmd = [[
-$.get('projects/browser/data/html/tests/sample01.html', function(err, status, xhr) {
-	print(status);
-	//print(xhr.responseText);
-	var doc = HTMLtoDOM(xhr.responseText, document);
-	doc = DOMClean(doc);
-	//print(JSON.stringify(doc));
-	//lj_loaddom(CBOR.encode(doc));
-});		
-]],
-	} )
+-- 	browser.send_message( "main", "js_eval", {
+-- 		cmd = [[
+-- $.get('projects/browser/data/html/sample01.html', function(err, status, xhr) {
+-- 	print(status);
+-- 	//print(xhr.responseText);
+-- 	var doc = HTMLtoDOM(xhr.responseText, document);
+-- 	// doc = DOMClean(doc);
+-- 	//print(JSON.stringify(doc));
+-- 	//lj_loaddom(CBOR.encode(doc));
+-- });		
+-- ]],
+-- 	} )
 
 	-- browser.send_message( "main", "duk_exec", {
 	-- 	cmd = jsapi.loaddom,
@@ -174,9 +176,9 @@ $.get('projects/browser/data/html/tests/sample01.html', function(err, status, xh
 
 	browser.timers["dumpTree"] = { time = 1300, cb = function(tm)
 		local dom = require("engine.libs.htmldom")
-		-- dom.root = dom.elookup[1]
-		utils.savedata("temp_dom.lua", utils.tdump(dom.elookup[1])) 
-		htmlr.loaddata(self, dom.elookup[1])
+		dom.root = dom.elookup[1]
+		-- utils.savedata("temp_dom.lua", utils.tdump(dom.root)) 
+		htmlr.loaddata(self, dom.root)
 	end }
 end
 

@@ -279,7 +279,7 @@
 
 	this.HTMLtoDOM = function (html, doc) {
 		// There can be only one of these elements
-		var one = makeMap("html");
+		var one = makeMap("html,head,body,title");
 
 		// Enforce a structure for the document
 		var structure = {
@@ -295,10 +295,11 @@
 			else if (typeof ActiveX != "undefined")
 				doc = new ActiveXObject("Msxml.DOMDocument");
 
-		} else
+		} else {
 			doc = doc.ownerDocument ||
 				doc.getOwnerDocument && doc.getOwnerDocument() ||
 				doc;
+		}
 
 		var elems = [],
 			documentElement = doc.documentElement ||
@@ -306,19 +307,23 @@
 
 		// If we're dealing with an empty document then we
 		// need to pre-populate it with the HTML document structure
-		// if (!documentElement && doc.createElement) (function () {
-		// 	var html = doc.createElement("html");
-		// 	var head = doc.createElement("head");
-		// 	head.appendChild(doc.createElement("title"));
-		// 	html.appendChild(head);
-		// 	html.appendChild(doc.createElement("body"));
-		// 	doc.appendChild(html);
-		// })();
+		if (!documentElement && doc.createElement) (function () {
+			var html = doc.createElement("html");
+			var head = doc.createElement("head");
+			head.appendChild(doc.createElement("title"));
+			html.appendChild(head);
+			html.appendChild(doc.createElement("body"));
+			doc.appendChild(html);
+		})();
 
 		// Find all the unique elements
 		if (doc.getElementsByTagName)
+		{
 			for (var i in one)
+			{	
 				one[i] = doc.getElementsByTagName(i)[0];
+			}
+		}
 
 		// If we're working with a document, inject contents into
 		// the body element
@@ -342,8 +347,8 @@
 					elem.setAttribute(attrs[attr].name, attrs[attr].value);
 
 				if (structure[tagName] && typeof one[structure[tagName]] != "boolean") {
-					// print("--->" + elem.tagName);
-					// print(one[structure[tagName]]);
+					print("--->" + elem.tagName);
+					print((structure[tagName]).toString());
 					one[structure[tagName]].appendChild(elem);
 				}
 				else if (curParentNode && curParentNode.appendChild)
