@@ -2,86 +2,86 @@
   [1] =  {
     [1] =  {
       [1] =  {
-        ["id"] = 4
         ["xarg"] =  {
         }
         ["label"] = title
+        ["id"] = 4
       }
-      ["id"] = 3
       ["xarg"] =  {
       }
-      ["dirty"] = true
+      ["id"] = 3
       ["label"] = head
+      ["dirty"] = true
     }
     [2] =  {
       [1] =  {
-        [1] = This is
+        [1] = This is 
         [2] =  {
           [1] = bold
-          ["id"] = 8
           ["xarg"] =  {
           }
-          ["dirty"] = true
+          ["id"] = 8
           ["label"] = b
+          ["dirty"] = true
         }
-        [3] = ,
+        [3] = , 
         [4] =  {
           [1] = strong
-          ["id"] = 11
           ["xarg"] =  {
           }
-          ["dirty"] = true
+          ["id"] = 11
           ["label"] = strong
+          ["dirty"] = true
         }
-        [5] = ,
+        [5] = , 
         [6] =  {
           [1] = italic
-          ["id"] = 14
           ["xarg"] =  {
           }
-          ["dirty"] = true
+          ["id"] = 14
           ["label"] = i
+          ["dirty"] = true
         }
-        [7] = ,
+        [7] = , 
         [8] =  {
           [1] = emphasis
-          ["id"] = 17
           ["xarg"] =  {
           }
-          ["dirty"] = true
+          ["id"] = 17
           ["label"] = em
+          ["dirty"] = true
         }
-        [9] = ,
+        [9] = , 
         [10] =  {
           [1] = underline
-          ["id"] = 20
           ["xarg"] =  {
           }
-          ["dirty"] = true
+          ["id"] = 20
           ["label"] = u
+          ["dirty"] = true
         }
         [11] = .
-        ["id"] = 6
         ["xarg"] =  {
         }
-        ["dirty"] = true
         ["label"] = p
+        ["id"] = 6
+        ["dirty"] = true
       }
-      ["id"] = 5
       ["xarg"] =  {
       }
-      ["dirty"] = true
+      ["id"] = 5
       ["label"] = body
+      ["dirty"] = true
     }
-    ["id"] = 2
     ["xarg"] =  {
     }
-    ["dirty"] = true
+    ["id"] = 2
     ["label"] = html
+    ["dirty"] = true
   }
-  ["id"] = 1
   ["xarg"] =  {
   }
-  ["dirty"] = true
+  ["id"] = 1
   ["label"] = #document
+  ["dirty"] = true
 }

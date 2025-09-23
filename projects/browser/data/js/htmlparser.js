@@ -367,8 +367,8 @@
 				curParentNode = elems[elems.length - 1];
 			},
 			chars: function (text) {
-				var cleaned = text.replace(/[\r\n]/g, "").trim();
-				if(cleaned.length == 0) return;
+				if (!/\S/.test(text)) return;  // Skip if only whitespace (no visible chars)
+				var cleaned = text.replace(/[\t\n\r]/g, '').replace(/ +/g, ' ');
 				curParentNode.appendChild(doc.createTextNode(cleaned));
 			},
 			comment: function (text) {
