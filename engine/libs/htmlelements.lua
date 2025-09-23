@@ -87,6 +87,7 @@ return {
 	elements 		= htmlelements, 
 	init			= layout.init,
 	drawall			= layout.drawall,
+	reset 			= layout.reset,
 
 	-- Use this flag to update elements
 	dirty 			= dirty_elements,

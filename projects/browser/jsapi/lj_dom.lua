@@ -7,6 +7,7 @@ local utils     = require("lua.utils")
 
 local tinsert 	= table.insert
 
+local htmle     = require("engine.libs.htmlelements")
 local htmlr 	= require("engine.libs.htmlrenderer") 
 
 -- This should be set on register
@@ -192,6 +193,26 @@ function native_print(ctx)
 end
 
 -- --------------------------------------------------------------------------------------
+
+function reset_dom(ctx)
+    
+    dom.reset()
+    return 0
+end
+
+-- --------------------------------------------------------------------------------------
+
+function load_dom_and_render(ctx)
+
+    -- local dom = require("engine.libs.htmldom")
+    htmle.reset()
+    dom.root = dom.elookup[1]
+    utils.savedata("temp_dom.lua", utils.tdump(dom.root)) 
+    htmlr.loaddata(browser, dom.root)
+    return 0
+end
+
+-- --------------------------------------------------------------------------------------
 -- register these in duktape
 local function register_bridge(ctx, _browser)
 
@@ -211,8 +232,14 @@ local function register_bridge(ctx, _browser)
 	duk.duk_put_global_string(ctx, "lj_receiveDomUpdate")
 
 	duk.duk_push_c_function(ctx, loadDomFromDuktape_cb, 1)
-	duk.duk_put_global_string(ctx, "lj_loaddom"); 
+	duk.duk_put_global_string(ctx, "lj_loaddom")
 
+    duk.duk_push_c_function(ctx, load_dom_and_render, 0)
+    duk.duk_put_global_string(ctx, "lj_renderdom")
+
+    duk.duk_push_c_function(ctx, reset_dom, 0)
+    duk.duk_put_global_string(ctx, "lj_resetdom")
+    
     -- dom Node Specific interface
     duk.duk_push_c_function(ctx, dom.createNode, 1 )
     duk.duk_put_global_string(ctx, "dt_createNode"); 

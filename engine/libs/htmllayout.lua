@@ -42,6 +42,21 @@ local ltree 		= ltreelib.new()
 local tcolor = { r=0.0, b=0.0, g=0.0, a=1.0 }
 
 ----------------------------------------------------------------------------------
+-- Resset everything
+
+function reset() 
+	render 			= {}
+	render_lookup 	= {}
+	-- layout 			= {}
+	elements		= {}
+	element_nodes 	= {} -- ltree node lookups by element id
+	-- element_ids 	= {} -- element data from element id itself.
+	-- tables			= {}
+	ltree 			= ltreelib.new()
+	tcolor = { r=0.0, b=0.0, g=0.0, a=1.0 }
+end	
+
+----------------------------------------------------------------------------------
 
 function table_print(tt, indent, done)
 	done = done or {}
@@ -298,6 +313,7 @@ end
 -- --------------------------------------------------------------------------------------
 
 local function init(frame, cursor) 
+
 	layout 		= {
 		frame 	= frame,
 		cursor 	= cursor,
@@ -523,6 +539,7 @@ return {
 
 	init 			= init,
 	drawall 		= drawall,
+	reset 			= reset,
 
 	getrenderobj 	= getrenderobj,
 

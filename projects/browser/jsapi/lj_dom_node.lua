@@ -34,6 +34,10 @@ dom.appendChild = function( ctx )
     local parent = dom.getNodeById(parentId)
     local child = dom.getNodeById(childId)
 
+    if(parent == nil or child == nil) then 
+        return 0
+    end
+
     -- update Lua DOM structure
 
     if child.label == "text" then 

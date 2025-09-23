@@ -74,8 +74,16 @@ end
 ----------------------------------------------------------------------------------
 
 dom.reset = function()
-    dom.root = nil
-    dom.elookup = {}
+    dom.root        =  { parent = ni, children = {}, eid = nil }
+    dom.elookup     = {}
+    dom.nodeid      = 0
+    dom.styles      = {}
+    dom.selectors   = {}
+
+    stylestack      = {}
+    stylestack[1]   = deepcopy(styleempty)
+
+    curr_node 	    = dom.root
     return dom.root
 end 
 
@@ -308,13 +316,13 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
     }
 
     dom.renderCtx = self.renderCtx 
-    curr_node = dom.reset(htmlelements)
+    curr_node = dom.reset()
 
 	--local filename = "/data/html/sample02-forms.html"
 	local xml = utils.loaddata(filename)
 	local xmldata = xmlp.parse(xml)
 
-    print(xmldata)
+    -- print(xmldata)
     utils.savedata("temp_xml.lua", utils.tdump(xmldata))
     dom.loadxml(xmldata)
 
@@ -331,12 +339,14 @@ dom.loadxmldata = function( self, data, frame, cursor )
     }
 
     dom.renderCtx = self.renderCtx 
-    curr_node = dom.reset(htmlelements)
+    -- curr_node = dom.reset()
+    curr_node = dom.root
 
-    print(data)
+    -- print(data)
+    utils.savedata("temp_data.lua", utils.tdump(data))
     dom.loadxml(data)
 
-    --layout.ltreeprint()
+    -- layout.ltreeprint()
 end
 
 ----------------------------------------------------------------------------------
@@ -349,7 +359,7 @@ dom.loadcborfile = function( self, cbordata, frame, cursor )
     }
 
     dom.renderCtx = self.renderCtx 
-    curr_node = dom.reset(htmlelements)
+    curr_node = dom.reset()
     utils.savedata("temp_cbor.lua", utils.tdump(cbordata))
     --dom.loadcbor(cbordata)
 

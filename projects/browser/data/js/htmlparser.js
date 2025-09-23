@@ -122,8 +122,8 @@
 
 					if (index >= 0) {
 						if (handler.comment)
-							handler.comment(html.substring(4, index));
-						html = html.substring(index + 3);
+							handler.comment(html.substring(9, index));
+						html = html.substring(index + 1);
 						chars = false;
 					}
 

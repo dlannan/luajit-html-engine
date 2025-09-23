@@ -39,6 +39,7 @@ end
 
 local function loaddata( ctx, data )
 
+	htmle.dirty = true
 	htmldom.loadxmldata( ctx, data, frame, cursor)
 end
 

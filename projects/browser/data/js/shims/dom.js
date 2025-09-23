@@ -261,22 +261,51 @@ Document.prototype.constructor = Document;
 
 // ---------------------------- WINDOW -------------------
 // Safe window reference
-var document = new Document();
-var window = this;
+var document;// = new Document();
+var window; //= this;
 
 // Attach document (make sure `document` is already defined)
-window.document = document;
-window.location = { href: "" };
+// window.document = document;
+// window.location = { href: "" };
 
 // === Root Elements ===
 // Create the <html> root and <body>
-var html = document.createElement("html");
-var head = document.createElement("head");
-head.appendChild(document.createElement("title"));
-html.appendChild(head);
-html.appendChild(document.createElement("body"));
-document.appendChild(html);
-document.documentElement = html;
+function defaultDocument() {
+    // Reset internal state if needed
+    lj_resetdom();  // Optional custom method
+
+    document = new Document();
+    window = this;
+
+    // Attach document (make sure `document` is already defined)
+    window.document = document;
+    window.location = { href: "" };
+
+    // Create structure
+    var html = document.createElement("html");
+    var head = document.createElement("head");
+    var title = document.createElement("title");
+    var body = document.createElement("body");
+
+    head.appendChild(title);
+    html.appendChild(head);
+    html.appendChild(body);
+
+    // Assign key references
+    document.documentElement = html;
+    document.head = head;
+    document.body = body;
+
+    // If needed, append html manually to a root container
+    if (typeof document.appendChild === "function") {
+        document.appendChild(html);
+    }
+
+    // Optional: set default title text
+    title.textContent = "Untitled";
+}
+
+defaultDocument();
 
 // Basic getComputedStyle stub
 window.getComputedStyle = function(elem) {

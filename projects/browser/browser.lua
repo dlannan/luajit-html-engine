@@ -64,19 +64,28 @@ function runTimers()
 
 	local time = slib.stm_ms(slib.stm_now())
 	local remove_timers = {}
-	for idx, tmr in pairs(browser.timers) do 
-		if( tmr and time > tmr.time ) then 
-			if(tmr.cb) then 
-				tmr.cb( time )
-				tinsert(remove_timers, idx)
-			end
-		end 
-	end
+	jsapi.duk_safe_eval(browser.jsctx, "runTimers();" )
 
-	for idx, tmrid in ipairs(remove_timers) do 
-		browser.timers[tmrid] = nil 
-	end
+	-- 	local tmr = browser.timers[ct]
+	-- 	if( tmr and time > tmr.time ) then 
+	-- 		if(tmr.cb) then 
+	-- 			tmr.cb( time )
+	-- 		end
+	-- 		if(tmr.rep ~= true) then tinsert(remove_timers, ct) end
+	-- 	end 
+	-- end
+
+	-- for idx, tmrid in ipairs(remove_timers) do 
+	-- 	browser.timers[tmrid] = nil 
 end	
+
+-- --------------------------------------------------------------------------------------
+
+function addTimer(id, time, delay, rep)
+
+	browser.timers[id] = { id = id, time = time, delay = delay, rep = rep } 
+	browser.timers_count = browser.timers_count + 1
+end 
 
 -- --------------------------------------------------------------------------------------
 
@@ -174,12 +183,8 @@ browser.init = function (self)
 	-- 	cmd = jsapi.loaddom,
 	-- } )
 
-	browser.timers["dumpTree"] = { time = 1300, cb = function(tm)
-		local dom = require("engine.libs.htmldom")
-		dom.root = dom.elookup[1]
-		-- utils.savedata("temp_dom.lua", utils.tdump(dom.root)) 
-		htmlr.loaddata(self, dom.root)
-	end }
+	-- browser.timers["dumpTree"] = { time = 1300, cb = function(tm)
+	-- end }
 end
 
 -- --------------------------------------------------------------------------------------
@@ -212,7 +217,6 @@ end
 browser.check_messages = function(self)
 
 	-- Update timers in duktape.
-	-- native_invoke_function(browser.jsctx, "runTimers" )
 	runTimers()
 
 	for k,msg in ipairs(browser.messages) do 
@@ -343,7 +347,7 @@ local function frame()
     sgl.sgl_ortho(0.0, w, h, 0.0, -1.0, 1.0)
 
     -- Clear the frame buffer.
-    sgp.sgp_set_color(0.1, 0.1, 0.1, 1.0)
+    sgp.sgp_set_color(1, 1, 1, 1.0)
     sgp.sgp_clear()
 
 	-- Must go here because the sokol 2d drawing happens within the rapi

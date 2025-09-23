@@ -118,7 +118,8 @@ end
 
 function delete_timer( ctx )
 	local id = duk.duk_get_int(ctx, 0)
-	browser.timers[id] = nil 
+	table.remove(browser.timers, id)
+	if(browser.timers[id] == nil) then return 0 end
 	browser.timers_count = browser.timers_count - 1
 	return 0
 end 
@@ -126,8 +127,9 @@ end
 -- --------------------------------------------------------------------------------------
 
 function repeat_timer( ctx )
-	local id = duk.duk_get_int(ctx, 0)
+	local id = tonumber(ffi.string(duk.duk_get_string(ctx, 0)))
 	local time = (duk.duk_get_number(ctx, 1) - browser.timeoffset)
+	if(browser.timers[id] == nil) then return 0 end
 	browser.timers[id].time = time 
 	return 0
 end 
