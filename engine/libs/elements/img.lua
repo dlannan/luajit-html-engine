@@ -14,7 +14,11 @@ return {
 		if(attribs.height) then style.height = attribs.height end 
 		if(attribs.src) then 
 			style.src = attribs.src
-			style.imgid = style.imgid or rapi.image_load(attribs.src) 
+			if(style.imgid == nil) then 
+				style.imgid, twidth, theight = rapi.image_load(attribs.src) 
+				if(style.width == 0 or style.width == nil) then style.width = twidth or 16 end
+				if(style.height == 0 or style.height == nil) then style.height = theight or 16 end
+			end
 		end
 
 		--checkmargins( g, style )

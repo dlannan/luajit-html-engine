@@ -1,9 +1,9 @@
 
 var testfiles =[ 
-    'projects/browser/data/html/tests/01-simple-document.html',
     'projects/browser/data/html/sample01.html',
+    'projects/browser/data/html/tests/01-simple-document.html',
     'projects/browser/data/html/tests/02-inline-vs-block.html',
-    'projects/browser/data/html/tests/03-attribues-quoting.html',
+    'projects/browser/data/html/tests/03-attributes-quoting.html',
     'projects/browser/data/html/tests/04-classes-and-ids.html',
     'projects/browser/data/html/tests/05-css-basic-style.html',
     'projects/browser/data/html/tests/06-lists-nesting.html',
@@ -20,6 +20,21 @@ function runHtmlDoc( filename ) {
     $.get(filename, function(err, status, xhr) {
         // print(status);
         // print(xhr.responseText);
+
+        if (status != "success") {
+            print_error("Failed to load file:" + filename + " Status:" +  status);
+            return;
+        }
+        if (!xhr || !xhr.responseText) {
+            print_error("Empty or invalid response for file:" + filename);
+            return;
+        }
+    
+        var html = xhr.responseText.trim();
+        if (html.length === 0) {
+            print_warn("HTML content is empty for file:" + filename);
+            return;
+        }
 
         // Clear document!
         defaultDocument();
@@ -54,4 +69,3 @@ var intervalId = setInterval(function() {
         currtest += 1;
     }
 }, timecount );
-    

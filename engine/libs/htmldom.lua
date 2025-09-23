@@ -323,7 +323,7 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
 	local xmldata = xmlp.parse(xml)
 
     -- print(xmldata)
-    utils.savedata("temp_xml.lua", utils.tdump(xmldata))
+    -- utils.savedata("temp_xml.lua", utils.tdump(xmldata))
     dom.loadxml(xmldata)
 
     --layout.ltreeprint()
@@ -343,7 +343,7 @@ dom.loadxmldata = function( self, data, frame, cursor )
     curr_node = dom.root
 
     -- print(data)
-    utils.savedata("temp_data.lua", utils.tdump(data))
+    -- utils.savedata("temp_data.lua", utils.tdump(data))
     dom.loadxml(data)
 
     -- layout.ltreeprint()

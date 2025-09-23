@@ -482,12 +482,14 @@ end
 render_api.image_load = function( filename )
 
 	local cachedid = cached_data[filename]
-	if(cachedid) then return cachedid end
+	if(cachedid) then 
+		return cachedid, src_images[cachedid].rect.w, src_images[cachedid].rect.h 
+	end
 	cachedid, w, h = load_image(filename) 
 	local srcrect = ffi.new("sgp_rect", { 0, 0, w, h })
 	src_images[cachedid] = { rect = srcrect }
 	cached_data[filename] = cachedid
-	return cachedid
+	return cachedid, w, h
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------

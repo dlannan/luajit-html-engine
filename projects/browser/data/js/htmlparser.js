@@ -190,7 +190,6 @@
 		parseEndTag();
 
 		function parseStartTag(tag, tagName, rest, unary) {
-			tagName = tagName.toLowerCase();
 
 			if (block[tagName]) {
 				while (stack.last() && inline[stack.last()]) {
@@ -331,6 +330,7 @@
 
 		HTMLParser(html, {
 			start: function (tagName, attrs, unary) {
+
 				// If it's a pre-built element, then we can ignore
 				// its construction
 				if (one[tagName]) {
@@ -346,13 +346,14 @@
 				for (var attr in attrs)
 					elem.setAttribute(attrs[attr].name, attrs[attr].value);
 
-				if (structure[tagName] && typeof one[structure[tagName]] != "boolean") {
-					print("--->" + elem.tagName);
-					print((structure[tagName]).toString());
-					one[structure[tagName]].appendChild(elem);
+				var parent =
+					structure[tagName] && typeof one[structure[tagName]] != "boolean"
+						? one[structure[tagName]]
+						: curParentNode;
+				
+				if (parent && parent.appendChild) {
+					parent.appendChild(elem);
 				}
-				else if (curParentNode && curParentNode.appendChild)
-					curParentNode.appendChild(elem);
 
 				if (!unary) {
 					elems.push(elem);

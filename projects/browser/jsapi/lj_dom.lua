@@ -194,8 +194,24 @@ end
 
 -- --------------------------------------------------------------------------------------
 
+function native_print_error(ctx) 
+	local outstr = ffi.string(duk.duk_to_string(ctx, -1))
+	print(string.format("[JS Error] %s", outstr))
+	return 0 
+end
+
+-- --------------------------------------------------------------------------------------
+
+function native_print_warn(ctx) 
+	local outstr = ffi.string(duk.duk_to_string(ctx, -1))
+	print(string.format("[JS Warning] %s", outstr))
+	return 0 
+end
+
+-- --------------------------------------------------------------------------------------
+
 function reset_dom(ctx)
-    
+
     dom.reset()
     return 0
 end
@@ -220,6 +236,13 @@ local function register_bridge(ctx, _browser)
 
 	duk.duk_push_c_function(ctx, native_print, 1)
 	duk.duk_put_global_string(ctx, "print"); 
+
+	duk.duk_push_c_function(ctx, native_print_error, 1)
+	duk.duk_put_global_string(ctx, "print_error"); 
+
+    duk.duk_push_c_function(ctx, native_print_warn, 1)
+	duk.duk_put_global_string(ctx, "print_warn"); 
+
 
 	-- Url load and fetch commands -- incoming obj is the xhr req object
 	duk.duk_push_c_function(ctx, load_url, 2)
