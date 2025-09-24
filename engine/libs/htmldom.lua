@@ -251,8 +251,18 @@ nodefuncs.pre = function( ctx, xml )
                 style = utils.tmerge(style, dom.selectors[label]) 
             end
             local class = xml.xarg["class"]
-            if(style and class and dom.selectors["."..class]) then 
-                style = utils.tmerge(style, dom.selectors["."..class]) 
+            if(class) then 
+                -- Classes may have multiple selectors - add each
+                local classes = utils.csplit(class, " ")
+                for i, iclass in ipairs(classes) do
+                    if(style and iclass) then 
+                        if(dom.selectors["."..iclass]) then 
+                            style = utils.tmerge(style, dom.selectors["."..iclass])
+                        elseif(dom.selectors[label.."."..iclass]) then 
+                            style = utils.tmerge(style, dom.selectors[label.."."..iclass])
+                        end 
+                    end
+                end
             end
             local id = xml.xarg["id"]
             if(style and id and dom.selectors["#"..id]) then 

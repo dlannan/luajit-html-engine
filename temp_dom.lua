@@ -3,69 +3,51 @@
     [1] =  {
       [1] =  {
         ["id"] = 4
-        ["label"] = title
         ["xarg"] =  {
         }
+        ["label"] = title
       }
-      ["id"] = 3
-      ["xarg"] =  {
+      [2] =  {
+        [1] =  #header { color: blue; } .highlight { background-color: yellow; } p.small { font-size: 12px;} 
+        ["dirty"] = true
+        ["label"] = style
+        ["xarg"] =  {
+        }
+        ["id"] = 6
       }
       ["dirty"] = true
       ["label"] = head
+      ["xarg"] =  {
+      }
+      ["id"] = 3
     }
     [2] =  {
       [1] =  {
-        [1] = This is 
-        [2] =  {
-          [1] = bold
-          ["id"] = 8
-          ["xarg"] =  {
-          }
-          ["dirty"] = true
-          ["label"] = b
-        }
-        [3] = , 
-        [4] =  {
-          [1] = strong
-          ["id"] = 11
-          ["xarg"] =  {
-          }
-          ["dirty"] = true
-          ["label"] = strong
-        }
-        [5] = , 
-        [6] =  {
-          [1] = italic
-          ["id"] = 14
-          ["xarg"] =  {
-          }
-          ["dirty"] = true
-          ["label"] = i
-        }
-        [7] = , 
-        [8] =  {
-          [1] = emphasis
-          ["id"] = 17
-          ["xarg"] =  {
-          }
-          ["dirty"] = true
-          ["label"] = em
-        }
-        [9] = , 
-        [10] =  {
-          [1] = underline
-          ["id"] = 20
-          ["xarg"] =  {
-          }
-          ["dirty"] = true
-          ["label"] = u
-        }
-        [11] = .
-        ["id"] = 6
-        ["label"] = p
-        ["dirty"] = true
+        [1] = Header
+        ["label"] = div
         ["xarg"] =  {
+          ["id"] = header
         }
+        ["dirty"] = true
+        ["id"] = 8
+      }
+      [2] =  {
+        [1] = Some text
+        ["label"] = p
+        ["xarg"] =  {
+          ["class"] = highlight
+        }
+        ["dirty"] = true
+        ["id"] = 10
+      }
+      [3] =  {
+        [1] = More text
+        ["label"] = p
+        ["xarg"] =  {
+          ["class"] = small
+        }
+        ["dirty"] = true
+        ["id"] = 12
       }
       ["id"] = 5
       ["xarg"] =  {
@@ -73,15 +55,15 @@
       ["dirty"] = true
       ["label"] = body
     }
-    ["id"] = 2
-    ["xarg"] =  {
-    }
     ["dirty"] = true
     ["label"] = html
-  }
-  ["id"] = 1
-  ["xarg"] =  {
+    ["xarg"] =  {
+    }
+    ["id"] = 2
   }
   ["dirty"] = true
   ["label"] = #document
+  ["xarg"] =  {
+  }
+  ["id"] = 1
 }
