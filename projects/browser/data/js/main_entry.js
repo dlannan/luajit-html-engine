@@ -1,6 +1,6 @@
 
 var testfiles =[ 
-    // 'projects/browser/data/html/sample01.html',
+    'projects/browser/data/html/sample01.html',
     // 'projects/browser/data/html/tests/01-simple-document.html',
     // 'projects/browser/data/html/tests/02-inline-vs-block.html',
     // 'projects/browser/data/html/tests/03-attributes-quoting.html',
