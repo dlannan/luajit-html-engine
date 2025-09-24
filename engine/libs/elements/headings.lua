@@ -12,7 +12,7 @@ local function headingopen( g, style, xml )
 	style.linesize 	= common.getlineheight(style)
 	style.fontweight = 1
 
-	-- libstyle.checkmargins( g, style )
+	libstyle.checkmargins( g, style )
 	common.elementopen(g, style, xml)
 end	
 
