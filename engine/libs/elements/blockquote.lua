@@ -12,7 +12,10 @@ return {
 		libstyle.checkmargins( g, style )
 		common.elementopen(g, style, xml)
 	end,
-	closed 		= common.defaultclose,
+	closed 		= function( g, style, xml )
+		style.margin 		= libstyle.defaultmargin(style)
+		common.defaultclose(g, style, xml)
+	end,
 }
 
 ----------------------------------------------------------------------------------

@@ -114,6 +114,20 @@ end
 
 ----------------------------------------------------------------------------------
 
+local function extendmargin( style, topbottom, sides )
+
+	local fr = topbottom or 0
+	local fs = sides or 0
+	local mgn = style.margin or defaultstyle.margin
+	return { 
+		top 	= mgn.top + style.textsize * fr, 
+		bottom 	= mgn.bottom + style.textsize * fr,
+		left 	= mgn.left + fs, right = mgn.right + fs 
+	}
+end
+
+----------------------------------------------------------------------------------
+
 local function style_setmargins( style, left, top, right, bottom)
 	style.margin.top 		= top
 	style.margin.bottom 	= bottom
@@ -270,6 +284,7 @@ return {
 	defaultbutton			= style_defaultbutton,
 
     getmargin               = getmargin,
+	extendmargin			= extendmargin,
     setmargins              = style_setmargins,
     gettextsize             = gettextsize,
     setpadding              = style_setpadding,

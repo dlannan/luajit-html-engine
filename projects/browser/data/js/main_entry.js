@@ -4,7 +4,7 @@ var testfiles =[
     // 'projects/browser/data/html/tests/01-simple-document.html',
     // 'projects/browser/data/html/tests/02-inline-vs-block.html',
     // 'projects/browser/data/html/tests/03-attributes-quoting.html',
-    'projects/browser/data/html/tests/04-classes-and-ids.html',
+    // 'projects/browser/data/html/tests/04-classes-and-ids.html',
     // 'projects/browser/data/html/tests/05-css-basic-style.html',
     // 'projects/browser/data/html/tests/06-lists-nesting.html',
     // 'projects/browser/data/html/tests/07-whitespace-handling.html',

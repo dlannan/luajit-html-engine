@@ -35,6 +35,13 @@ local function textopened( g, style, xml )
 	text = string.gsub(text, "[\n\r\t]", "")
 	
 	style.etype = "text"
+	if(style.list) then 
+		if(style.list.ltype == "ordered") then 
+			text = string.format("%s.  %s", tostring(style.list.index), text) 
+		else 
+			text = string.format("%s  %s", tostring(style.list.index), text) 
+		end
+	end
 	libstyle.gettextsize(g, style, text ) 
 	local element 	= elementopen( g, style, xml )	
 
@@ -83,7 +90,7 @@ local function stepline( g, style )
 	g.cursor.top 	= g.cursor.top + style.margin.bottom
 
 	-- Return to leftmost + parent margin
-	g.cursor.left 	= g.frame.left
+	g.cursor.left 	= g.frame.left + style.margin.left
 	g.cursor.element_left = g.cursor.left
 end 
 
@@ -95,22 +102,59 @@ local function defaultclose( g, style )
 	stepline(g, style)
 end	
 
+----------------------------------------------------------------------------------
+
 local function closenone( g, style )
 
 end	
 
 ----------------------------------------------------------------------------------
+local function elementbutton( g, style, xml )
+
+	-- TODO: Need to make these default style settings for buttons
+
+	-- Need to add check for css style
+	libstyle.defaultbutton(style)
+
+	-- A button is inserted as an "empty" div which is expanded as elements are added.
+	local element = elementopen(g, style, xml)
+	libstyle.applypadding( g, style, element )
+
+	layout.addbuttonobject( g, style, xml.xargs )
+end
+
+----------------------------------------------------------------------------------
+local function elementbuttonclose( g, style )
+	
+	-- Push the size of the element into the button object
+	local element 		= layout.getelement(style.elementid)
+	local obj 			= layout.getelementdim( element.id )
+
+	element.width 		= obj.maxX - obj.minX
+	element.height 		= obj.maxY - obj.minY
+
+	libstyle.applyspacing( g, style, element )
+
+	layout.updateelement(element.id, element)
+	if(element.height > style.pstyle.linesize) then style.pstyle.linesize  = element.height end
+
+	elementclose(g, style, xml)
+end 
+
+----------------------------------------------------------------------------------
 
 return {
-    elementopen     = elementopen,
-    elementclose    = elementclose,
-    textopened     	= textopened,
-	textclosed 		= textclosed,
-    defaultclose    = defaultclose,
-    closenone       = closenone,
+    elementopen     	= elementopen,
+    elementclose    	= elementclose,
+	elementbutton 		= elementbutton,
+	elementbuttonclose 	= elementbuttonclose,
+    textopened     		= textopened,
+	textclosed 			= textclosed,
+    defaultclose    	= defaultclose,
+    closenone       	= closenone,
 
-    stepline        = stepline,
-    getlineheight   = getlineheight,
+    stepline        	= stepline,
+    getlineheight   	= getlineheight,
 }
 
 ----------------------------------------------------------------------------------

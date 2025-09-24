@@ -147,16 +147,50 @@ local cssColors = {
 
 ----------------------------------------------------------------------------------
 
+function hexToRGBA(hex)
+    hex = hex:gsub("^#", "")
+
+    -- Shorthand 3 or 4 digits (#rgb / #rgba)
+    if #hex == 3 or #hex == 4 then
+        hex = hex:sub(1,1):rep(2) ..
+              hex:sub(2,2):rep(2) ..
+              hex:sub(3,3):rep(2) ..
+              (#hex == 4 and hex:sub(4,4):rep(2) or "")
+    end
+
+    -- Full 6 or 8 digit hex
+    local r = tonumber(hex:sub(1,2), 16)
+    local g = tonumber(hex:sub(3,4), 16)
+    local b = tonumber(hex:sub(5,6), 16)
+    local a = #hex >= 8 and tonumber(hex:sub(7,8), 16) or 255
+
+    return r, g, b, a
+end
+
+----------------------------------------------------------------------------------
+
 local function getcolor(colorname)
-    local col = cssColors[colorname]
-    if(col == nil) then return nil end 
-    
-    return { 
-        r =col[1], 
-        g =col[2], 
-        b =col[3], 
-        a =col[4],
-    }
+
+    -- If this is a # hex number then convert!!
+    if(string.sub(colorname, 1, 1) == "#") then 
+        r, g, b, a = hexToRGBA(colorname)
+        return {  
+            r = r, 
+            g = g, 
+            b = b, 
+            a = a,
+        }
+    else 
+        local col = cssColors[colorname]
+        if(col == nil) then return nil end 
+        
+        return { 
+            r =col[1], 
+            g =col[2], 
+            b =col[3], 
+            a =col[4],
+        }
+    end
 end 
 
 ----------------------------------------------------------------------------------

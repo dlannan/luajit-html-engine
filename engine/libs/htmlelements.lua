@@ -60,6 +60,11 @@ htmlelements["body"] 		= require("engine.libs.elements.body")
 htmlelements["html"] 		= require("engine.libs.elements.html")
 htmlelements["div"] 		= require("engine.libs.elements.div")
 
+
+htmlelements["ol"] 		= require("engine.libs.elements.list_ordered")
+htmlelements["ul"] 		= require("engine.libs.elements.list_unordered")
+htmlelements["li"] 		= require("engine.libs.elements.list_li")
+
 ----------------------------------------------------------------------------------
 -- Script elements 
 htmlelements["script"] 		= require("engine.libs.elements.script")

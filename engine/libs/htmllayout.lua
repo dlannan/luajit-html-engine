@@ -13,7 +13,7 @@ local events 	= require("projects.browser.events")
 local ltreelib 	= require("engine.utils.layouttree")
 
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
-local enableDebug 			= nil
+local enableDebug 			= true
 local enableDebugElements 	= nil
 
 ----------------------------------------------------------------------------------
@@ -183,12 +183,14 @@ local function renderinputtext( g, v )
 
 	local text 		= v.text
 	local style 	= v.style
+	local cnr 		= style["border-radius"] or 0
 	local ele = getelement( v.eid )
 
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
 	-- imgui.begin_child(tostring(v.eid), ele.width, ele.height)
 	g.ctx.ctx.setstyle(style)
-	local changed, value = rapi.input_text( ele.attr.value or "", "Label" )
+	local color = style.color or { r = 0.0, g = 0.0, b = 0.0, a = 1.0 }
+	local changed, value = rapi.input_text( ele.attr.value or "",  ele.width, ele.height, color, cnr )
 	if(changed) then 
 		-- print(changed, value)
 		ele.attr.value = value
@@ -223,19 +225,20 @@ end
 local bgcolor		= { r=1, g=1, b=1, a=1 }
 local brdrcolor 	= { r=0, g=0, b=0, a=1 }
 local margincolor 	= { r=0, g=0, b=1, a=1 }
+local debugrender 	= { r=0, g=0.2, b=1, a=1 }
 
 local function renderelement( g, ele ) 
 
 	-- local ele = getelement( v.eid )
 	-- g.gcairo:RenderBox( ele.pos.left, ele.pos.top, ele.width, ele.height, 0, bgcolor, brdrcolor )
 	--print("TG:", tg.left, tg.top, tg.width, tg.height)
-	rapi.draw_rect( ele.pos.left, ele.pos.top, ele.width, ele.height, 0x000033ff) -- , brdrcolor )
+	rapi.draw_rect( ele.pos.left, ele.pos.top, ele.width, ele.height, debugrender) -- , brdrcolor )
 
-	g.ctx.ctx.setstyle(style)
-	rapi.set_cursor_pos(tg.left, tg.top)
-	rapi.set_window_font_scale( 0.5 )
-	rapi.text( tostring(tg.gid) )
-	g.ctx.ctx.unsetstyle()
+	-- g.ctx.ctx.setstyle(style)
+	-- rapi.set_cursor_pos(tg.left, tg.top)
+	-- rapi.set_window_font_scale( 0.5 )
+	-- rapi.text( tostring(tg.gid) )
+	-- g.ctx.ctx.unsetstyle()
 end	
 
 ----------------------------------------------------------------------------------
@@ -460,8 +463,9 @@ local function addinputtextobject( g, style, attribs )
 		style 	= stylecopy, 
 		cursor 	= { top = g.cursor.top, left = g.cursor.left },
 		frame  	= { top = g.frame.top, left = g.frame.left },
+		text 	= attribs.value,
 	}
-	
+
 	-- Render obejcts are queued in order of the output data with the correct styles
 	tinsert(render, renderobj)
 	render_lookup[renderobj.eid] = #render

@@ -8,7 +8,7 @@ return {
 	opened 		= function( g, style, xml)
         -- TODO: default paragraph styles needed
 		style.textsize 	= libstyle.FONT_SIZES.p
-		style.margin 	= libstyle.getmargin(style, libstyle.TEXT_CONST.MARGINS, 2)
+		-- style.margin.left =  style.margin.left + 2 * style.textsize
 		style.linesize 	= style.textsize
         if(style.pstyle) then 
             style.width = g.frame.width 

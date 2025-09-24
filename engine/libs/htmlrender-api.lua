@@ -469,10 +469,20 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Render input text field
-render_api.input_text = function( text, label )
+render_api.input_text = function( text, w, h, color, cnr )
 
 	-- No labels by default
 	label = label or ""
+
+	local x, y = render_api.left + render_api.window.x, render_api.top + render_api.window.y
+	local c = color or defaultcolor
+	if(type(c) == "number") then c = getRGBAColor(color) end
+	-- print( c.r, c.g, c.b, c.a )
+	sgp.sgp_set_color( c.r, c.g, c.b, c.a )
+
+	-- imgui.button( text, w, h ) 
+	drawRect( x, y, tonumber(w), tonumber(h))
+
 	-- return imgui.input_text( label, text ) 
 end
 
