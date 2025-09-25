@@ -52,6 +52,21 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
+local single_line = ffi.new("sgp_line[1]")
+local function drawLine( x1, y1, x2, y2 )
+
+    sgp.sgp_push_transform()
+	single_line[0].a.x = x1
+	single_line[0].a.y = y1 
+	single_line[0].b.x = x2
+	single_line[0].b.y = y2 
+
+    sgp.sgp_draw_lines(single_line, 1)
+    sgp.sgp_pop_transform()
+end
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
 local lines = ffi.new("sgp_line[4]")
 local function drawRect( x, y, w, h )
 
@@ -279,8 +294,8 @@ render_api.setup = function(self)
 		local fontface = style.fontface or "Regular"
 		if(fontface == "Regular") then 
 			if(style.fontweight == 1) then fontface = "Bold" end 
-			if(style.fontstyle == 1) then fontface = "Italic" end 
-			if(style.fontstyle == 1 and style.fontweight == 1) then fontface = "BoldItalic" end 
+			if(bit.band(style.fontstyle or 0, 1) == 1) then fontface = "Italic" end 
+			if(bit.band(style.fontstyle or 0, 1) == 1 and style.fontweight == 1) then fontface = "BoldItalic" end 
 		end
 		return self.renderCtx.fonts[fontface]
 	end 	
@@ -401,15 +416,13 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Render text using the specified interface
-render_api.text = function( text, wrapwidth, align )
+render_api.text = function( text, wrapwidth, align, underline )
 
 	align = align or "left"
 	render_api.set_text_align(align)
 	local x, y = render_api.left + render_api.window.x, render_api.top + render_api.window.y
 	local w, h = getTextSize(text)
-
-	-- If align is center then text is positionsed by its middle. Add half text width!
-	if(align == "center") then x = x + w/2 end
+	local uh = h - 0.1 * h
 
 	if(w > wrapwidth) then 
 		local parts  = calcMultiLines(x, y, w, h, wrapwidth, text)
@@ -417,11 +430,18 @@ render_api.text = function( text, wrapwidth, align )
 		for i,p in ipairs(parts) do 
 			-- Alignment needs to be done by the css/style
 			fs.fonsDrawText(state.fons, x + p.x, y + p.y, p.text, nil)
+			if(underline == true) then 
+				local w, h = getTextSize(p.text)
+				drawLine(x + p.x, y + p.y + uh, x + p.x + w, y + p.y + uh)
+			end
 		end
 	else
 		-- Alignment needs to be done by the css/style
 		--fs.fonsSetAlign(state.fons, bit.bor(fs.FONS_ALIGN_LEFT, fs.FONS_ALIGN_TOP))
 		fs.fonsDrawText(state.fons, x, y, text, nil)
+		if(underline == true) then 
+			drawLine(x, y + uh, x + w, y + uh)
+		end
 	end
 end
 
@@ -444,6 +464,7 @@ end
 --  Set the color of the following text
 render_api.set_text_color = function( color )
 	color = color or defaultcolor
+	sgp.sgp_set_color( color.r, color.g, color.b, color.a )
 	fs.fonsSetColor(state.fons, fs.sfons_rgba(color.r, color.g, color.b, color.a))
 end
 

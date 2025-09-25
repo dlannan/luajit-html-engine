@@ -13,7 +13,7 @@ local events 	= require("projects.browser.events")
 local ltreelib 	= require("engine.utils.layouttree")
 
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
-local enableDebug 			= true
+local enableDebug 			= nil
 local enableDebugElements 	= nil
 
 ----------------------------------------------------------------------------------
@@ -152,7 +152,8 @@ local function rendertext( g, v )
 	rapi.set_cursor_pos(ele.pos.left, ele.pos.top)
 	rapi.set_window_font_scale(style.textsize/g.ctx.ctx.fontsize)
 	rapi.set_text_color(style["color"])
-	rapi.text( text, ele.width + g.frame.left, style["text-align"] )
+	local underline = bit.band(style.fontstyle or 0, 2) == 2
+	rapi.text( text, ele.width + g.frame.left, style["text-align"], underline )
 	-- Always do this when using fontface
 	g.ctx.ctx.unsetstyle()
 end 

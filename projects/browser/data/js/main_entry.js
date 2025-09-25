@@ -1,6 +1,6 @@
 
 var testfiles =[ 
-    // 'projects/browser/data/html/sample01.html',
+    'projects/browser/data/html/sample01.html',
     // 'projects/browser/data/html/tests/01-simple-document.html',
     // 'projects/browser/data/html/tests/02-inline-vs-block.html',
     // 'projects/browser/data/html/tests/03-attributes-quoting.html',
@@ -10,7 +10,7 @@ var testfiles =[
     // 'projects/browser/data/html/tests/07-whitespace-handling.html',
     // 'projects/browser/data/html/tests/08-forms-basic.html',
     // 'projects/browser/data/html/tests/09-images-links.html',
-    'projects/browser/data/html/tests/10-text-formatting.html'
+    // 'projects/browser/data/html/tests/10-text-formatting.html'
 ];
 
 // example: 'projects/browser/data/html/sample01.html'
