@@ -13,7 +13,10 @@ return {
 		common.elementopen(g, style, xml)
 	end,
 	closed 		= function( g, style, xml )
-		style.margin 		= libstyle.defaultmargin(style)
+		style.margin.top = 40
+		style.margin.bottom = style.pstyle.margin.bottom
+		style.margin.left = style.pstyle.margin.left
+		style.margin.right = style.pstyle.margin.right
 		common.defaultclose(g, style, xml)
 	end,
 }

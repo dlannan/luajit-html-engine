@@ -153,7 +153,8 @@ local function rendertext( g, v )
 	rapi.set_window_font_scale(style.textsize/g.ctx.ctx.fontsize)
 	rapi.set_text_color(style["color"])
 	local underline = bit.band(style.fontstyle or 0, 2) == 2
-	rapi.text( text, ele.width + g.frame.left, style["text-align"], underline )
+	local strikethrough = bit.band(style.fontstyle or 0, 4) == 4
+	rapi.text( text, ele.width + g.frame.left, style["text-align"], underline, strikethrough )
 	-- Always do this when using fontface
 	g.ctx.ctx.unsetstyle()
 end 

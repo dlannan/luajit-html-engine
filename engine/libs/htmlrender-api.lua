@@ -416,7 +416,7 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --  Render text using the specified interface
-render_api.text = function( text, wrapwidth, align, underline )
+render_api.text = function( text, wrapwidth, align, underline, strikethrough )
 
 	align = align or "left"
 	render_api.set_text_align(align)
@@ -433,6 +433,9 @@ render_api.text = function( text, wrapwidth, align, underline )
 			if(underline == true) then 
 				local w, h = getTextSize(p.text)
 				drawLine(x + p.x, y + p.y + uh, x + p.x + w, y + p.y + uh)
+			elseif(strikethrough == true) then 
+				local w, h = getTextSize(p.text)
+				drawLine(x + p.x, y + p.y + h * 0.5, x + p.x + w, y + p.y + h * 0.5)
 			end
 		end
 	else
@@ -441,6 +444,8 @@ render_api.text = function( text, wrapwidth, align, underline )
 		fs.fonsDrawText(state.fons, x, y, text, nil)
 		if(underline == true) then 
 			drawLine(x, y + uh, x + w, y + uh)
+		elseif(strikethrough == true) then 
+			drawLine(x, y + h * 0.5, x + w, y + h * 0.5)
 		end
 	end
 end

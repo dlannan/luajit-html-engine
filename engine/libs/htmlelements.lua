@@ -39,6 +39,7 @@ htmlelements["em"] 			= require("engine.libs.elements.text_italics")
 htmlelements["b"]  			= require("engine.libs.elements.text_bold")
 htmlelements["strong"] 		= require("engine.libs.elements.text_bold")
 htmlelements["u"] 			= require("engine.libs.elements.text_underline")
+htmlelements["s"] 			= require("engine.libs.elements.text_strikethrough")
 htmlelements["br"]  		= require("engine.libs.elements.br")
 htmlelements["blockquote"] 	= require("engine.libs.elements.blockquote")
 
