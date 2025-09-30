@@ -271,6 +271,7 @@ local function doraster( )
 		end
 	end
 
+	-- Collate display tags, and reprocess elements for inline displays
 	for k, v in ipairs( render ) do 
 
 		local g = { ctx = v.ctx, cursor=v.cursor, frame = v.frame }
@@ -373,6 +374,7 @@ local function addelement( g, style, attribs )
 	local element = {}
 	element.ctx 		= g
 	element.etype 		= style.etype
+	element.display 	= style.display
 	element.background 	= { color = style.background or "#aaaaaa" }
 	element.margin 		= { top = style.margin.top or 0, bottom = style.margin.bottom or 0, left = style.margin.left or 0, right = style.margin.right or 0 }
 	element.padding		= { top = style.padding.top or 0, bottom = style.padding.bottom or 0, left = style.padding.left or 0, right = style.padding.right or 0 }

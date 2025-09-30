@@ -45,6 +45,59 @@ local TEXT_ALIGN = {
 }
 
 ----------------------------------------------------------------------------------
+-- Layout display types
+local DISPLAY_TYPES = {
+	inline 			= 1,
+	inlineblock		= 2,
+	block			= 3,
+	none			= 4,
+	table			= 5,
+	flex			= 6,
+	grid			= 7,
+}
+
+----------------------------------------------------------------------------------
+-- These tags force an inline to break. 
+-- They should always break the line _before_ the element is processed.
+local BLOCK_TAGS = {
+	div				= 1,
+	p				= 2,
+	
+	h1				= 3,
+	h2				= 4,
+	h3 				= 5,
+	h4				= 6,
+	h5				= 7,
+	h6 				= 8,
+	
+	blockquote		= 9,
+	pre				= 10,
+	
+	ul				= 11, 
+	ol				= 12,
+	li				= 13,
+
+	table			= 14, 
+	tr				= 15,
+	td				= 16, 
+	thead			= 17,
+	tbody			= 18,
+	tfoot			= 19,
+
+	form			= 20,
+	fieldset		= 21,
+
+	section			= 22,
+	article			= 23,
+	aside			= 24,
+	nav				= 25,
+	header			= 26,
+	footer			= 27,
+
+	hr				= 28,
+}
+
+----------------------------------------------------------------------------------
 
 local defaultlinesize 	= FONT_SIZES.normal
 local defaultheight 	= FONT_SIZES.normal
@@ -266,11 +319,36 @@ end
 
 ----------------------------------------------------------------------------------
 
+local function styleinput( style )
+	style_setmargins(style, 0, 0, 0, 0)
+	style_setpadding(style, 4, 2, 4, 2)
+	style_setborders(style, 1, 1, 1, 1)
+end	
+
+----------------------------------------------------------------------------------
+
+local function getformatted(g, style, text)
+
+	if text and style.list then 
+		if(style.list.ltype == "ordered") then 
+			text = string.format("%s.  %s", tostring(style.list.index), text) 
+		elseif(style.list.ltype == "unordered") then 
+			text = string.format("%s  %s", tostring(style.list.index), text) 
+		end
+	end
+	return text
+end
+
+----------------------------------------------------------------------------------
+
 return {
 
     FONT_SIZES              = FONT_SIZES,
     TEXT_CONST              = TEXT_CONST,
     TEXT_ALIGN              = TEXT_ALIGN,
+
+	DISPLAY_TYPES			= DISPLAY_TYPES,
+	BLOCK_TAGS				= BLOCK_TAGS,
 
 	defaultstyle			= defaultstyle,
 	 
@@ -291,11 +369,15 @@ return {
     setborders              = style_setborders,
     checkmargins            = checkmargins,
 
+	getformatted 			= getformatted,
+
 	applyspacing		 	= applyspacing,
 	applypadding			= applypadding,
 
     close                   = styleclose,
     open                    = styleopen,
+
+	styleinput				= styleinput,
 }
 
 ----------------------------------------------------------------------------------

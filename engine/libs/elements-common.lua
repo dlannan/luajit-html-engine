@@ -35,13 +35,7 @@ local function textopened( g, style, xml )
 	text = string.gsub(text, "[\n\r\t]", "")
 	
 	style.etype = "text"
-	if(style.list) then 
-		if(style.list.ltype == "ordered") then 
-			text = string.format("%s.  %s", tostring(style.list.index), text) 
-		else 
-			text = string.format("%s  %s", tostring(style.list.index), text) 
-		end
-	end
+	text = libstyle.getformatted(g, style, text )
 	libstyle.gettextsize(g, style, text ) 
 	local element 	= elementopen( g, style, xml )	
 

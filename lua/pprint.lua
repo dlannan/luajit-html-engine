@@ -12,7 +12,7 @@ pprint.defaults = {
     show_number = true,
     show_string = true,
     show_table = true,
-    show_function = false,
+    show_function = true,
     show_thread = false,
     show_userdata = false,
     -- additional display trigger

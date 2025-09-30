@@ -11,12 +11,13 @@ local utils 		= require("lua.utils")
 
 return {
 	opened 		= function( g, style, xml )
+
 		if(style.list) then 
 			style.margin.left 	=  style.margin.left + style.pstyle.list.depth * style.textsize
 			if(style.list.ltype == "ordered") then 
 				style.pstyle.list.index = style.pstyle.list.index + 1
-			end 
-		end
+			end
+		end		
 		common.stepline(g, style)
 		common.elementopen(g, style, xml)
 	end,

@@ -23,10 +23,6 @@ return {
 			if(w < tw * 20) then w = tw * 20 end
 			if(style.width < w) then style.width = w end
 		
-			-- libstyle.setmargins(style, 0, 0, 0, 0)
-			-- libstyle.setpadding(style, 8, 4, 8, 4)
-			-- libstyle.setborders(style, 1, 1, 1, 1)
-
 			style.height = h * g.ctx.fontsize + style.padding.top + style.padding.bottom
 			-- style.width = 8.0 * g.ctx.fontsize
 			

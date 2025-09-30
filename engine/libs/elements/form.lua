@@ -6,7 +6,8 @@ local layout    = require("engine.libs.htmllayout")
 
 return {
 	opened 		= function (g, style, xml) 
-		style.margin 		= libstyle.getmargin(style, libstyle.TEXT_CONST.NONE, 0)
+		libstyle.styleinput(style)
+		-- style.margin 		= libstyle.getmargin(style, libstyle.TEXT_CONST.NONE, 0)
 		common.elementopen(g, style, xml)
 	end, 
 	closed 		= common.defaultclose,
