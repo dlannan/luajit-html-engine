@@ -79,10 +79,10 @@ local BLOCK_TAGS = {
 
 	table			= 14, 
 	tr				= 15,
-	td				= 16, 
-	thead			= 17,
-	tbody			= 18,
-	tfoot			= 19,
+	-- td				= 16, 
+	-- thead			= 17,
+	-- tbody			= 18,
+	-- tfoot			= 19,
 
 	form			= 20,
 	fieldset		= 21,
@@ -341,6 +341,20 @@ end
 
 ----------------------------------------------------------------------------------
 
+local function newlinebox(g, style)
+
+	g.cursor.top 	= g.cursor.top + style.linesize
+	-- Add in the collated margin from the bottom
+	g.cursor.element_top = g.cursor.top
+	g.cursor.top 	= g.cursor.top + style.margin.bottom
+
+	-- Return to leftmost + parent margin
+	g.cursor.left 	= g.frame.left + style.margin.left
+	g.cursor.element_left = g.cursor.left
+end 
+
+----------------------------------------------------------------------------------
+
 return {
 
     FONT_SIZES              = FONT_SIZES,
@@ -378,6 +392,8 @@ return {
     open                    = styleopen,
 
 	styleinput				= styleinput,
+
+	newlinebox				= newlinebox,
 }
 
 ----------------------------------------------------------------------------------

@@ -12,7 +12,11 @@ local function elementopen( g, style, xml )
 	style.elementid 	= element.id
 	xml.eid 			= element.id
 	element.cursor_top 	= g.cursor.top
-
+	
+	-- If this is a block tag or the display style is block then start new line box
+	if(libstyle.BLOCK_TAGS[xml.label]) then 
+		libstyle.newlinebox(g, style)
+	end
 	return element
 end 
 
@@ -93,7 +97,7 @@ end
 local function defaultclose( g, style )
 	
 	elementclose(g, style)	
-	stepline(g, style)
+	--stepline(g, style)
 end	
 
 ----------------------------------------------------------------------------------
