@@ -7,7 +7,10 @@ local layout    	= require("engine.libs.htmllayout")
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= common.elementbutton,
+	opened 		= function(g, style, xml)
+		style.display 	= style.display or "inline"
+		common.elementbutton(g, style, xml)
+	end,
 	closed 		= common.elementbuttonclose,
 }
 

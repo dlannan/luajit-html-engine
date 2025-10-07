@@ -77,12 +77,7 @@ local BLOCK_TAGS = {
 	ol				= 12,
 	li				= 13,
 
-	table			= 14, 
-	tr				= 15,
-	-- td				= 16, 
-	-- thead			= 17,
-	-- tbody			= 18,
-	-- tfoot			= 19,
+	table 			= 14,
 
 	form			= 20,
 	fieldset		= 21,
@@ -95,6 +90,40 @@ local BLOCK_TAGS = {
 	footer			= 27,
 
 	hr				= 28,
+}
+
+----------------------------------------------------------------------------------
+
+local TABLE_TAGS = {
+	table			= 1, 
+	tr				= 2,
+}
+
+----------------------------------------------------------------------------------
+
+local TABLE_ROW_TAGS = {
+	td				= 3, 
+	th 				= 4,
+	thead			= 5,
+	tbody			= 6,
+	tfoot			= 7,
+}
+
+----------------------------------------------------------------------------------
+
+local DISPLAY_MAP = {
+	div     = 'block',
+	p       = 'block',
+	span    = 'inline',
+	button  = 'inline-block',
+	table   = 'table',
+	tr      = 'table-row',
+	td      = 'table-cell',
+	th      = 'table-cell',
+	br      = 'inline',
+	ul      = 'block',
+	li      = 'list-item',
+	img     = 'inline-block',
 }
 
 ----------------------------------------------------------------------------------
@@ -355,6 +384,47 @@ end
 
 ----------------------------------------------------------------------------------
 
+local function handle_display(g, style, xml)
+
+	local display = DISPLAY_MAP[xml.label] or 'inline'
+	
+	if BLOCK_TAGS[xml.label] or style.display == "block" then
+		if display == 'inline' or display == 'inline-block' then
+			newlinebox(g, style)
+		elseif display == 'block' then
+			-- flush_linebox()
+			newlinebox(g, style)
+		elseif display == 'table' then
+			-- flush_linebox()
+			newlinebox(g, style)
+			-- push_formatting_context("table")
+		end
+
+	elseif style.display == "inline" then
+		if display == 'inline' or display == 'inline-block' then
+			-- add_to_linebox(tag)
+		elseif display == 'block' then
+			-- flush_linebox()
+			newlinebox(g, style)
+			-- start_block_box(tag)
+		end
+
+	elseif TABLE_TAGS[xml.label] or style.display == "table" then
+
+		if xml.label == 'tr' then
+			newlinebox(g, style)
+			-- push_formatting_context("table_row")
+		end
+
+	elseif TABLE_ROW_TAGS[xml.label] or style.display == "table_row" then
+		if xml.label == 'td' or xml.label == 'th' then
+			-- push_formatting_context("table_cell")
+		end
+	end
+end
+	
+----------------------------------------------------------------------------------
+
 return {
 
     FONT_SIZES              = FONT_SIZES,
@@ -363,6 +433,7 @@ return {
 
 	DISPLAY_TYPES			= DISPLAY_TYPES,
 	BLOCK_TAGS				= BLOCK_TAGS,
+	DISPLAY_MAP				= DISPLAY_MAP,
 
 	defaultstyle			= defaultstyle,
 	 
@@ -394,6 +465,7 @@ return {
 	styleinput				= styleinput,
 
 	newlinebox				= newlinebox,
+	handle_display			= handle_display,
 }
 
 ----------------------------------------------------------------------------------

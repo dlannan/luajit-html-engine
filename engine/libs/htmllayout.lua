@@ -13,7 +13,7 @@ local events 	= require("projects.browser.events")
 local ltreelib 	= require("engine.utils.layouttree")
 
 -- Set this to show the geom outlines. Doesnt support scrolling at the moment.
-local enableDebug 			= nil
+local enableDebug 			= true
 local enableDebugElements 	= nil
 
 ----------------------------------------------------------------------------------

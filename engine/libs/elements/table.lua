@@ -29,6 +29,8 @@ return {
 		
 		-- Make a table stack. This stores rows that contain td widths for post update
 		common.elementopen(g, style, xml)
+
+		style.display = style.display or "table"
 	end,
 	closed 		= function( g, style, xml)
 

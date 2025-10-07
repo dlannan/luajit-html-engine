@@ -6,17 +6,15 @@ local layout        = require("engine.libs.htmllayout")
 local function elementopen( g, style, xml )
 
 	libstyle.open(g, style, xml)
+	libstyle.handle_display(g, style, xml)	
+
 	local element 		= layout.addelement( g, style, xml.xarg )
 	
     -- style.peid          = style.elementid
 	style.elementid 	= element.id
 	xml.eid 			= element.id
 	element.cursor_top 	= g.cursor.top
-	
-	-- If this is a block tag or the display style is block then start new line box
-	if(libstyle.BLOCK_TAGS[xml.label]) then 
-		libstyle.newlinebox(g, style)
-	end
+
 	return element
 end 
 

@@ -5,7 +5,10 @@ local layout    	= require("engine.libs.htmllayout")
 ----------------------------------------------------------------------------------
 
 return {
-	opened 		= common.textopened,
+	opened 		= function( g, style, xml )
+		style.display 		= style.display or "inline"
+		common.textopened(g, style, xml)
+	end,	
 	closed 		= common.textclosed,
 }
 

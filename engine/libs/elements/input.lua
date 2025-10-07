@@ -7,6 +7,8 @@ local layout    = require("engine.libs.htmllayout")
 return {
 	opened 		= function (g, style, xml) 
 
+		style.display 	= style.display or "inline"
+
         local attribs = xml.xarg
 		local atype = attribs.type:lower()
 		style.textsize 		= libstyle.FONT_SIZES.p

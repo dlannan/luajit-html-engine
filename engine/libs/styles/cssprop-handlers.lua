@@ -34,7 +34,7 @@ local css_properties = {
     "background-size", -- Background size (cover, contain, etc.)
     
     -- Positioning and Layout
-    "display",        -- Display type (block, inline, flex, etc.)
+    ["display"]           = require("engine.libs.styles.handler-display"),  -- Display type (block, inline, flex, etc.)
     "position",       -- Positioning method (static, relative, absolute, fixed)
     "top",            -- Position top offset
     "left",           -- Position left offset

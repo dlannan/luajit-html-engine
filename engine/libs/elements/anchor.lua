@@ -7,7 +7,8 @@ local csscolors = require("engine.libs.styles.csscolors")
 
 return {
 	opened 		= function( g, style, xml )
-		style.color = csscolors.rgba_color("blue")
+		style.color 	= csscolors.rgba_color("blue")
+		style.display 	= style.display or "inline"
 		common.elementopen(g, style, xml)
 	end,
 	closed 		= function( g, style, xml )
