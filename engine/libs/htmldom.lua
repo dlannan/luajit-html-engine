@@ -250,7 +250,7 @@ nodefuncs.pre = function( ctx, xml )
 	local style = deepcopy(currstyle)
 	local this_node = nil
 
-	local g = { ctx=ctx, cursor = dom.ctx.cursor, frame = dom.ctx.frame }
+	local g = { ctx=ctx, cursor = dom.ctx.cursor, frame = dom.ctx.frame, lineboxes = dom.ctx.lineboxes }
 	-- Check element names 
 	local label = nil
 	if( xml.label ) then label = string.lower(xml.label) end
@@ -328,6 +328,7 @@ dom.loadxmlfile = function( self, filename, frame, cursor )
     dom.ctx = {
         frame       = frame,
         cursor      = cursor,
+        lineboxes   = {},
     }
 
     dom.renderCtx = self.renderCtx 
@@ -351,6 +352,7 @@ dom.loadxmldata = function( self, data, frame, cursor )
     dom.ctx = {
         frame       = frame,
         cursor      = cursor,
+        lineboxes   = {},
     }
 
     dom.renderCtx = self.renderCtx 
@@ -371,6 +373,7 @@ dom.loadcborfile = function( self, cbordata, frame, cursor )
     dom.ctx = {
         frame       = frame,
         cursor      = cursor,
+        lineboxes   = {},
     }
 
     dom.renderCtx = self.renderCtx 

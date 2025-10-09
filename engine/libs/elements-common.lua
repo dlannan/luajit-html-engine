@@ -6,7 +6,6 @@ local layout        = require("engine.libs.htmllayout")
 local function elementopen( g, style, xml )
 
 	libstyle.open(g, style, xml)
-	libstyle.handle_display(g, style, xml)	
 
 	local element 		= layout.addelement( g, style, xml.xarg )
 	
@@ -15,6 +14,7 @@ local function elementopen( g, style, xml )
 	xml.eid 			= element.id
 	element.cursor_top 	= g.cursor.top
 
+	libstyle.handle_display(g, style, xml)	
 	return element
 end 
 
@@ -95,7 +95,8 @@ end
 local function defaultclose( g, style )
 	
 	elementclose(g, style)	
-	--stepline(g, style)
+	-- This is no longer used, and is now handled by lineboxes. 
+	-- stepline(g, style)
 end	
 
 ----------------------------------------------------------------------------------

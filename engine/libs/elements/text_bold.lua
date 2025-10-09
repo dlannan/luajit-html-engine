@@ -7,7 +7,7 @@ local layout    = require("engine.libs.htmllayout")
 return {
 	opened 		= function( g, style, xml )
 		style.fontweight 	= 1
-		style.display 		= style.display or "inline"
+		-- style.display 		= style.display or "inline"
 		common.elementopen(g, style, xml)
 	end,
 	closed 		= function( g, style, xml )

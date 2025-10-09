@@ -4,6 +4,9 @@ local styleprops    = require("engine.libs.styles.cssprop-handlers")
 
 local utils 		= require("lua.utils")
 
+local tinsert		= table.insert 
+local tremove 		= table.remove
+
 ----------------------------------------------------------------------------------
 
 local FONT_SIZES = {
@@ -59,56 +62,48 @@ local DISPLAY_TYPES = {
 ----------------------------------------------------------------------------------
 -- These tags force an inline to break. 
 -- They should always break the line _before_ the element is processed.
-local BLOCK_TAGS = {
-	div				= 1,
-	p				= 2,
-	
-	h1				= 3,
-	h2				= 4,
-	h3 				= 5,
-	h4				= 6,
-	h5				= 7,
-	h6 				= 8,
-	
-	blockquote		= 9,
-	pre				= 10,
-	
-	ul				= 11, 
-	ol				= 12,
-	li				= 13,
-
-	table 			= 14,
-
-	form			= 20,
-	fieldset		= 21,
-
-	section			= 22,
-	article			= 23,
-	aside			= 24,
-	nav				= 25,
-	header			= 26,
-	footer			= 27,
-
-	hr				= 28,
+local DEFAULT_DISPLAY = {
+	html 	  = "block",
+	body 	  = "block",
+	div       = "block",
+	p         = "block",
+	span      = "inline",
+	button    = "inline-block",
+	br        = "inline",  -- with special behavior
+	table     = "table",
+	tr        = "table-row",
+	td        = "table-cell",
+	th        = "table-cell",
+	ul        = "block",
+	li        = "list-item",
+	img       = "inline-block",
+	section   = "block",
+	header    = "block",
+	footer    = "block",
+	h1        = "block",
+	h2        = "block",
+	h3        = "block",
+	h4        = "block",
+	h5        = "block",
+	h6        = "block",
+	blockquote = "block",
+	pre        = "block",
+	form       = "block",
+	hr         = "block",
+	-- etc.
 }
 
 ----------------------------------------------------------------------------------
-
-local TABLE_TAGS = {
-	table			= 1, 
-	tr				= 2,
+-- example categories
+local DisplayCategory = {
+	BLOCK = 1,
+	INLINE = 2,
+	INLINE_BLOCK = 3,
+	TABLE = 4,
+	TABLE_ROW = 5,
+	TABLE_CELL = 6,
 }
-
-----------------------------------------------------------------------------------
-
-local TABLE_ROW_TAGS = {
-	td				= 3, 
-	th 				= 4,
-	thead			= 5,
-	tbody			= 6,
-	tfoot			= 7,
-}
-
+  
 ----------------------------------------------------------------------------------
 
 local DISPLAY_MAP = {
@@ -125,6 +120,22 @@ local DISPLAY_MAP = {
 	li      = 'list-item',
 	img     = 'inline-block',
 }
+
+----------------------------------------------------------------------------------
+
+local DISPLAY_CATEGORY_MAP = {
+	["block"]         = DisplayCategory.BLOCK,
+	["inline"]        = DisplayCategory.INLINE,
+	["inline-block"]  = DisplayCategory.INLINE_BLOCK,
+	["table"]         = DisplayCategory.TABLE,
+	["table-row"]     = DisplayCategory.TABLE_ROW,
+	["table-cell"]    = DisplayCategory.TABLE_CELL,
+	["none"]          = DisplayCategory.NONE, -- optional
+}
+  
+local function categorize_display(display_string)
+	return DISPLAY_CATEGORY_MAP[display_string] or DisplayCategory.INLINE  -- fallback default
+end
 
 ----------------------------------------------------------------------------------
 
@@ -384,44 +395,111 @@ end
 
 ----------------------------------------------------------------------------------
 
-local function handle_display(g, style, xml)
-
-	local display = DISPLAY_MAP[xml.label] or 'inline'
-	
-	if BLOCK_TAGS[xml.label] or style.display == "block" then
-		if display == 'inline' or display == 'inline-block' then
-			newlinebox(g, style)
-		elseif display == 'block' then
-			-- flush_linebox()
-			newlinebox(g, style)
-		elseif display == 'table' then
-			-- flush_linebox()
-			newlinebox(g, style)
-			-- push_formatting_context("table")
-		end
-
-	elseif style.display == "inline" then
-		if display == 'inline' or display == 'inline-block' then
-			-- add_to_linebox(tag)
-		elseif display == 'block' then
-			-- flush_linebox()
-			newlinebox(g, style)
-			-- start_block_box(tag)
-		end
-
-	elseif TABLE_TAGS[xml.label] or style.display == "table" then
-
-		if xml.label == 'tr' then
-			newlinebox(g, style)
-			-- push_formatting_context("table_row")
-		end
-
-	elseif TABLE_ROW_TAGS[xml.label] or style.display == "table_row" then
-		if xml.label == 'td' or xml.label == 'th' then
-			-- push_formatting_context("table_cell")
-		end
-	end
+local function is_linebox_open( g )
+	if( g.lineboxes == nil or #g.lineboxes == 0) then 
+		return nil 
+	else 
+		return true 
+	end 
 end
+
+----------------------------------------------------------------------------------
+
+local function start_linebox( g, style )
+
+	local lineboxes = g.lineboxes or {} -- Auto create a linebox stack 
+	local newlinebox = { 
+		elements = {}, 
+		left 		= g.cursor.left, 
+		top 		= g.cursor.top, 
+		frameleft 	= g.frame.left, 
+		linesize 	= style.linesize,
+		display 	= style.display or "inline",
+	}
+	tinsert(lineboxes, newlinebox )
+	g.lineboxes = lineboxes
+end
+
+----------------------------------------------------------------------------------
+-- Pops the linebox from the linebox stack. Steps the line
+local function flush_linebox(g, style)
+	if not is_linebox_open(g) then
+		return  -- nothing to flush, no line stepping needed
+	end	
+	
+	local lbox = tremove(g.lineboxes)
+	-- process_linebox(g, style, lbox) -- This recalcs linebox elements and updates layouts for each element
+
+	g.cursor.top 	= g.cursor.top + lbox.linesize
+	-- Add in the collated margin from the bottom
+	g.cursor.element_top = g.cursor.top
+	g.cursor.top 	= g.cursor.top + style.margin.bottom
+
+	-- Return to leftmost + parent margin
+	g.cursor.left 	= g.frame.left + style.margin.left
+	g.cursor.element_left = g.cursor.left
+
+	return lbox.display
+end
+
+----------------------------------------------------------------------------------
+
+local function handle_display(g, style, xml)
+    -- 1. Determine raw display value for this tag
+    local label = xml.label
+    local raw_display = DEFAULT_DISPLAY[label] or "inline"  -- fallback to inline
+
+    -- 2. Check for CSS override in style
+    if style.display then
+        raw_display = style.display
+		print(raw_display)
+    end
+
+    -- 3. Determine the **current context** / parent display
+    local parent_display = style.pstyle.display  -- e.g. "block" or "inline"
+    local parent_category = categorize_display(parent_display)
+    local current_category = categorize_display(raw_display)
+
+	-- print(label, raw_display, parent_category, current_category)
+
+    -- 4. Handle transitions based on parent / preceding display
+    -- (For example: if parent is inline but child is block, you need to flush etc.)
+    if parent_category == DisplayCategory.INLINE then
+        if current_category == DisplayCategory.BLOCK then
+            -- inline → block: must flush the current linebox in the parent
+            flush_linebox(g, style)
+        end
+    elseif parent_category == DisplayCategory.BLOCK then
+        -- parent is block-level container
+        if current_category == DisplayCategory.INLINE or current_category == DisplayCategory.INLINE_BLOCK then
+            -- okay: inline children inside block
+            -- maybe start a new linebox if none is open
+            if not is_linebox_open(g) then
+				start_linebox(g, style)
+            end
+        elseif current_category == DisplayCategory.BLOCK then
+            -- block child inside block: ensure current linebox flushed
+            if is_linebox_open(g) then
+                flush_linebox(g, style)
+            end
+        elseif current_category == DisplayCategory.TABLE then
+            -- block → table: treat table like a block for transition
+            if is_linebox_open(g) then
+                flush_linebox(g, style)
+            end
+        end
+    end
+
+	style.display = raw_display
+
+    -- 6. Possibly set up layout state for this element
+    -- e.g. if table, push a new layout context; if inline-block, set inline-block state, etc.
+    -- setup_layout_for_display(g, style, xml)
+
+    -- 7. Return if needed, or push style/context so child processors use it
+    return style.display
+end
+
 	
 ----------------------------------------------------------------------------------
 

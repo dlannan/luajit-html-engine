@@ -7,20 +7,21 @@ local layout    = require("engine.libs.htmllayout")
 return {
 	opened 		= function( g, style, xml )
 		style.fontweight 	= 1
+		-- style.display = style.display or "table"
 		common.elementopen(g, style, xml)
-		style["text-align"] = "center"
+		-- style["text-align"] = "center"
 	end,
 	closed 		= function( g, style, xml )
 
-		local element 		= layout.getelement(style.elementid)
-		local obj 			= layout.getelementdim( element.id )
+		-- local element 		= layout.getelement(style.elementid)
+		-- local obj 			= layout.getelementdim( element.id )
 
-		element.width 		= obj.maxX - obj.minX
-		element.height 		= obj.maxY - obj.minY
+		-- element.width 		= obj.maxX - obj.minX
+		-- element.height 		= obj.maxY - obj.minY
 
-		layout.updateelement(element.id, element)
+		-- layout.updateelement(element.id, element)
 
-		common.elementclose(g, style, xml)
+		-- common.elementclose(g, style, xml)
 		style.fontweight = nil
 	end,
 }

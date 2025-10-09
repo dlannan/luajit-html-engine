@@ -371,6 +371,7 @@ end
 -- Try to replicate css properties here. 
 local function addelement( g, style, attribs )
 
+	print(style.etype, style.display)
 	local element = {}
 	element.ctx 		= g
 	element.etype 		= style.etype

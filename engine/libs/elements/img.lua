@@ -22,7 +22,7 @@ return {
 		end
 
 		--checkmargins( g, style )
-		style.display 		= style.display or "inline"
+		-- style.display 		= style.display or "inline"
 		
 		local element 		= layout.addelement( g, style, xml.xarg )
 		style.elementid 	= element.id
