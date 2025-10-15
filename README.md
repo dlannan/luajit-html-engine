@@ -23,13 +23,13 @@ The core goal is to make an embedable html rendering engine that utilizes good l
 
 Think something like Webkit without all the  cruft. And it _wont_ support all mimetypes known to mankind, it will support a specific set. If the webpage doesnt work with it, then you will need to adjust the webpage to suit. This is mainly for application development, but the test example will be a simple browser.
 
-- [ ]  Application window and application API
+- [X]  Application window and application API
 - [ ]  HTTP Get and network Management (use sokol fetch?)
-- [ ]  Layouts - appropriate arch.
+- [X]  Layouts - appropriate arch.
 - [X]  JS Duktape integration (its in and working)
-- [ ]  DOM in Lua - integrate libraries if needed (Duktape needs DOM api registrations)
-- [ ]  CSS in Lua - integrate libraries if needed
-- [ ]  Sokol Rendering - 2D
+- [X]  DOM in Lua - integrate libraries if needed (Duktape needs DOM api registrations) - Mostly Working
+- [X]  CSS in Lua - integrate libraries if needed - Started
+- [X]  Sokol Rendering - 2D
 - [ ]  Sokol Rendering - Support 3D? (this is a nice to have, but might ignore)
 - [ ]  Sokol Audio
 - [ ]  Sokol Video
